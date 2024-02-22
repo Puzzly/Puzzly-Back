@@ -38,3 +38,8 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// 불필요한 jar 파일 생성하지않음
+jar {
+    enabled = false
+}
