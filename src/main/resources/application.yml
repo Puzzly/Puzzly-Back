@@ -24,6 +24,8 @@ spring:
     url: jdbc:h2:mem:testdb
     username: sa
     password:
+logging:
+  root: debug
 ---
 spring:
   config:
