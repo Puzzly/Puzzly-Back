@@ -1,5 +1,6 @@
 package com.puzzly.dto;
 
+import com.puzzly.enums.Authority;
 import com.puzzly.enums.JoinType;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,7 @@ public class UserDTORequest {
     private String phoneNumber;
     private JoinType joinType;
     private LocalDateTime createDatetime;
+    private Authority authority;
 
     /*
     public static UserDTO toEntity(User entity){

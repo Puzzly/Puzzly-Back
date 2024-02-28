@@ -1,8 +1,11 @@
 package com.puzzly.configuration;
 
+import com.puzzly.Utils.JwtUtils;
 import com.puzzly.security.filter.CustomUsernamePasswordAuthenticationFilter;
+import com.puzzly.security.filter.JwtAuthenticationFilter;
 import com.puzzly.security.handler.CustomUsernamePasswordSuccessHandler;
 import com.puzzly.security.provider.CustomUsernamePasswordAuthenticationProvider;
+import com.puzzly.security.securityService.CustomUserDetailsService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +31,13 @@ import java.util.Collections;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final JwtUtils jwtUtils;
+
+    public SecurityConfig(JwtUtils jwtUtils){
+        this.jwtUtils = jwtUtils;
+    }
+
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         // 비밀번호 암호화 용도
@@ -42,7 +52,8 @@ public class SecurityConfig {
     }
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity,
-                                           CustomUsernamePasswordAuthenticationFilter customUsernamePasswordAuthenticationFilter) throws Exception{
+                                           CustomUsernamePasswordAuthenticationFilter customUsernamePasswordAuthenticationFilter,
+                                           JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception{
 
         httpSecurity.csrf((auth) -> auth.disable())
                 .headers(headers -> headers.addHeaderWriter(new XFrameOptionsHeaderWriter(XFrameOptionsHeaderWriter.XFrameOptionsMode.SAMEORIGIN)))
@@ -53,15 +64,17 @@ public class SecurityConfig {
                 .httpBasic((auth) -> auth.disable())
                 .authorizeHttpRequests(
                         (auth) -> auth
-                                .requestMatchers("/api/user/join", "/api/user/login", "/api/user/securityContext").permitAll()
+                                .requestMatchers("/resources/**").permitAll()
+                                .requestMatchers("/api/user/join", "/api/user/login", "/api/user/jwttest").permitAll()
                                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                                 .requestMatchers(PathRequest.toH2Console()).permitAll()
                                 .requestMatchers("/api/user/test/admin").hasRole("ADMIN")
                                 .requestMatchers("/api/user/test/user").hasRole("USER")
                                 .anyRequest().authenticated()
                 )
-                // usernamepasswordfilter 등록. .at()으로 처리 여부?
-                .addFilterBefore(customUsernamePasswordAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, BasicAuthenticationFilter.class)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterAt(customUsernamePasswordAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
     }
     @Bean
@@ -102,5 +115,10 @@ public class SecurityConfig {
                 userDetailsService
         );
     }
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtils jwtUtils, CustomUserDetailsService userDetailsService) {
+        return new JwtAuthenticationFilter(jwtUtils, userDetailsService);
+    }
+
 
 }

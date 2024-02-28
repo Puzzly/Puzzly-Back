@@ -36,24 +36,6 @@ public class UserController {
         return new ResponseEntity<>(userDTOResponse, HttpStatus.OK);
     }
 
-    @GetMapping("/securityContext")
-    public ResponseEntity<?> getSecurityContext(
-            HttpServletRequest request
-    ) {
-        SecurityUser securityUser = (SecurityUser)SecurityContextHolder.getContext().getAuthentication();
-        log.error(securityUser.toString());
-        return new ResponseEntity<>(securityUser, HttpStatus.OK);
-    }
-
-    @PostMapping("/obtain")
-    public ResponseEntity<?> obtainUser(
-            HttpServletRequest request,
-            @RequestBody UserDTORequest userDTORequest
-    ) {
-        User user = userService.obtainUser(userDTORequest.getEmail(), userDTORequest.getPassword());
-        return new ResponseEntity<>(user, HttpStatus.OK);
-    }
-
     @PostMapping("/join")
     public ResponseEntity<?> joinUser(
             HttpServletRequest request,
@@ -61,14 +43,6 @@ public class UserController {
     ){
         UserDTOResponse userDTOResponse = userService.insertUser(userDTO);
         return new ResponseEntity<>(userDTOResponse, HttpStatus.OK);
-    }
-
-    @GetMapping(value="/all")
-    public ResponseEntity<?> getAllUser(
-            HttpServletRequest request
-    ){
-        List<UserDTORequest> list = userService.findAll();
-        return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
     @GetMapping(value="/test/user")

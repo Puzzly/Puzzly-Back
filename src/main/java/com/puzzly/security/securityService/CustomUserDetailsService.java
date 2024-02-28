@@ -25,10 +25,7 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Failed : Email invalid");
         }
 
-        SecurityUser securityUser = new SecurityUser();
-        securityUser.setPassword(user.getPassword());
-        securityUser.setEmail(user.getEmail());
-        securityUser.setAuthority(user.getAuthority());
+        SecurityUser securityUser = new SecurityUser(user);
 
         return securityUser;
     }

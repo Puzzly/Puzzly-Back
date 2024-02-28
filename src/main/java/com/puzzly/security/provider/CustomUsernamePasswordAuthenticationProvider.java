@@ -31,14 +31,11 @@ public class CustomUsernamePasswordAuthenticationProvider implements Authenticat
         String userPassword = (String) token.getCredentials();
 
         SecurityUser securityUser = (SecurityUser) userDetailsService.loadUserByUsername(email);
-        log.error("securityUser : " + securityUser.toString());
         if (!bCryptPasswordEncoder().matches(userPassword, securityUser.getPassword())) {
-            log.error("pw : " + securityUser.getPassword());
-            log.error("invalid password?");
             throw new BadCredentialsException(securityUser.getEmail() + "Invalid password");
         }
 
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(securityUser, userPassword, securityUser.getAuthorities());
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(securityUser, "el", securityUser.getAuthorities());
         return authToken;
     }
 

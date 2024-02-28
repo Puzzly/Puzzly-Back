@@ -1,5 +1,6 @@
 package com.puzzly.security.details;
 
+import com.puzzly.entity.User;
 import com.puzzly.enums.Authority;
 import com.puzzly.enums.JoinType;
 import jakarta.persistence.EnumType;
@@ -21,39 +22,28 @@ import java.util.Collections;
 @Slf4j
 @RequiredArgsConstructor
 public class SecurityUser implements UserDetails {
-    private Long userId;
+    private User user;
 
-    private String email;
-    private String password;
-    private String userName;
-    private LocalDate birth;
-    private boolean gender;
-    private String phoneNumber;
-    @Enumerated(EnumType.STRING)
-    private JoinType joinType;
-    @Enumerated(EnumType.STRING)
-    private Authority authority;
-
-    private LocalDateTime createDateTime;
-    private LocalDateTime deleteDateTime;
-
+    public SecurityUser(User user){
+        this.user = user;
+    }
     private Collection<? extends GrantedAuthority> authorities;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority(authority.toString()));
+        return Collections.singletonList(new SimpleGrantedAuthority(user.getAuthority().toString()));
     }
     public String getEmail(){
-        return this.email;
+        return user.getEmail();
     }
     @Override
     public String getPassword() {
-        return this.password;
+        return this.user.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return this.userName;
+        return this.user.getUserName();
     }
 
     @Override

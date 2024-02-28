@@ -30,13 +30,11 @@ public class UserService {
     private UserRepository userRepository;
 
     public UserDTOResponse insertUser(UserDTORequest userDTO){
-        //User user = modelMapper.map(userDTO, User.class);
         User user = modelMapper.map(userDTO, User.class);
         if(user.getCreateDateTime() == null) user.setCreateDateTime(LocalDateTime.now());
-        user.setAuthority(Authority.USER);
+        if(user.getAuthority() == null) user.setAuthority(Authority.ROLE_USER);
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         User saveEntity = userRepository.save(user);
-        logger.info("saveEntity : " + saveEntity.toString());
 
         return modelMapper.map(saveEntity, UserDTOResponse.class);
     }
@@ -61,6 +59,10 @@ public class UserService {
             return user;
         }
         return null;
+    }
+
+    public User findByEmail(String email){
+        return userRepository.findByEmail(email);
     }
 
 }
