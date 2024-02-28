@@ -4,6 +4,7 @@ import com.puzzly.entity.User;
 import com.puzzly.exception.FailException;
 import com.puzzly.repository.UserRepository;
 import com.puzzly.security.details.SecurityUser;
+import com.puzzly.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,11 +16,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email);
+        User user = userService.findByEmail(email);
 
         if(user == null){
             throw new UsernameNotFoundException("Failed : Email invalid");

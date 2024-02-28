@@ -52,15 +52,6 @@ public class UserService {
         return results;
     }
 
-    //dev
-    public User obtainUser(String email, String password){
-        User user = userRepository.findByEmail(email);
-        if(user.getPassword().equals(password)){
-            return user;
-        }
-        return null;
-    }
-
     public User findByEmail(String email){
         return userRepository.findByEmail(email);
     }
