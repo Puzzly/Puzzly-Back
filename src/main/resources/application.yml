@@ -5,6 +5,11 @@ spring:
   profiles:
     active: local
 
+---
+spring:
+  config:
+    activate:
+      on-profile: local
   h2:
     console:
       enabled: true
@@ -24,6 +29,7 @@ spring:
     url: jdbc:h2:mem:testdb
     username: sa
     password:
+
 logging:
   root: debug
 ---
