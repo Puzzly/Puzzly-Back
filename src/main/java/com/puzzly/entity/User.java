@@ -1,5 +1,6 @@
 package com.puzzly.entity;
 
+import com.puzzly.enums.Authority;
 import com.puzzly.enums.JoinType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,6 +27,9 @@ public class User {
     private String phoneNumber;
     @Enumerated(EnumType.STRING)
     private JoinType joinType;
+    @Enumerated(EnumType.STRING)
+    private Authority authority;
+
     private LocalDateTime createDateTime;
     private LocalDateTime deleteDateTime;
 
