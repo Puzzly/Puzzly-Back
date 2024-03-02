@@ -9,6 +9,10 @@ on:
       - Dockerfile
       - .github/workflows/flydeploy.yml
     branches:
+      - develop
+
+  pull_request:
+    branches:
       - main
 
 jobs:
@@ -17,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 👀 Read app names
         uses: SebRollen/toml-action@v1.0.2
@@ -27,7 +31,7 @@ jobs:
           field: app
 
       - name: 🚀 Deploy Production
-        uses: superfly/flyctl-actions@1.4
+        uses: superfly/flyctl-actions/setup-flyctl@master
         with:
           args: deploy --remote-only
         env:
