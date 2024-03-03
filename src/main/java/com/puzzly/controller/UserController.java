@@ -44,7 +44,6 @@ public class UserController {
         UserDTOResponse userDTOResponse = userService.insertUser(userDTO);
         return new ResponseEntity<>(userDTOResponse, HttpStatus.OK);
     }
-
     @GetMapping(value="/test/user")
     public ResponseEntity<?> userLoginTest(
             HttpServletRequest request
