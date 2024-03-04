@@ -9,11 +9,11 @@ on:
       - Dockerfile
       - .github/workflows/flydeploy.yml
     branches:
-      - develop
-
-  pull_request:
-    branches:
       - main
+
+#  pull_request:
+#    branches:
+#      - main
 
 jobs:
 
@@ -37,8 +37,8 @@ jobs:
           field: app
 
       - name: 🚀 Deploy Production
-        uses: superfly/flyctl-actions@1.4
+        uses: superfly/flyctl-actions/setup-flyctl@master
         with:
           args: deploy --remote-only
         env:
-          FLY_API_TOKEN: ${{ secrets.FLYIO_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
