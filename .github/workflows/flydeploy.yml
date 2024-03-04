@@ -11,6 +11,8 @@ on:
       - .github/workflows/flydeploy.yml
     branches:
       - develop
+      - main
+      
 jobs:
   deploy:
     name: Deploy App
