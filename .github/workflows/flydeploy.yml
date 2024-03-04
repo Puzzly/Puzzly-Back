@@ -1,3 +1,4 @@
+
 name: Fly Deploy
 
 on:
@@ -9,32 +10,14 @@ on:
       - Dockerfile
       - .github/workflows/flydeploy.yml
     branches:
-      - main
-
-#  pull_request:
-#    branches:
-#      - main
-
+      - develop
 jobs:
-
   deploy:
     name: Deploy App
     runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
-
-      - name: 'Setup Node'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: 👀 Read app names
-        uses: SebRollen/toml-action@v1.0.2
-        id: app_name
-        with:
-          file: fly.toml
-          field: app
 
       - name: 🚀 Deploy Production
         uses: superfly/flyctl-actions/setup-flyctl@master
