@@ -29,16 +29,13 @@ spring:
     url: jdbc:h2:mem:testdb
     username: sa
     password:
+
 logging:
   root: debug
+
 springdoc:
   show-login-endpoint: true
   enable-spring-security: true
----
-spring:
-  config:
-    activate:
-      on-profile: local
 
 ---
 spring:
