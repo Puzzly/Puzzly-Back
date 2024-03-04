@@ -16,12 +16,19 @@ on:
       - main
 
 jobs:
+
   deploy:
     name: Deploy App
     runs-on: ubuntu-latest
+    needs: [build]
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
+
+      - name: 'Setup Node'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
 
       - name: 👀 Read app names
         uses: SebRollen/toml-action@v1.0.2
@@ -31,7 +38,7 @@ jobs:
           field: app
 
       - name: 🚀 Deploy Production
-        uses: superfly/flyctl-actions/setup-flyctl@master
+        uses: superfly/flyctl-actions@1.4
         with:
           args: deploy --remote-only
         env:

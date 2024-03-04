@@ -32,11 +32,6 @@ spring:
 
 logging:
   root: debug
----
-spring:
-  config:
-    activate:
-      on-profile: local
 
 ---
 spring:
