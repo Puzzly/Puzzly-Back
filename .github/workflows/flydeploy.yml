@@ -11,8 +11,11 @@ on:
       - .github/workflows/flydeploy.yml
     branches:
       - develop
+
+  pull_request:
+    branches:
       - main
-      
+
 jobs:
   deploy:
     name: Deploy App
