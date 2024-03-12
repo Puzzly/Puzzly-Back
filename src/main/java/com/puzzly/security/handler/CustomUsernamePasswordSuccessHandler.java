@@ -2,10 +2,10 @@ package com.puzzly.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.puzzly.Utils.JwtUtils;
-import com.puzzly.entity.User;
+import com.puzzly.entity.JwtToken;
 import com.puzzly.security.details.SecurityUser;
+import com.puzzly.service.AuthService;
 import com.puzzly.service.UserService;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +34,9 @@ public class CustomUsernamePasswordSuccessHandler extends SavedRequestAwareAuthe
     @Autowired
     JwtUtils jwtUtils;
 
+    @Autowired
+    AuthService authService;
+
     @Override
     public void onAuthenticationSuccess(
             HttpServletRequest request,
@@ -44,12 +47,19 @@ public class CustomUsernamePasswordSuccessHandler extends SavedRequestAwareAuthe
         log.info("Auth succeed!");
         SecurityUser securityUser = (SecurityUser)authentication.getPrincipal();
 
-        String jwtToken = jwtUtils.generateJwtToken(securityUser.getUser());
+        String accessToken = jwtUtils.generateJwtToken(securityUser.getUser());
+        String refreshToken = jwtUtils.generateRefreshToken("refreshToken");
+
         response.setContentType("application/json");
         response.setStatus(HttpStatus.OK.value());
 
         HashMap<String, Object> responseMap = new HashMap<>();
-        responseMap.put("token", "Bearer " + jwtToken );
+        responseMap.put("accessToken", "Bearer " + accessToken );
+        responseMap.put("refreshToken", refreshToken);
+
+        JwtToken jwtToken = new JwtToken(securityUser.getEmail(), accessToken, refreshToken);
+        authService.insertJwtToken(jwtToken);
+
         JSONObject object = new JSONObject(responseMap);
 
         try (PrintWriter printWriter = response.getWriter()){

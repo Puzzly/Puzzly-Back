@@ -40,6 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+        // TODO Check : Security permitAll() 안먹혀서 별도로 처리중
         List<String> list = Arrays.asList(
                 "/api/user/login",
                 "/api/user/join",
@@ -49,7 +50,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "/images/**",
                 "/swagger-ui/**",
                 "/swagger-ui/index.html",
-                "/favicon.ico"
+                "/favicon.ico",
+                "/api/auth/refresh"
         );
         if (list.contains(request.getRequestURI())) {
             filterChain.doFilter(request, response);
