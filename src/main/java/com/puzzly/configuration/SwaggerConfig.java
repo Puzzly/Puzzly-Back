@@ -42,6 +42,9 @@ public class SwaggerConfig {
                 .type(SecurityScheme.Type.HTTP)
                 .scheme("bearer")
                 .bearerFormat("JWT")
+                .description("When you using swagger-ui, \"Bearer \" string value will be automatically added in authorization value\n" +
+                        "so you should remove string \"Bearer \" value from access token.\n" +
+                        "On the other hand, if you using your own application, You should maintain \"Bearer \" value in access token.")
         );
         return new OpenAPI().info(info).addSecurityItem(securityRequirement).components(components);
     }
