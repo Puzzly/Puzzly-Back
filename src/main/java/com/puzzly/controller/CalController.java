@@ -25,7 +25,7 @@ public class CalController {
 
     @GetMapping(value = "/findId")
     public ResponseEntity<?> findByCalId(
-            HttpServletRequest httpReq, @RequestParam(name = "CalId", required = false)String calId){
+            HttpServletRequest httpReq, @RequestParam(name = "calId", required = false)String calId){
         return new ResponseEntity<>(calService.findById(calId), HttpStatus.OK);
     }
 }
