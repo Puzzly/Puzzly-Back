@@ -28,7 +28,7 @@ COPY --from=builder /build/build/libs/*.jar app.jar
 ENTRYPOINT [                                                \
     "java",                                                 \
     "-jar",                                                 \
-    "-Dspring.profiles.active=local",                       \
+    "-Dspring.profiles.active=deploy",                      \
     "-Dsun.net.inetaddr.ttl=0",                             \
     "app.jar"              \
 ]
