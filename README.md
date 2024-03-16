@@ -1,4 +1,9 @@
-Java 17
-Spring boot 3.2
+# Project Infomation
+## Java 17
+## Spring boot 3.2
 
-추후 차차 수정
+## lib List
+- swagger
+- springdoc
+- jackson
+- modelmapper
