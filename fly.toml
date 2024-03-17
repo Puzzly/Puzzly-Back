@@ -10,7 +10,7 @@ primary_region = 'nrt'
 #  builder = 'paketobuildpacks/builder:base'
 #  buildpacks = ['gcr.io/paketo-buildpacks/nodejs']
   dockerfile = "Dockerfile"
-#  ignorefile = "/path/.dockerignore"
+  ignorefile = "/path/.dockerignore"
 
 [http_service]
   internal_port = 8080
