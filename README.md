@@ -20,10 +20,14 @@ Puzzly Back End
 
 📂com  
 ┗ 📂puzzly  
-  ┣ 📂configuration  
+  ┣ 📂**  
   ┃ ┗ 📜**.java  
   ┗ 📂api  
     ┗ 📂구분명  
+      ┣ 📂domain  
+      ┃ ┗ 📜** Entity.java  
+      ┃ ┗ 📜** Request(Req).java  
+      ┃ ┗ 📜** Response(Res).java  
       ┣ 📂controller  
       ┃ ┗ 📜** Controller.java  
       ┣ 📂service  
