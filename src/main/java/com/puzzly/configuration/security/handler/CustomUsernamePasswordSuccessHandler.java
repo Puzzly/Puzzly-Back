@@ -2,10 +2,10 @@ package com.puzzly.configuration.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.puzzly.Utils.JwtUtils;
-import com.puzzly.api.cmm.domian.JwtToken;
+import com.puzzly.api.cmm.securityDomain.JwtToken;
 import com.puzzly.configuration.security.details.SecurityUser;
-import com.puzzly.api.auth.service.AuthService;
-import com.puzzly.api.member.service.UserService;
+import com.puzzly.api.service.AuthService;
+import com.puzzly.api.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

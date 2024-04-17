@@ -1,8 +1,8 @@
 package com.puzzly.configuration.security.filter;
 
 import com.puzzly.Utils.JwtUtils;
-import com.puzzly.api.member.entity.User;
-import com.puzzly.api.enums.Authority;
+import com.puzzly.api.entity.User;
+import com.puzzly.api.enums.AccountAuthority;
 import com.puzzly.configuration.security.details.SecurityUser;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -76,10 +76,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authority = jwtUtils.getAuthorityFromToken(token);
 
         User user = new User();
+        /*
+        // TODO 나중에 user쪽에 Setter를 쓰든 DTO를 바꾸든 셋터 올려야함
         user.setEmail(username);
         user.setPassword("temppassword");
-        user.setAuthority(Authority.valueOf(authority));
+        user.setAccountAuthority(AccountAuthority.valueOf(authority));
 
+
+         */
         SecurityUser securityUser = new SecurityUser(user);
         Authentication authToken = new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
 
