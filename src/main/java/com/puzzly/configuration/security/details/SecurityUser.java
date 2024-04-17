@@ -1,6 +1,6 @@
 package com.puzzly.configuration.security.details;
 
-import com.puzzly.api.member.entity.User;
+import com.puzzly.api.entity.User;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ public class SecurityUser implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority(user.getAuthority().toString()));
+        return Collections.singletonList(new SimpleGrantedAuthority(user.getAccountAuthority().toString()));
     }
     public String getEmail(){
         return user.getEmail();
@@ -36,7 +36,10 @@ public class SecurityUser implements UserDetails {
 
     @Override
     public String getUsername() {
-        return this.user.getUserName();
+        // TODO DTO 정리하면서 뭔가 꼬인듯 정리필요
+
+        //return this.user.getUsername();
+        return "";
     }
 
     @Override

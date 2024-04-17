@@ -1,7 +1,7 @@
 package com.puzzly.configuration.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.puzzly.api.member.dto.UserDTORequest;
+import com.puzzly.api.dto.request.UserRequestDto;
 import com.puzzly.api.cmm.exception.FailException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,7 +26,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
         UsernamePasswordAuthenticationToken attemptToken;
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            UserDTORequest user = objectMapper.readValue(request.getInputStream(), UserDTORequest.class);
+            UserRequestDto user = objectMapper.readValue(request.getInputStream(), UserRequestDto.class);
             attemptToken = new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword());
             setDetails(request, attemptToken);
         } catch (Exception e) {

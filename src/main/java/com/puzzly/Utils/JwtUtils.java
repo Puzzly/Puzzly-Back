@@ -1,6 +1,6 @@
 package com.puzzly.Utils;
 
-import com.puzzly.api.member.entity.User;
+import com.puzzly.api.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +34,7 @@ public class JwtUtils implements InitializingBean {
     public String generateJwtToken(User user) {
         Claims claims = Jwts.claims();
         claims.put("email", user.getEmail());
-        claims.put("authority", user.getAuthority());
+        claims.put("authority", user.getAccountAuthority());
 
         JwtBuilder builder = Jwts.builder()
                 .setClaims(claims)                           // Payload - Claims구성
