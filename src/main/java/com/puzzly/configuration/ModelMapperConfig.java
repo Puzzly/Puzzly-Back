@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@Deprecated(since = "puzzly_0.0.4", forRemoval = true)
 public class ModelMapperConfig {
 
     @Bean

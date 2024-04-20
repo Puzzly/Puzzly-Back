@@ -1,7 +1,7 @@
 package com.puzzly.api.controller;
 
 
-import com.puzzly.api.cmm.securityDomain.JwtToken;
+import com.puzzly.api.entity.JwtToken;
 import com.puzzly.api.service.AuthService;
 import com.puzzly.api.cmm.exception.FailException;
 import io.swagger.v3.oas.annotations.Operation;

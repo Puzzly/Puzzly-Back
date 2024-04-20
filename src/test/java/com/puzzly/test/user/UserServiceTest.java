@@ -2,7 +2,7 @@ package com.puzzly.test.user;
 
 import com.puzzly.api.dto.request.UserRequestDto;
 import com.puzzly.api.entity.User;
-import com.puzzly.api.repository.UserRepository;
+import com.puzzly.api.repository.jpa.UserRepository;
 import com.puzzly.api.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,10 +1,10 @@
 package com.puzzly.api.service;
 
 import com.puzzly.Utils.JwtUtils;
-import com.puzzly.api.cmm.securityDomain.JwtToken;
+import com.puzzly.api.entity.JwtToken;
 import com.puzzly.api.entity.User;
 import com.puzzly.api.cmm.exception.FailException;
-import com.puzzly.api.repository.AuthRepository;
+import com.puzzly.api.repository.jpa.AuthRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -2,7 +2,7 @@ package com.puzzly.configuration.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.puzzly.Utils.JwtUtils;
-import com.puzzly.api.cmm.securityDomain.JwtToken;
+import com.puzzly.api.entity.JwtToken;
 import com.puzzly.configuration.security.details.SecurityUser;
 import com.puzzly.api.service.AuthService;
 import com.puzzly.api.service.UserService;
