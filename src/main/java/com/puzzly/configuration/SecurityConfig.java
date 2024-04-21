@@ -1,11 +1,12 @@
 package com.puzzly.configuration;
 
-import com.puzzly.Utils.JwtUtils;
-import com.puzzly.security.filter.CustomUsernamePasswordAuthenticationFilter;
-import com.puzzly.security.filter.JwtAuthenticationFilter;
-import com.puzzly.security.handler.CustomUsernamePasswordSuccessHandler;
-import com.puzzly.security.provider.CustomUsernamePasswordAuthenticationProvider;
-import com.puzzly.security.securityService.CustomUserDetailsService;
+import com.puzzly.api.coreComponent.securityCore.filter.CustomUsernamePasswordAuthenticationFilter;
+import com.puzzly.api.coreComponent.securityCore.filter.JwtAuthenticationFilter;
+import com.puzzly.api.coreComponent.securityCore.handler.CustomUsernamePasswordSuccessHandler;
+import com.puzzly.api.coreComponent.securityCore.provider.CustomUsernamePasswordAuthenticationProvider;
+import com.puzzly.api.coreComponent.securityCore.securityService.CustomUserDetailsService;
+import com.puzzly.api.util.JwtUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,19 +31,12 @@ import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
+
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtUtils jwtUtils;
-
-    public SecurityConfig(JwtUtils jwtUtils){
-        this.jwtUtils = jwtUtils;
-    }
-
-    @Bean
-    public BCryptPasswordEncoder bCryptPasswordEncoder() {
-        // 비밀번호 암호화 용도
-        return new BCryptPasswordEncoder();
-    }
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
@@ -69,9 +63,11 @@ public class SecurityConfig {
                                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                                 .requestMatchers("/api/auth/refresh").permitAll()
                                 .requestMatchers(PathRequest.toH2Console()).permitAll()
-                                .requestMatchers("/api/user/test/admin").hasRole("ADMIN")
+                                .requestMatchers("/api/admin/test/admin").hasRole("ADMIN")
                                 .requestMatchers("/api/user/test/user").hasRole("USER")
-                                .anyRequest().authenticated()
+                                //.anyRequest().authenticated()
+                                // TODO 개발용 모든 APi Setup (until User Controller FIN)
+                                .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, BasicAuthenticationFilter.class)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -112,9 +108,9 @@ public class SecurityConfig {
 
     @Bean
     public CustomUsernamePasswordAuthenticationProvider customUsernamePasswordAuthenticationProvider(UserDetailsService userDetailsService) {
-        return new CustomUsernamePasswordAuthenticationProvider(
-                userDetailsService
-        );
+        return new CustomUsernamePasswordAuthenticationProvider(userDetailsService, bCryptPasswordEncoder);
+        // 이거 하면서 custom-provider에 @component 붙였음
+        //return new CustomUsernamePasswordAuthenticationProvider(userDetailsService);
     }
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtils jwtUtils, CustomUserDetailsService userDetailsService) {
