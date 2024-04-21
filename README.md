@@ -15,7 +15,12 @@ Puzzly Back End
   - objectmapper
   - h2 (local)
   - mariadb (in dev, oper , as planning)
-  
+
+---
+## database structure
+** 이준훈에게 파일을 요청해주시거나 혹은 notion을 제안해주세요
+![Puzzly_DBSTRC_FIN](https://github.com/Puzzly/Puzzly-Back/assets/48429012/4b613f7b-8897-4c5e-b938-d7832ccf2032)
+
 <!--
 ## 패키지 구조
 
