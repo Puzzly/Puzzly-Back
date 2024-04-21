@@ -13,8 +13,8 @@ public class UserExRequestDto {
 
     private Long userExId;
 
-    boolean firstTermAgreement;
-    boolean secondTermAgreement;
+    private Boolean firstTermAgreement;
+    private Boolean secondTermAgreement;
     private String statusMessage;
     private String profileFilePath;
 

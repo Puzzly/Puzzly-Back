@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
         e.printStackTrace();
         log.error(e);
 
-        FailException failException = new FailException(status.value(), message);
+        FailException failException = new FailException(message, status.value());
         return new ResponseEntity<>(failException, HttpStatus.BAD_REQUEST);
     }
 }

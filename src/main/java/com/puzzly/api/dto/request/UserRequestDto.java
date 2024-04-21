@@ -26,7 +26,7 @@ public class UserRequestDto {
     private String phoneNumber;
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate birth;
-    private boolean gender;
+    private Boolean gender;
     private AccountAuthority accountAuthority;
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createDateTime;

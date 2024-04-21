@@ -23,7 +23,7 @@ public class FailException extends RuntimeException {
 	}
 
 	public FailException(int status) {
-		this(status, null);
+		this("", status);
 	}
 
 	public int getStatus() {
@@ -33,7 +33,7 @@ public class FailException extends RuntimeException {
 	public void setStatus(int status){
 		this.status = status;
 	}
-	public FailException(int status, String message) {
+	public FailException(String message, int status) {
 		super(message);
 		this.status = status;
 	}

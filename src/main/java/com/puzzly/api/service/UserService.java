@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
@@ -32,12 +33,14 @@ public class UserService {
     private final UserJpaRepository userJpaRepository;
     private final UserExJpaRepository userExJpaRepository;
 
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+
     public UserResponseDto insertUser(UserRequestDto userRequestDto){
 
         if(userRequestDto.getCreateDateTime() == null) userRequestDto.setCreateDateTime(LocalDateTime.now());
         //if(userRequestDto.getAccountAuthority() == null) userRequestDto.setAccountAuthority(AccountAuthority.ROLE_USER);
         // TODO FE와 별도로 상의하여 통신구간 암호화를 구현하고, 복호화 > 암호화 혹은 그대로 때려박기 등을 구현해야 한다.
-        //userRequestDto.setPassword(bCryptPasswordEncoder.encode(userRequestDto.getPassword()));
+        userRequestDto.setPassword(bCryptPasswordEncoder.encode(userRequestDto.getPassword()));
 
         /*
         UserExRequestDto tmpEx = userDTO.getUserExRequestDto();
@@ -48,14 +51,13 @@ public class UserService {
 
 
         User user = User.builder()
-                .userId((long)0)
                 .userName(userRequestDto.getUserName())
                 .nickName(userRequestDto.getNickName())
                 .email(userRequestDto.getEmail())
                 .password(userRequestDto.getPassword())
                 .phoneNumber(userRequestDto.getPhoneNumber())
                 .birth(userRequestDto.getBirth())
-                .gender(userRequestDto.isGender())
+                .gender(userRequestDto.getGender() == null ? false : userRequestDto.getGender())
                 .accountAuthority(userRequestDto.getAccountAuthority() == null ? AccountAuthority.ROLE_USER : userRequestDto.getAccountAuthority())
                 .createDateTime(userRequestDto.getCreateDateTime() == null ? LocalDateTime.now() : userRequestDto.getCreateDateTime())
                 .status("CREATED")
@@ -66,8 +68,8 @@ public class UserService {
 
         UserEx userEx = UserEx.builder()
                 //.profileFilePath(userExDto.getProfileFilePath())
-                .firstTermAgreement(userExDto.isFirstTermAgreement())
-                .secondTermAgreement(userExDto.isSecondTermAgreement())
+                .firstTermAgreement(userExDto.getFirstTermAgreement() == null ? false : userExDto.getFirstTermAgreement())
+                .secondTermAgreement(userExDto.getSecondTermAgreement() == null ? false : userExDto.getSecondTermAgreement())
                 .user(userJpaRepository.findById(savedEntity.getUserId()).get())
                 .build();
         UserEx savedExEntity = userExJpaRepository.save(userEx);
@@ -112,5 +114,9 @@ public class UserService {
             ).collect(Collectors.toList());
             return userList;
         }
+    }
+
+    public User findByEmail(String email){
+        return userJpaRepository.findByEmail(email);
     }
 }
