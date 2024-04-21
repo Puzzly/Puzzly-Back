@@ -7,10 +7,14 @@ import com.puzzly.api.service.UserService;
 import com.puzzly.api.util.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
+
+import java.time.format.DateTimeFormatter;
 
 @Component
 @Slf4j
@@ -29,6 +33,7 @@ public class ApplicationListenerService implements ApplicationListener<ContextRe
         UserRequestDto user = new UserRequestDto();
         user.setEmail("admin@puzzly.com");
         user.setPassword("admin");
+        user.setBirth(LocalDate.parse("1994-01-01", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         user.setAccountAuthority(AccountAuthority.ROLE_ADMIN);
         user.setUserExRequestDto(new UserExRequestDto());
         userService.insertUser(user);

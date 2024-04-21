@@ -9,6 +9,7 @@ import com.puzzly.api.entity.User;
 import com.puzzly.api.entity.UserEx;
 import com.puzzly.api.repository.jpa.UserExJpaRepository;
 import com.puzzly.api.repository.jpa.UserJpaRepository;
+import com.puzzly.api.repository.mybatis.UserMybatisRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,6 +34,7 @@ public class UserService {
 
     private final UserJpaRepository userJpaRepository;
     private final UserExJpaRepository userExJpaRepository;
+    private final UserMybatisRepository userMybatisRepository;
 
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
@@ -76,7 +79,7 @@ public class UserService {
         logger.info("SAVEDENTITY : " + savedExEntity);
 
         return UserResponseDto.builder().userId(savedEntity.getUserId()).userName(user.getUserName()).email(savedEntity.getEmail()).
-                createDateTime(savedEntity.getCreateDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))).
+                createDateTime(savedEntity.getCreateDateTime()).
                 accountAuthority(savedEntity.getAccountAuthority()).build();
     }
 
@@ -85,7 +88,7 @@ public class UserService {
             List<UserResponseDto> userList = userJpaRepository.findAll().stream().map((user) -> {
                 UserResponseDto dto = UserResponseDto.builder().userId(user.getUserId()).userName(user.getUserName()).nickName(user.getNickName())
                         .email(user.getEmail()).phoneNumber(user.getPhoneNumber()).birth(user.getBirth()).gender(user.isGender())
-                        .accountAuthority(user.getAccountAuthority()).createDateTime(user.getCreateDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))).status(user.getStatus())
+                        .accountAuthority(user.getAccountAuthority()).createDateTime(user.getCreateDateTime()).status(user.getStatus())
                         .build();
                 UserEx userEx = user.getUserEx();
                 UserExResponseDto exDto = UserExResponseDto.builder().profileFilePath(userEx.getProfileFilePath())
@@ -101,7 +104,7 @@ public class UserService {
             List<UserResponseDto> userList = userJpaRepository.findById(userId).stream().map((user) -> {
                         UserResponseDto dto = UserResponseDto.builder().userId(user.getUserId()).userName(user.getUserName()).nickName(user.getNickName())
                                 .email(user.getEmail()).phoneNumber(user.getPhoneNumber()).birth(user.getBirth()).gender(user.isGender())
-                                .accountAuthority(user.getAccountAuthority()).createDateTime(user.getCreateDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))).status(user.getStatus())
+                                .accountAuthority(user.getAccountAuthority()).createDateTime(user.getCreateDateTime()).status(user.getStatus())
                                 .build();
                         UserEx userEx = user.getUserEx();
                         UserExResponseDto exDto = UserExResponseDto.builder().profileFilePath(userEx.getProfileFilePath())
@@ -116,6 +119,24 @@ public class UserService {
         }
     }
 
+    public List<UserResponseDto> selectUserMybatis(Long userId){
+        List<UserResponseDto> userList = userMybatisRepository.selectUser(userId).stream().map((user) -> {
+                    UserResponseDto dto = UserResponseDto.builder().userId(user.getUserId()).userName(user.getUserName()).nickName(user.getNickName())
+                            .email(user.getEmail()).phoneNumber(user.getPhoneNumber()).birth(user.getBirth()).gender(user.isGender())
+                            .accountAuthority(user.getAccountAuthority()).createDateTime(user.getCreateDateTime()).status(user.getStatus())
+                            .build();
+/*                    UserEx userEx = user.getUserEx();
+                    UserExResponseDto exDto = UserExResponseDto.builder().profileFilePath(userEx.getProfileFilePath())
+                            .firstTermAgreement(userEx.isFirstTermAgreement())
+                            .secondTermAgreement(userEx.isSecondTermAgreement())
+                            .statusMessage(userEx.getStatusMessage()).build();
+                    dto.setUserExResponseDto(exDto);*/
+                    return dto;
+                }
+        ).collect(Collectors.toList());
+
+        return userList;
+    }
     public User findByEmail(String email){
         return userJpaRepository.findByEmail(email);
     }

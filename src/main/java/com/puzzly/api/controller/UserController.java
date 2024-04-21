@@ -36,4 +36,13 @@ public class UserController {
         List<UserResponseDto> userResponseDtoList = userService.selectUser(userId);
         return new ResponseEntity<>(userResponseDtoList, HttpStatus.OK);
     }
+
+    @GetMapping("/mybatis")
+    public ResponseEntity<?> getUserMybatis(
+            HttpServletRequest request,
+            @RequestParam (required=false) Long userId
+    ){
+        List<UserResponseDto> userResponseDtoList = userService.selectUserMybatis(userId);
+        return new ResponseEntity<>(userResponseDtoList, HttpStatus.OK);
+    }
 }

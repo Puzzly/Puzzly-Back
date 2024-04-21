@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
 
     private final ObjectMapper objectMapper;
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(FailException.class)
     protected ResponseEntity<?> handleException(Exception e, HttpServletRequest req) throws JsonMappingException, JsonProcessingException {
         HashMap<String, Object> eMap = objectMapper.readValue(e.getMessage(), HashMap.class);
         HttpStatus status =HttpStatus.valueOf((int)eMap.get("code"));

@@ -13,7 +13,7 @@ public class FailException extends RuntimeException {
 	//private static final long serialVersionUID = 16804106399509039L;
 
 	private int status = 400;
-	static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
+	static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private String timestamp = sdf.format(new Date());
 	private Object message = this.getMessage();
 
