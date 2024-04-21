@@ -2,6 +2,7 @@ package com.puzzly.api.domain;
 
 import com.puzzly.api.enums.CodeEnum;
 import lombok.Getter;
+import org.apache.ibatis.type.MappedTypes;
 
 import java.util.Arrays;
 
