@@ -19,8 +19,10 @@ public class CalendarContentsDel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long contentsId;
 
+    // 작성자
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "userId", nullable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    //@JoinColumn(name = "createId", nullable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @JoinColumn(name = "createId", nullable = false)
     private User user;
 
     @Column private LocalDateTime startLocalDateTime;
@@ -32,9 +34,23 @@ public class CalendarContentsDel {
     @Column private int notifyMin;
     @Column private String memo;
 
-    @OneToOne(fetch=FetchType.LAZY)
-    @JoinColumn(name="label_id", referencedColumnName = "labelId")
+    // 소속된 마더 켈린더
+    @ManyToOne(fetch = FetchType.EAGER)
+
+    @JoinColumn(name = "calendarId", referencedColumnName = "calendarId", nullable=false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    //@JoinColumn(name = "calendarId", referencedColumnName = "calendarId", nullable=false)
+    private Calendar calendar;
+
+    // 켈린더 라벨
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name="labelId", referencedColumnName = "labelId", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    //@JoinColumn(name="labelId", referencedColumnName = "labelId")
     private CalendarLabel calendarLabel;
-    @OneToMany(mappedBy = "attachmentId", cascade = CascadeType.ALL)
-    private List<CalenderAttachments> attachments= new ArrayList<>();
+
+    // 켈린더 첨부파일
+    // 서비스레벨에서 첨부파일 삭제할것이니까, detach
+    // tb_del 은 tb 에서 옮겨지고, schedule로 삭제될것임.
+    // 이에따라 tb는 del 정보를 알 필요도, 알 수도 없음. 논리제어로 첨부파일 제거 필요
+/*    @OneToMany(mappedBy = "calendarContents")
+    private List<CalenderAttachments> CalendarattachmentsList= new ArrayList<>();*/
 }

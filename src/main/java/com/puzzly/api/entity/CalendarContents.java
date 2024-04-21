@@ -19,8 +19,10 @@ public class CalendarContents {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long contentsId;
 
+    // 작성자
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "userId", nullable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    //@JoinColumn(name = "createId", nullable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @JoinColumn(name = "createId", nullable = false)
     private User user;
 
     @Column private LocalDateTime startLocalDateTime;
@@ -32,13 +34,21 @@ public class CalendarContents {
     @Column private int notifyMin;
     @Column private String memo;
 
+    // 소속된 마더 켈린더
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "calendarId", nullable=false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
-    private Calendar calendar ;
+    // TODO 실 개발모드에서는 fk 제약 해제할것
+    //@JoinColumn(name = "calendarId", referencedColumnName = "calendarId", nullable=false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @JoinColumn(name = "calendarId", referencedColumnName = "calendarId", nullable=false)
+    private Calendar calendar;
 
-    @OneToOne(fetch=FetchType.LAZY)
-    @JoinColumn(name="label_id", referencedColumnName = "labelId")
+    // 켈린더 라벨
+    @ManyToOne(fetch=FetchType.LAZY)
+    // @JoinColumn(name="labelId", referencedColumnName = "labelId", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @JoinColumn(name="labelId", referencedColumnName = "labelId")
     private CalendarLabel calendarLabel;
-    @OneToMany(mappedBy = "attachmentId", cascade = CascadeType.ALL)
-    private List<CalenderAttachments> attachments= new ArrayList<>();
+
+    // 켈린더 첨부파일
+    // 서비스 레벨에서 첨부파일 제어할것임.
+    @OneToMany(mappedBy = "calendarContents")
+    private List<CalenderAttachments> CalendarattachmentsList= new ArrayList<>();
 }

@@ -1,4 +1,4 @@
-package com.puzzly.api.enums;
+package com.puzzly.api.domain;
 
 public enum JoinType {
     NATIVE, NAVER, GOOGLE, KAKAO, APPLE

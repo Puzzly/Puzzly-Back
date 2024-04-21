@@ -4,21 +4,20 @@ server:
 spring:
   profiles:
     active: local
-jwt:
-  secretKey: 89e3d9b82f6908ddae0f2f20ce7bbcd7307b14e6938fa54e2990e8ee498632e7680474fd37098932f1d4605b7b3768bca12bf8b5454ed26f8316ee1de8a6948b
+
+
+#--- local
 ---
 spring:
   config:
     activate:
       on-profile: local
-
   h2:
     console:
       enabled: true
       settings:
         web-allow-others: true
       path: /h2-console
-
 
   jpa:
     hibernate:
@@ -26,35 +25,42 @@ spring:
     show-sql: true
     generate-ddl: true
     defer-datasource-initialization: true
-
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:testdb
+    url: jdbc:h2:mem:testdb;MODE=mysql;
     username: sa
     password:
-
 logging:
-  root: debug
+  level:
+    root: info
 
-springdoc:
-  show-login-endpoint: true
-  enable-spring-security: true
+
+#--- dev
 
 ---
 spring:
   config:
     activate:
-      on-profile: prod
-
-  datasource:
-    driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:testdb
-    username: sa
-    password:
-
+      on-profile: dev
   h2:
     console:
       enabled: true
       settings:
         web-allow-others: true
       path: /h2-console
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    generate-ddl: true
+    defer-datasource-initialization: true
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb;MODE=mysql;
+    username: sa
+    password:
+logging:
+  level:
+    root: info
+#---

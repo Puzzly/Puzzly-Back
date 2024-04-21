@@ -67,10 +67,20 @@ public class Calendar {
      * Team멤버에서 @ManyToOne @JoinColumn(name="TEAM_ID", insertable=false, updatable=false) Team
      *   ^ JoinColumn 선언만 있으므로 주인
      * */
+
+    // 소유주
+    // TODO 실 개발모드에서는 fk 제약 해제할것
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "userId", nullable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    //@JoinColumn(name = "ownerId", referencedColumnName = "userId", nullable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @JoinColumn(name = "ownerId", referencedColumnName = "userId", nullable = false)
     private User user;
 
-    @OneToMany(mappedBy = "contentsId", cascade = CascadeType.ALL)
-    private List<CalendarContents> contents= new ArrayList<>();
+    // 그룹관계정일
+    @OneToMany(mappedBy="calendar")
+    private List<CalendarUserRel> calenderUserRelList = new ArrayList<>();
+
+    // 캘린더 하위 컨텐츠 정보
+    // 논리제어할것임
+    @OneToMany(mappedBy = "calendar")
+    private List<CalendarContents> calendarContentsList= new ArrayList<>();
 }
