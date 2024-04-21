@@ -19,7 +19,8 @@ public class CheckList {
     private long checkListId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "userId", nullable=false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    //@JoinColumn(name = "createId", nullable=false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @JoinColumn(name = "createId", nullable=false)
     private User user;
 
     @Column private int orderNum;
@@ -32,8 +33,8 @@ public class CheckList {
     @Column private LocalDateTime modifyDateTime;
     @Column private LocalDateTime DeleteDateTime;
 
-    @OneToOne(fetch=FetchType.LAZY)
-    @JoinColumn(name="label_id", referencedColumnName = "labelId")
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name="labelId", referencedColumnName = "labelId")
     private CheckListLabel checklistLabel;
 
     @Column private long parentCheckListId;
@@ -49,6 +50,6 @@ public class CheckList {
     @OneToMany(mappedBy="parentCheckList", fetch = FetchType.EAGER)
     private List<CheckList> childrenCheckList = new ArrayList<>();
 
-    @OneToMany(mappedBy = "attachmentId", cascade = CascadeType.ALL)
-    private List<CheckListAttachments> attachments= new ArrayList<>();
+    @OneToMany(mappedBy = "checkList")
+    private List<CheckListAttachments> checkListattachmentsList= new ArrayList<>();
 }

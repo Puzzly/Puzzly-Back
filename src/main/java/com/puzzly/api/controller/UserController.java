@@ -1,54 +1,48 @@
 package com.puzzly.api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.puzzly.api.dto.request.UserRequestDto;
-import com.puzzly.api.dto.response.UserDTOResponse;
+import com.puzzly.api.dto.response.UserResponseDto;
 import com.puzzly.api.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @Slf4j
 @RequestMapping("/api/user")
+@RequiredArgsConstructor
 public class UserController {
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-    @GetMapping()
-    public ResponseEntity<?> getUser(
-            HttpServletRequest request,
-            @RequestParam(name = "username", required=false) String username,
-            @RequestParam(name = "userId", required=false) Long userId
-    ) {
-        UserDTOResponse userDTOResponse = userService.getUser(username);
-        return new ResponseEntity<>(userDTOResponse, HttpStatus.OK);
-    }
+    private final UserService userService;
 
     @PostMapping("/join")
     public ResponseEntity<?> joinUser(
             HttpServletRequest request,
-            @RequestBody UserRequestDto userDTO
-    ){
-        UserDTOResponse userDTOResponse = userService.insertUser(userDTO);
+            @RequestBody UserRequestDto userRequestDto
+            ){
+        UserResponseDto userDTOResponse = userService.insertUser(userRequestDto);
         return new ResponseEntity<>(userDTOResponse, HttpStatus.OK);
     }
-    @GetMapping(value="/test/user")
-    public ResponseEntity<?> userLoginTest(
-            HttpServletRequest request
+
+    @GetMapping()
+    public ResponseEntity<?> getUser(
+            HttpServletRequest request,
+            @RequestParam (required=false) Long userId
     ){
-        return new ResponseEntity<>("Hello User!", HttpStatus.OK);
+        List<UserResponseDto> userResponseDtoList = userService.selectUser(userId);
+        return new ResponseEntity<>(userResponseDtoList, HttpStatus.OK);
     }
-    @GetMapping(value="/test/admin")
-    public ResponseEntity<?> adminLoginTest(
-            HttpServletRequest request
+
+    @GetMapping("/mybatis")
+    public ResponseEntity<?> getUserMybatis(
+            HttpServletRequest request,
+            @RequestParam (required=false) Long userId
     ){
-        return new ResponseEntity<>("Hello Admin!", HttpStatus.OK);
+        List<UserResponseDto> userResponseDtoList = userService.selectUserMybatis(userId);
+        return new ResponseEntity<>(userResponseDtoList, HttpStatus.OK);
     }
 }

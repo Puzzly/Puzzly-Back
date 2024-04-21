@@ -1,8 +1,6 @@
 package com.puzzly.configuration;
 
-import com.puzzly.api.enums.AccountAuthority;
 import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import jakarta.persistence.EntityManagerFactory;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.type.TypeHandler;
@@ -11,9 +9,6 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.annotation.MapperScan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,18 +17,23 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.transaction.ChainedTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.orm.jpa.JpaTransactionManager;
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
-import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
-import java.util.Properties;
 
+
+/*
 @Configuration
 @EnableJpaRepositories(
         basePackages = "com.puzzly.api.repository.jpa", entityManagerFactoryRef = "entityManagerFactory"
 )
 @MapperScan(basePackages = {"com.puzzly.api.repository.mybatis"}, sqlSessionFactoryRef = "sqlSessionFactory")
+
+ */
+/**
+ * below settings moved to application.yml (minimal setup. in applicatiom.yml, excluded transaction settings etc..)
+ * for Transaction setting, This Class could be valid again.
+ * */
+@Deprecated(forRemoval = false)
 public class DatabaseConfig {
     Logger logger = LoggerFactory.getLogger(DatabaseConfig.class);
     private final String TYPE_ALIASE = "com.puzzly.api.enums";
@@ -42,7 +42,7 @@ public class DatabaseConfig {
     // https://velog.io/@ghk4889/mybatis%EC%9D%98-custom-typehandler-%EB%A7%8C%EB%93%A4%EA%B8%B0JAVA-Enum-%ED%83%80%EC%9E%85
     // https://www.holaxprogramming.com/2015/11/12/spring-boot-mybatis-typehandler/
     public static TypeHandler<?>[] SQL_SESSION_FACTORY_TYPE_HANDELER = new TypeHandler[] {
-            new AccountAuthority.AuthTypeHandler()
+            //new AccountAuthority.AuthTypeHandler()
     };
 
     //application.yml에서 datasource.mariadb 선언값 조회, 자동으로 HikariCP Configure에 삽입

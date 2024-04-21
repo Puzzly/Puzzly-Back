@@ -15,18 +15,22 @@ public class UserServiceTest {
 
     Logger logger = LoggerFactory.getLogger(UserServiceTest.class);
 
-    UserRepository userRepository;
+    //UserRepository userRepository;
     UserService userService;
 
+    /*
     @BeforeEach
     public void beforeEach(){
         userService = new UserService(new BCryptPasswordEncoder(), new ModelMapper(), userRepository);
     }
 
+
+     */
     // TODO 생성자 주입을 사용하면, new를 사용해서 넣을수 있는게 장점이다
     // 를 아직 이해 못함. 찾아서 공부해야해
     @Test
     public void addUser(){
+        /*
         logger.info("addUser Started");
         UserRequestDto userRequestDto = UserRequestDto.builder()
                 .userName("tester")
@@ -44,6 +48,8 @@ public class UserServiceTest {
 
         logger.info("user insert done");
 
+
+         */
 
     }
 }

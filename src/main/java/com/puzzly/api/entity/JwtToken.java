@@ -1,6 +1,5 @@
 package com.puzzly.api.entity;
 
-import com.puzzly.api.enums.AccessType;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;

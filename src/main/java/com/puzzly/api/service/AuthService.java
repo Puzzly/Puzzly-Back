@@ -1,10 +1,13 @@
 package com.puzzly.api.service;
 
-import com.puzzly.Utils.JwtUtils;
+
 import com.puzzly.api.entity.JwtToken;
 import com.puzzly.api.entity.User;
-import com.puzzly.api.cmm.exception.FailException;
-import com.puzzly.api.repository.jpa.AuthRepository;
+
+import com.puzzly.api.exception.FailException;
+import com.puzzly.api.repository.jpa.AuthJpaRepository;
+import com.puzzly.api.util.JwtUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,20 +16,16 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class AuthService {
 
-    @Autowired
-    private AuthRepository authRepository;
+    private final AuthJpaRepository authRepository;
+    private final UserService userService;
+    private final JwtUtils jwtUtils;
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JwtUtils jwtUtils;
-
-    public JwtToken refreshJwtToken(String accessToken, String refreshToken) throws FailException{
+    public JwtToken refreshJwtToken(String accessToken, String refreshToken) throws FailException {
         if(StringUtils.isEmpty(accessToken)){
-            throw new FailException("access Token not exists", HttpStatus.BAD_REQUEST);
+            throw new FailException("access Token not exists", HttpStatus.BAD_REQUEST.value());
         }
 
         if (!accessToken.startsWith("Bearer ")) {

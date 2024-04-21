@@ -19,7 +19,8 @@ public class UserCalSyncs {
 
     // User를 외래키로 지정하는 방법
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "userId", nullable=false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    //@JoinColumn(name = "userId", nullable=false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @JoinColumn(name = "userId", nullable=false)
     private User user;
     @Column private LocalDateTime lastSyncTime;
     @Column private String syncEmail;
