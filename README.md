@@ -14,14 +14,15 @@ Puzzly Back End
   - jjwt
   - objectmapper
   - h2 (local)
-  - mariadb (in plan)
-
+  - mariadb (in dev, oper , as planning)
+  
+<!--
 ## 패키지 구조
 
 
 📂com  
 ┗ 📂puzzly  
-  ┣ 📂 api
+  ┣ 📂 api
     ┣ 📂 controller
       ┗ auth, user ..etc controller
     ┣ 📂 coreComponent
@@ -48,3 +49,4 @@ Puzzly Back End
       ┗ jwtUtil, Global Util ..etc
   ┣ 📂 configuration 
     ┣ configs.java (Swagger, Security, ObjectMapper, H2Server, BcryptPassword, Database (Database Configuration is temporary @Deprecated) 
+    -->
