@@ -2,9 +2,7 @@ package com.puzzly.api.entity;
 
 import com.puzzly.api.domain.AccountAuthority;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,10 +11,15 @@ import java.util.List;
 
 @Getter
 @Entity
-@NoArgsConstructor
+@Builder
+// TODO Class Builder 제거하고 AllArgsConstructor 지워야한다.
+// TODO constructor builder로 가야한다.
+@AllArgsConstructor
+@NoArgsConstructor(access= AccessLevel.PROTECTED)
 @ToString
 @Table(name="tb_users")
 public class User {
+
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long userId;
     @Column private String userName;
@@ -34,7 +37,6 @@ public class User {
 
     // 사용자 추가정보
     @OneToOne(mappedBy="user")
-    @PrimaryKeyJoinColumn
     private UserEx userEx;
 
     // 소속 켈린더 정보
