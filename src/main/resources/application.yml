@@ -71,4 +71,7 @@ spring:
 logging:
   level:
     root: info
+springdoc:
+  show-login-endpoint: true
+  enable-spring-security: true
 #---

@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @ToString
 @Table(name="tb_calendar_contents_attachments")
-public class CalenderAttachments {
+public class CalendarAttachments {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long attachmentId;
 
@@ -28,6 +28,8 @@ public class CalenderAttachments {
     @Column private LocalDateTime createDateTime;
     @Column private LocalDateTime modifyDateTime;
     @Column private LocalDateTime DeleteDateTime;
+
+    @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="deleteId") private User deleteId;
 
     // 첨부파일 생성자 정보
     @ManyToOne(fetch=FetchType.LAZY)

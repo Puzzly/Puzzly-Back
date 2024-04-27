@@ -52,5 +52,5 @@ public class CalendarContentsDel {
     // tb_del 은 tb 에서 옮겨지고, schedule로 삭제될것임.
     // 이에따라 tb는 del 정보를 알 필요도, 알 수도 없음. 논리제어로 첨부파일 제거 필요
 /*    @OneToMany(mappedBy = "calendarContents")
-    private List<CalenderAttachments> CalendarattachmentsList= new ArrayList<>();*/
+    private List<CalendarAttachments> CalendarattachmentsList= new ArrayList<>();*/
 }

@@ -1,14 +1,16 @@
-# fly.toml app configuration file generated for puzzly-back on 2024-04-27T21:26:23+09:00
+# fly.toml app configuration file generated for puzzly-back-depoly on 2024-02-22T16:10:03+09:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'puzzly-back'
+app = 'puzzly-back-depoly'
 primary_region = 'nrt'
 
 [build]
-#dockerfile = "Dockerfile"
-#ignorefile = "/path/.dockerignore"
+#  builder = 'paketobuildpacks/builder:base'
+#  buildpacks = ['gcr.io/paketo-buildpacks/nodejs']
+  dockerfile = "Dockerfile"
+  ignorefile = "/path/.dockerignore"
 
 [http_service]
   internal_port = 8080
