@@ -79,7 +79,7 @@ public class Calendar {
 
     // 그룹관계정일
     @OneToMany(mappedBy="calendar")
-    private List<CalendarUserRel> userRequestDtoUserRelList = new ArrayList<>();
+    private List<CalendarUserRel> calendarUserRelList = new ArrayList<>();
 
     // 캘린더 하위 컨텐츠 정보
     // 논리제어할것임
