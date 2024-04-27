@@ -36,7 +36,7 @@ public class CalendarDel {
     /*
     // 그룹관계정일
     @OneToMany(mappedBy="calendar")
-    private List<CalendarUserRel> calenderUserRelList = new ArrayList<>();
+    private List<CalendarUserRel> calendarUserRelList = new ArrayList<>();
 
     // 캘린더 하위 컨텐츠 정보임
     // 논리제어할것임

@@ -18,6 +18,8 @@ import java.util.List;
 public class Calendar {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long calendarId;
+
+    /** need to refactor. > 달력 type 없음*/
     @Column private String calendarType;
     @Column private String calendarName;
     @Column private LocalDateTime createDateTime;
@@ -77,10 +79,14 @@ public class Calendar {
 
     // 그룹관계정일
     @OneToMany(mappedBy="calendar")
-    private List<CalendarUserRel> calenderUserRelList = new ArrayList<>();
+    private List<CalendarUserRel> calendarUserRelList = new ArrayList<>();
 
     // 캘린더 하위 컨텐츠 정보
     // 논리제어할것임
     @OneToMany(mappedBy = "calendar")
     private List<CalendarContents> calendarContentsList= new ArrayList<>();
+
+    @OneToMany(mappedBy = "calendar")
+    private List<CalendarLabelCalendarRel> calendarLabelCalendarRelList = new ArrayList<>();
+
 }

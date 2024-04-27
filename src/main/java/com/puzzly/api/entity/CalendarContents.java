@@ -50,5 +50,5 @@ public class CalendarContents {
     // 켈린더 첨부파일
     // 서비스 레벨에서 첨부파일 제어할것임.
     @OneToMany(mappedBy = "calendarContents")
-    private List<CalenderAttachments> CalendarattachmentsList= new ArrayList<>();
+    private List<CalendarAttachments> CalendarattachmentsList= new ArrayList<>();
 }

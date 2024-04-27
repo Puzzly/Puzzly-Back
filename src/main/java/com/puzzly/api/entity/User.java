@@ -57,7 +57,7 @@ public class User {
 
     // 내가 만든 켈린더 첨부파일 정보
     @OneToMany(mappedBy = "user")
-    private List<CalenderAttachments> calenderAttachmentsList = new ArrayList<>();
+    private List<CalendarAttachments> calendarAttachmentsList = new ArrayList<>();
 
     // 체크리스트 정보
     @OneToMany(mappedBy="user")
