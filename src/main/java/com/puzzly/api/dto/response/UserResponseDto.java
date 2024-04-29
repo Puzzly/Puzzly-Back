@@ -7,12 +7,14 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.puzzly.api.domain.AccountAuthority;
 import com.puzzly.api.dto.request.UserExRequestDto;
+import com.puzzly.api.entity.UserAccountAuthority;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Builder
 @Getter
@@ -29,7 +31,7 @@ public class UserResponseDto {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birth;
     private boolean gender;
-    private AccountAuthority accountAuthority;
+    private List<String> accountAuthority;
 
     // JSON Format 쓰기 전엔 아래 코드로 대응했음
     // getCreateDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))

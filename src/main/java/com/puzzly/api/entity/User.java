@@ -1,6 +1,5 @@
 package com.puzzly.api.entity;
 
-import com.puzzly.api.domain.AccountAuthority;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,6 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Entity
@@ -29,7 +29,11 @@ public class User {
     @Column private String phoneNumber;
     @Column private LocalDate birth;
     @Column private boolean gender;
-    @Enumerated(EnumType.STRING) private AccountAuthority accountAuthority;
+    //@Enumerated(EnumType.STRING) private List<AccountAuthority> accountAuthority;
+
+    @OneToMany(mappedBy="user", fetch = FetchType.EAGER)
+    private List<UserAccountAuthority> userAccountAuthorityList = new ArrayList<>();
+
     @Column private LocalDateTime createDateTime;
     @Column private LocalDateTime modifyDateTime;
     @Column private LocalDateTime deleteDateTime;
@@ -70,8 +74,6 @@ public class User {
 
     @OneToMany(mappedBy="user")
     private List<UserCalSyncs> syncList = new ArrayList<>();
-
-
 
 
 

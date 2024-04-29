@@ -2,9 +2,12 @@ package com.puzzly.api.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @Entity
 @NoArgsConstructor
 @Table(name="jwttoken_tb")
@@ -14,7 +17,9 @@ public class JwtToken {
     private Long tokenId;
 
     private String email;
+    @Column(columnDefinition = "TEXT")
     private String accessToken;
+    @Column(columnDefinition = "TEXT")
     private String refreshToken;
 
     @Enumerated(EnumType.STRING)

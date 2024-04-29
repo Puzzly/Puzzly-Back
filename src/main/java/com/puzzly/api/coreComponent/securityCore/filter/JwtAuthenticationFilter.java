@@ -1,9 +1,11 @@
 package com.puzzly.api.coreComponent.securityCore.filter;
 
-import com.puzzly.api.domain.AccountAuthority;
 import com.puzzly.api.domain.SecurityUser;
 import com.puzzly.api.entity.User;
+import com.puzzly.api.exception.FailException;
 import com.puzzly.api.util.JwtUtils;
+import com.puzzly.api.util.Utils;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -19,6 +23,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -27,6 +32,7 @@ import java.util.regex.Pattern;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
+
     private final UserDetailsService userDetailsService;
 
     /*
@@ -67,17 +73,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         String token = authorization.split(" ")[1];
-        if (jwtUtils.isExpired(token)) {
-            log.error("token expired");
-            filterChain.doFilter(request, response);
-            return;
+        try{
+            if (jwtUtils.isExpired(token)) {
+                log.error("token expired");
+                filterChain.doFilter(request, response);
+                return;
+            }
+        } catch (ExpiredJwtException eje){
+            throw new FailException("Token Expired", 400);
         }
-        String email = jwtUtils.getEmailFromToken(token);
-        String authority = jwtUtils.getAuthorityFromToken(token);
 
-        User user = User.builder().email(email).password("PROTECTED").accountAuthority(AccountAuthority.valueOf(authority)).build();
+        String email = jwtUtils.getEmailFromToken(token);
+        List<String> authorities = jwtUtils.getAuthorityFromToken(token);
+
+        User user = User.builder().email(email).password("PROTECTED").build();
 
         SecurityUser securityUser = new SecurityUser(user);
+        securityUser.setAuthorities(getSimpleAuthorityListFromJwt(authorities));
         Authentication authToken = new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
 
         SecurityContextHolder.getContext().setAuthentication(authToken);
@@ -137,5 +149,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         return false;
+    }
+
+    public Collection<? extends GrantedAuthority> getSimpleAuthorityListFromJwt(List<String> accountAuthorityArrayList) {
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        for(String authority : accountAuthorityArrayList){
+            authorities.add(new SimpleGrantedAuthority(authority));
+        }
+        return authorities;
     }
 }

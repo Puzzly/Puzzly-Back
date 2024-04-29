@@ -1,10 +1,13 @@
 package com.puzzly.api.util;
 
 import com.puzzly.api.entity.User;
+import com.puzzly.api.entity.UserAccountAuthority;
 import com.puzzly.api.service.UserService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -13,10 +16,14 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtUtils implements InitializingBean {
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
     //private static final String jwtSecretKey = "89e3d9b82f6908ddae0f2f20ce7bbcd7307b14e6938fa54e2990e8ee498632e7680474fd37098932f1d4605b7b3768bca12bf8b5454ed26f8316ee1de8a6948b";
@@ -26,7 +33,7 @@ public class JwtUtils implements InitializingBean {
     // @constructorBinding?
     private Key key;
     private final String principal = "email";
-    private final String authority = "authority";
+    private final String authority = "authorities";
 
     private final int expiredMilsForAccess = 10 * 60 * 1000;
     private final int expiredMilsForRefresh = 6 * 60 * 60 * 1000;
@@ -38,7 +45,7 @@ public class JwtUtils implements InitializingBean {
     public String generateJwtToken(User user) {
         Claims claims = Jwts.claims();
         claims.put("email", user.getEmail());
-        claims.put("authority", user.getAccountAuthority());
+        claims.put("authorities", getUserAccountAuthorityList(user.getUserAccountAuthorityList()));
 
         JwtBuilder builder = Jwts.builder()
                 .setClaims(claims)                           // Payload - Claims구성
@@ -94,9 +101,10 @@ public class JwtUtils implements InitializingBean {
         return claims.get(principal).toString();
     }
 
-    public String getAuthorityFromToken(String token){
+    public List<String> getAuthorityFromToken(String token){
         Claims claims = getClaimsFormToken(token);
-        return claims.get(authority).toString();
+        ArrayList<String> authorityList = (ArrayList<String>) claims.get(authority);
+        return authorityList;
     }
 
     public Boolean isExpired(String token){
@@ -106,5 +114,11 @@ public class JwtUtils implements InitializingBean {
 
     public String getJwtSecretKey(){
         return jwtSecretKey;
+    }
+
+    public List<String> getUserAccountAuthorityList(List<UserAccountAuthority> accountAuthorityArrayList) {
+        return accountAuthorityArrayList.stream().map((authority) -> {
+            return authority.getAccountAuthority().getText();
+        }).collect(Collectors.toList());
     }
 }

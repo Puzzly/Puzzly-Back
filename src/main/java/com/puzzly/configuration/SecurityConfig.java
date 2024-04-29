@@ -6,6 +6,7 @@ import com.puzzly.api.coreComponent.securityCore.handler.CustomUsernamePasswordS
 import com.puzzly.api.coreComponent.securityCore.provider.CustomUsernamePasswordAuthenticationProvider;
 import com.puzzly.api.coreComponent.securityCore.securityService.CustomUserDetailsService;
 import com.puzzly.api.util.JwtUtils;
+import com.puzzly.api.util.Utils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -37,6 +38,8 @@ public class SecurityConfig {
 
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtUtils jwtUtils;
+
+    private final Utils utils;
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
