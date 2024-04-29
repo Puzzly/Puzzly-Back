@@ -43,7 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException, FailException {
         // TODO Check : Security permitAll() 안먹혀서 별도로 처리중
         List<String> list = Arrays.asList(
                 "/api/user/login",
@@ -85,8 +85,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String email = jwtUtils.getEmailFromToken(token);
         List<String> authorities = jwtUtils.getAuthorityFromToken(token);
-
-        User user = User.builder().email(email).password("PROTECTED").build();
+        Long userId = jwtUtils.getUserIdFromToken(token);
+        User user = User.builder().userId(userId).email(email).password("PROTECTED").build();
 
         SecurityUser securityUser = new SecurityUser(user);
         securityUser.setAuthorities(getSimpleAuthorityListFromJwt(authorities));

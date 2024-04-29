@@ -35,6 +35,8 @@ public class JwtUtils implements InitializingBean {
     private final String principal = "email";
     private final String authority = "authorities";
 
+    private final String userId = "userId";
+
     private final int expiredMilsForAccess = 10 * 60 * 1000;
     private final int expiredMilsForRefresh = 6 * 60 * 60 * 1000;
 
@@ -46,6 +48,7 @@ public class JwtUtils implements InitializingBean {
         Claims claims = Jwts.claims();
         claims.put("email", user.getEmail());
         claims.put("authorities", getUserAccountAuthorityList(user.getUserAccountAuthorityList()));
+        claims.put("userId", user.getUserId());
 
         JwtBuilder builder = Jwts.builder()
                 .setClaims(claims)                           // Payload - Claims구성
@@ -71,7 +74,7 @@ public class JwtUtils implements InitializingBean {
         return builder.compact();
     }
 
-    public boolean isValidToken(String token) {
+    public boolean isValidToken(String token) throws Exception{
         try {
             Claims claims = getClaimsFormToken(token);
 
@@ -100,6 +103,12 @@ public class JwtUtils implements InitializingBean {
         Claims claims = getClaimsFormToken(token);
         return claims.get(principal).toString();
     }
+
+    public Long getUserIdFromToken(String token){
+        Claims claims = getClaimsFormToken(token);
+        return Long.parseLong(claims.get(userId).toString());
+    }
+
 
     public List<String> getAuthorityFromToken(String token){
         Claims claims = getClaimsFormToken(token);
