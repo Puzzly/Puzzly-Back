@@ -10,4 +10,6 @@ import java.util.List;
 @Mapper
 public interface UserMybatisRepository {
     public List<User> selectUser(@Param("userId") Long userId);
+
+    public User selectUserByEmail(@Param("email") String email);
 }

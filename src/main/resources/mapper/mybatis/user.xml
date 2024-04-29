@@ -6,4 +6,7 @@
     <select id="selectUser" resultType="com.puzzly.api.entity.User">
         select * from tb_users where user_id = #{userId}
     </select>
+    <select id="selectUserByEmail" resultType="com.puzzly.api.entity.User">
+        select * from tb_users where email = #{email}
+    </select>
 </mapper>

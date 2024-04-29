@@ -8,6 +8,7 @@ import com.puzzly.api.dto.response.UserResponseDto;
 import com.puzzly.api.entity.User;
 import com.puzzly.api.entity.UserAccountAuthority;
 import com.puzzly.api.entity.UserEx;
+import com.puzzly.api.exception.FailException;
 import com.puzzly.api.repository.jpa.UserAccountJpaRepository;
 import com.puzzly.api.repository.jpa.UserExJpaRepository;
 import com.puzzly.api.repository.jpa.UserJpaRepository;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,8 +47,10 @@ public class UserService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Transactional
-    public UserResponseDto insertUser(UserRequestDto userRequestDto){
-
+    public UserResponseDto insertUser(UserRequestDto userRequestDto) throws FailException{
+        if(userMybatisRepository.selectUserByEmail(userRequestDto.getEmail()) != null){
+            throw new FailException("USER EMAIL ALREADY EXISTS", 400);
+        }
         if(userRequestDto.getCreateDateTime() == null) userRequestDto.setCreateDateTime(LocalDateTime.now());
         //if(userRequestDto.getAccountAuthority() == null) userRequestDto.setAccountAuthority(AccountAuthority.ROLE_USER);
         // TODO FE와 별도로 상의하여 통신구간 암호화를 구현하고, 복호화 > 암호화 혹은 그대로 때려박기 등을 구현해야 한다.
@@ -171,5 +175,6 @@ public class UserService {
         return userJpaRepository.findByEmail(email);
     }
 
+    public Optional<User> findById(Long userId) {return userJpaRepository.findById(userId);}
 
 }
