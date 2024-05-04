@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
+@Setter
+// Edit 가능하게 별도 setter 선언 필요
 @Entity
 @Builder
 // TODO Class Builder 제거하고 AllArgsConstructor 지워야한다.
@@ -28,7 +30,7 @@ public class User {
     @Column private String password;
     @Column private String phoneNumber;
     @Column private LocalDate birth;
-    @Column private boolean gender;
+    @Column private Boolean gender;
     //@Enumerated(EnumType.STRING) private List<AccountAuthority> accountAuthority;
 
     @OneToMany(mappedBy="user", fetch = FetchType.EAGER)
@@ -38,6 +40,7 @@ public class User {
     @Column private LocalDateTime modifyDateTime;
     @Column private LocalDateTime deleteDateTime;
     @Column private String status;
+    @Column private Boolean isDeleted;
 
     // 사용자 추가정보
     @OneToOne(mappedBy="user")
@@ -52,7 +55,7 @@ public class User {
     private List<Calendar> calendarList = new ArrayList<>();
 
     // 내가 쓴 켈린더 컨텐츠
-    @OneToMany(mappedBy="user")
+    @OneToMany(mappedBy="createUser")
     private List<CalendarContents> calendarContentList = new ArrayList<>();
 
     // 내가 만든 켈린더 라벨 정보

@@ -1,0 +1,28 @@
+{
+  "userName": "string",
+  "nickName": "string",
+  "email": "string@naver.com",
+  "_emailComment" : "Unique값입니다.",
+  "password": "stringpassword",
+  "phoneNumber": "010-1111-2222",
+  "birth": "2024-05-03",
+
+  "gender": true,
+  "genderComment" : "생략 불능. Gender true: 남성, false : 여성 / 기타의견 전달주시면 반영하겠습니다.",
+
+  "accountAuthority": "ROLE_USER",
+  "accountAuthorityComment" : "생략 가능, 생략하시면 BE에서 알아서 ROLE_USER 줍니다. ROLE_USER : 일반사용자, ROLE_ADMIN : 관리자",
+
+  "createDateTime": "2024-04-21 21:37:00",
+  "createDateTimeComment" : "생략 가능. 생략하시면 BE에서 알아서 생성합니다.",
+
+  "status": "CREATE",
+  "statusComment" : "생략 가능. 생략하시면 BE에서 알아서 CREATE로 생성합니다.  ",
+  "isDeleted" : false,
+  "isDelComment" : "생략 가능. 생략하시면 BE에서 알아서 생성합니다.",
+
+  "firstTermAgreement": true,
+  "firstTermAgreementComment" : "생략 불능. 약관 동의여부 등을 대비한 컬럼입니다.",
+  "secondTermAgreement": true,
+  "secondTermAgreementComment" : "생략 불능. 약관 동의여부 등을 대비한 컬럼입니다."
+}

@@ -3,6 +3,7 @@ package com.puzzly.api.dto.request;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.puzzly.api.domain.AccountAuthority;
 import com.puzzly.api.entity.*;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,28 +19,40 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Schema(description = "사용자에 관련된 요청사항을 전달할 때 사용하는 DTO")
 public class UserRequestDto {
-
+    @Schema(description = "사용자ID, 주로 생략 가능. BE에서 JWT 토큰에서 뽑아서 사용함")
     private Long userId;
+    @Schema(description = "사용자 이름", defaultValue = "김미영")
     private String userName;
+    @Schema(description = "사용자 별명", defaultValue ="김퍼즐리")
     private String nickName;
+    @Schema(description = "사용자 Email, Unique", defaultValue = "user1@naver.com")
     private String email;
+    @Schema(description = "사용자 password", defaultValue = "string")
     private String password;
+    @Schema(description = "사용자 휴대전화번호, pattern 검사 별도로 안하고있음.", defaultValue = "010-1111-2222")
     private String phoneNumber;
     // Date는 T, Z 등 불필요한 요소가 swagger-ui에서 안붙어서 별도 명시 X
     //@JsonFormat(pattern = "yyyy-MM-dd")
     // REFER : https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=varkiry05&logNo=221736856257
     @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @Schema(description = "생년월일")
     private LocalDate birth;
+    @Schema(description = "성별, true : 남성 / false : 여성", defaultValue = "false")
     private Boolean gender;
+    @Schema(description = "계정 자체 권한, ROLE_USER : 일반사용자 / ROLE_ADMIN : 관리자, 단 ROLE_ADMIN이 서버로 주어지면 자동으로 ROLE_USER도 추가됨", defaultValue = "ROLE_USER")
     private AccountAuthority accountAuthority;
     //Swagger에 에시로 출력될 패턴
     // https://stackoverflow.com/questions/49379006/what-is-the-correct-way-to-declare-a-date-in-an-openapi-swagger-file/49379235#49379235
-    @Schema(pattern = "2024-04-21 21:37:00", type="string")
+    @Schema(pattern = "2024-04-21 21:37:00", type="string", description = "생성일자, 대체로 무시해도 됌. 서버에서 생성해서 사용")
     //@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss",)
     // Json으로 올려받고 내려줄때 패턴 선언, String 까지 써야 Swagger가 알아들음
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createDateTime;
+    @Schema(pattern = "2024-04-21 21:37:00", type="string", description = "생성일자, 대체로 무시해도 됌. 서버에서 생성해서 사용")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime modifyDateTIme;
 /*
     //DTO는 해당 내용을 알 필요 없음
     @Schema(pattern = "yyyy-MM-dd HH:mm:ss", type="string", example="")
@@ -48,10 +61,21 @@ public class UserRequestDto {
     @Schema(pattern = "yyyy-MM-dd HH:mm:ss", type="string", example = "")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime deleteDateTime;*/
+    @Schema(defaultValue = "CREATE", description = "계정상태. CREATE: 정상 / DELETED : 탈퇴")
     private String status;
+    @Schema(defaultValue = "false", description = "계정상태. false : 사용중 / true : 탈퇴 / 아직 status로할지 isdeleted로 할지 결정중")
+    private Boolean isDeleted;
 
     // 사용자 추가정보
-    private UserExRequestDto userExRequestDto;
-
+    //private UserExRequestDto userExRequestDto;
+    // 사용자 추가정보
+    @Schema(defaultValue = "true", description = "약관 1 동의여부")
+    private Boolean firstTermAgreement;
+    @Schema(defaultValue = "true", description = "약관 2 동의여부")
+    private Boolean secondTermAgreement;
+    @Schema(defaultValue = "WELCOME PUZZLY", description = "사용자 상태메시지")
+    private String statusMessage;
+    @Schema(defaultValue = "", description = "사용자 프로필 사진 서버상 경로")
+    private String profileFilePath;
 
 }
