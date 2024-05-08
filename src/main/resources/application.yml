@@ -55,7 +55,7 @@ puzzly:
   filePath: /Users/junhoon.lee/sideP/PuzzlyFile
 logging:
   level:
-    root: debug
+    root: info
 
 #--- dev
 ---
