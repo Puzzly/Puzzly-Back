@@ -31,19 +31,11 @@ public class SwaggerConfig {
                 .bearerFormat("JWT")
                 .description(" Swagger로 테스트하실때에는 login-end-point의 response 값중 Bearar 값은 빼고 여기에 입력해주세요.\n\n Swagger가 자동으로 한번 더 붙여서 보내서 에러납니다..")
         );
-
-        // flyio uses https
-        // Solution SEE : https://stackoverflow.com/questions/60625494/wrong-generated-server-url-in-springdoc-openapi-ui-swagger-ui-deployed-behin
-        // 나중에 BE 앞단에 서게되면 부디 제발 nginx로 upstream 처리
-        Server server = new Server();
-        server.setUrl("https://puzzly-back.fly.dev");
-        server.setDescription("Available on Puzzly");
-
-        Server serverLocal = new Server();
-        server.setUrl("http://localhost:8080");
-        server.setDescription("Available on Local");
-
-        return new OpenAPI().info(info).addSecurityItem(securityRequirement).components(components).addServersItem(server).addServersItem(serverLocal);
+        // 나중에 Server Object 쓰게되면 nginx 앞단에 세워서 upstream은 http 통신 하도록 적용하는것이 간단하게 처리할 수 있어보임.
+        return new OpenAPI().info(info).addSecurityItem(securityRequirement).components(components).servers(List.of(
+                new Server().url("https://puzzly-back.fly.dev").description("Avail on flyio"),
+                new Server().url("http://localhost:8080").description("Avail on local")
+        ));
     }
     /*
     @Bean
