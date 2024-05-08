@@ -45,12 +45,12 @@ public class UserRequestDto {
     private AccountAuthority accountAuthority;
     //Swagger에 에시로 출력될 패턴
     // https://stackoverflow.com/questions/49379006/what-is-the-correct-way-to-declare-a-date-in-an-openapi-swagger-file/49379235#49379235
-    @Schema(pattern = "2024-04-21 21:37:00", type="string", description = "생성일자, 대체로 무시해도 됌. 서버에서 생성해서 사용")
+    @Schema(pattern = "2024-04-21 21:37:00", type="string", description = "생성일자, 대체로 무시해도 됌. 서버에서 생성해서 사용", hidden = true)
     //@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss",)
     // Json으로 올려받고 내려줄때 패턴 선언, String 까지 써야 Swagger가 알아들음
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createDateTime;
-    @Schema(pattern = "2024-04-21 21:37:00", type="string", description = "생성일자, 대체로 무시해도 됌. 서버에서 생성해서 사용")
+    @Schema(pattern = "2024-04-21 21:37:00", type="string", description = "생성일자, 대체로 무시해도 됌. 서버에서 생성해서 사용", hidden = true)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime modifyDateTIme;
 /*

@@ -60,14 +60,16 @@ public class UserController {
     }
 
     @GetMapping()
-    @Operation(summary = "내 정보 조회, JWT 토큰필요 O", description = "내 정보 조회, 토큰 필요 O")
+    @Operation(summary = "사용자 정보 조회, JWT 토큰필요 O", description = "내 정보 조회, 토큰 필요 O")
     @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserResponseDto.class)))
     @ApiResponse(responseCode = "4**", description = "SERVER_MESSAGE_* 메시지는 의도된 예외처리")
     public ResponseEntity<?> getUserMybatis(
-            HttpServletRequest request
+            HttpServletRequest request,
+            @Parameter(description = "조회하려는 사용자PK (생략 가능. 생략시 본인 정보 조회, 주어질경우 해당 유저 조회)")
+            @RequestParam(name="userId", required = false) Long userId
     ) throws FailException{
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        UserResponseDto user = userService.selectUserMybatis(securityUser.getUser().getUserId());
+        UserResponseDto user = userService.selectUserMybatis(userId == null ? securityUser.getUser().getUserId() : userId);
         RestResponse response = new RestResponse();
         response.setResult(user);
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -104,11 +106,11 @@ public class UserController {
             HttpServletRequest request
     ){
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        //UserResponseDto user = userService.selectUser(securityUser.getUser().getUserId());
+        UserResponseDto user = userService.selectUser(securityUser.getUser().getUserId());
 
         RestResponse response = new RestResponse();
-        //response.setResult(user);
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        response.setResult(user);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

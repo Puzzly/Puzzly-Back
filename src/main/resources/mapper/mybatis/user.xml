@@ -21,7 +21,7 @@
     </select>
 
     <select id="selectUserByCalendarId" resultType="com.puzzly.api.dto.response.UserResponseDto">
-        SELECT tu.user_id, tu.nick_name, tu.email, tu.phone_number, tu.gender
+        SELECT tu.user_id, tu.user_name, tu.nick_name, tu.email, tu.phone_number, tu.gender
         FROM
             tb_users tu
         INNER JOIN

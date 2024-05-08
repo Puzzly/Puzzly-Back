@@ -7,7 +7,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -50,22 +49,28 @@ public class User {
     @OneToMany(mappedBy="user")
     private List<CalendarUserRel> calendarUserRelList = new ArrayList<>();
 
+    /*
     // 소유한 캘린더 정보
-    @OneToMany(mappedBy="user")
+    @OneToMany(mappedBy="createUser")
     private List<Calendar> calendarList = new ArrayList<>();
+     */
 
+    /*
     // 내가 쓴 켈린더 컨텐츠
     @OneToMany(mappedBy="createUser")
     private List<CalendarContents> calendarContentList = new ArrayList<>();
-
+     */
+    /*
     // 내가 만든 켈린더 라벨 정보
     @OneToMany(mappedBy="user")
     private List<CalendarLabel> calendarLabelList = new ArrayList<>();
 
     // 내가 만든 켈린더 첨부파일 정보
-    @OneToMany(mappedBy = "user")
-    private List<CalendarAttachments> calendarAttachmentsList = new ArrayList<>();
+    @OneToMany(mappedBy = "createUser")
+    private List<CalendarContentsAttachments> calendarAttachmentsList = new ArrayList<>();
 
+
+     */
     // 체크리스트 정보
     @OneToMany(mappedBy="user")
     private List<CheckList> checklistList = new ArrayList<>();
