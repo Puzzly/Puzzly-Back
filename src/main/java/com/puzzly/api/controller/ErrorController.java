@@ -1,6 +1,7 @@
 package com.puzzly.api.controller;
 
 import com.puzzly.api.exception.FailException;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 public class ErrorController {
 
     @RequestMapping(value = "/error", method = RequestMethod.POST)
+    @Schema(hidden = true)
     public ResponseEntity<?> error(HttpServletRequest request, HttpServletResponse response)  {
         int status = Integer.valueOf(request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE).toString());
         String message = request.getAttribute(RequestDispatcher.ERROR_MESSAGE).toString();

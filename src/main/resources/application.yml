@@ -21,12 +21,13 @@ mybatis:
     use-generated-keys: true
     map-underscore-to-camel-case: true
 
+
 springdoc:
   swagger-ui:
     tags-sorter: alpha
+    default-models-expand-depth: 2
   show-login-endpoint: true
   enable-spring-security: true
-
 #--- local
 ---
 spring:
@@ -39,7 +40,6 @@ spring:
       settings:
         web-allow-others: true
       path: /h2-console
-
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -51,11 +51,13 @@ spring:
     url: jdbc:h2:mem:testdb;MODE=mysql;
     username: sa
     password:
+puzzly:
+  filePath: /Users/junhoon.lee/sideP/PuzzlyFile
 logging:
   level:
     root: debug
-#--- dev
 
+#--- dev
 ---
 spring:
   config:
@@ -79,6 +81,8 @@ spring:
     url: jdbc:h2:mem:testdb;MODE=mysql;
     username: sa
     password:
+puzzly:
+  filePath: /opt/PuzzlyFile
 logging:
   level:
     root: info
