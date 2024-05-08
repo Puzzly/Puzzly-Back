@@ -103,8 +103,9 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         //flyio가 default protocol을 https 로 사용하면서 통신불능 장애 발생
-        configuration.setAllowedOrigins(Arrays.asList("*", "https://puzzly-back.fly.dev", "http://puzzly-back.fly.dev"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+        //configuration.setAllowedOrigins(Arrays.asList("*", "https://puzzly-back.fly.dev", "http://puzzly-back.fly.dev"));
+        configuration.setAllowedOrigins(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("X-Requested-With", "Content-Type", "Authorization", "X-XSRF-token"));
         configuration.setAllowCredentials(false);
         configuration.setMaxAge(3600L);

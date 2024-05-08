@@ -1,13 +1,18 @@
 package com.puzzly.configuration;
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Configuration
 @Slf4j
@@ -26,7 +31,19 @@ public class SwaggerConfig {
                 .bearerFormat("JWT")
                 .description(" Swagger로 테스트하실때에는 login-end-point의 response 값중 Bearar 값은 빼고 여기에 입력해주세요.\n\n Swagger가 자동으로 한번 더 붙여서 보내서 에러납니다..")
         );
-        return new OpenAPI().info(info).addSecurityItem(securityRequirement).components(components);
+
+        // flyio uses https
+        // Solution SEE : https://stackoverflow.com/questions/60625494/wrong-generated-server-url-in-springdoc-openapi-ui-swagger-ui-deployed-behin
+        // 나중에 BE 앞단에 서게되면 부디 제발 nginx로 upstream 처리
+        Server server = new Server();
+        server.setUrl("https://puzzly-back.fly.dev");
+        server.setDescription("Available on Puzzly");
+
+        Server serverLocal = new Server();
+        server.setUrl("http://localhost:8080");
+        server.setDescription("Available on Local");
+
+        return new OpenAPI().info(info).addSecurityItem(securityRequirement).components(components).addServersItem(server).addServersItem(serverLocal);
     }
     /*
     @Bean
