@@ -27,10 +27,12 @@ Puzzly Back End
 ### JPA
 - 단순 C, U, D
 - 단순 Read ( FrontEnd로 리턴할 필요 없이 단순 존재여부 확인, 단순 데이터 조회 후 해당 데이터로 서비스 로직을 굴릴경우)
+- 단순 C 후 FE에 결과값을 리턴하려 하는 경우
 
 ### Mybatis
-- 통계성 C, U
-- 쿼리의 결과값을 FrontEnd로 내릴 목적이 있는 객체, FrontEnd로 내리기 전에 추가적인 조작이 필요한 경우
+- 통계성 CRUDL
+- 스케쥴로 제어하는 CRUDL
+- 단순 C 후 FE에 결과 리턴을 제외한 쿼리의 결과값을 FrontEnd로 내릴 목적이 있는 객체, FrontEnd로 내리기 전에 추가적인 조작이 필요한 경우
 
 
 <!--

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.puzzly.api.repository.mybatis.CalendarMybatisRepository">
+    <select id="getSimpleCalendarDtoListJoinRel" resultType="com.puzzly.api.dto.response.CalendarResponseDto">
+        <!-- 추후 개선사항 (page, limit를 사용하지 말고 정렬기준을 통해서 Fetch 로 처리하자
+         REFER : https://binux.tistory.com/148-->
+        SELECT calendar_id, calendar_name, create_date_time, modify_date_time,
+               delete_date_time, (select count(calendar_id) from tb_calendar_user_rels b where b.calendar_id = a.calendar_id)
+        FROM tb_calendars a
+        WHERE
+            calendar_id IN(
+                SELECT
+                    calendar_id
+                FROM
+                    tb_calendar_user_rels
+                WHERE
+                    user_id = #{userId}
+                )
+        ORDER BY calendar_id desc
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="getCalendar" resultType="com.puzzly.api.dto.response.CalendarResponseDto">
+        SELECT calendar_id, calendar_name, create_date_time, modify_date_time,
+               delete_date_time, (select count(calendar_id) from tb_calendar_user_rels b where b.calendar_id = a.calendar_id)
+        FROM tb_calendars a
+    </select>
+</mapper>

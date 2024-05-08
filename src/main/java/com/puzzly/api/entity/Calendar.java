@@ -1,30 +1,38 @@
 package com.puzzly.api.entity;
 
 
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Setter
 @Entity
-@NoArgsConstructor
 @ToString
+@Builder
+// TODO Class Builder 제거하고 AllArgsConstructor 지워야한다.
+// TODO constructor builder로 가야한다.
+@AllArgsConstructor
+@NoArgsConstructor(access= AccessLevel.PROTECTED)
 @Table(name="tb_calendars")
 public class Calendar {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long calendarId;
 
+    //e83vfNMHJUzkUOBbJiD5rGCdWyxm9oWN9rylBD39fEw=
     /** need to refactor. > 달력 type 없음*/
     @Column private String calendarType;
     @Column private String calendarName;
     @Column private LocalDateTime createDateTime;
     @Column private LocalDateTime modifyDateTime;
-    @Column private LocalDateTime DeleteDateTime;
+    @Column private LocalDateTime deleteDateTime;
+    @Column private Boolean isDeleted;
 
     /** Note FK 관계설정
      * REF:// mjmjmj98.tistory.com/m/152
@@ -74,9 +82,17 @@ public class Calendar {
     // TODO 실 개발모드에서는 fk 제약 해제할것
     @ManyToOne(fetch = FetchType.LAZY)
     //@JoinColumn(name = "ownerId", referencedColumnName = "userId", nullable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
-    @JoinColumn(name = "ownerId", referencedColumnName = "userId", nullable = false)
-    private User user;
+    @JoinColumn(name = "createId", referencedColumnName = "userId")
+    private User createUser;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    //@JoinColumn(name = "ownerId", referencedColumnName = "userId", nullable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @JoinColumn(name = "modifyId", referencedColumnName = "userId")
+    private User modifyUser;
+    @ManyToOne(fetch = FetchType.LAZY)
+    //@JoinColumn(name = "ownerId", referencedColumnName = "userId", nullable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @JoinColumn(name = "deleteId", referencedColumnName = "userId")
+    private User deleteUser;
     // 그룹관계정일
     @OneToMany(mappedBy="calendar")
     private List<CalendarUserRel> calendarUserRelList = new ArrayList<>();
@@ -89,4 +105,10 @@ public class Calendar {
     @OneToMany(mappedBy = "calendar")
     private List<CalendarLabelCalendarRel> calendarLabelCalendarRelList = new ArrayList<>();
 
+    /*
+    public void setCalendarType(String calendarType) {
+        this.calendarType = calendarType;
+    }
+
+     */
 }

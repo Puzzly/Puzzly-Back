@@ -1,7 +1,12 @@
 package com.puzzly.api.coreComponent;
 
 import com.puzzly.api.domain.AccountAuthority;
+import com.puzzly.api.domain.SecurityUser;
+import com.puzzly.api.dto.request.CalendarRequestDto;
 import com.puzzly.api.dto.request.UserRequestDto;
+import com.puzzly.api.entity.Calendar;
+import com.puzzly.api.entity.User;
+import com.puzzly.api.service.CalendarService;
 import com.puzzly.api.service.UserService;
 import com.puzzly.api.util.JwtUtils;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +26,7 @@ import java.time.format.DateTimeFormatter;
 public class ApplicationListenerService implements ApplicationListener<ContextRefreshedEvent> {
 
     private final UserService userService;
+    private final CalendarService calendarService;
 
     private final JwtUtils jwtUtils;
     @Override
@@ -40,6 +46,14 @@ public class ApplicationListenerService implements ApplicationListener<ContextRe
         user.setSecondTermAgreement(true);
         user.setGender(true);
         userService.insertUser(user);
+        SecurityUser securityUser = new SecurityUser();
+        securityUser.setUser(userService.findById((long)1).orElse(null));
+
+        CalendarRequestDto calendarRequestDto = new CalendarRequestDto();
+        calendarRequestDto.setCalendarName("PuzzlyCalendar");
+        calendarRequestDto.setUserId(securityUser.getUser().getUserId());
+        calendarService.createCalendar(securityUser, calendarRequestDto);
+
 
     }
 }

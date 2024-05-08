@@ -17,7 +17,7 @@ public class SwaggerConfig {
         Info info = new Info()
                 .version("Dev 0.0.0")
                 .title("Puzzly API")
-                .description("");
+                .description("** NOTIFICATION : API마다 생략가능한 값이나 무시되는 값이 별도로 존재합니다. 각 API 설명 참고 부탁드립니다..");
         SecurityRequirement securityRequirement = new SecurityRequirement().addList("JWT");
         Components components = new Components().addSecuritySchemes("JWT", new SecurityScheme()
                 .name("JWT")
