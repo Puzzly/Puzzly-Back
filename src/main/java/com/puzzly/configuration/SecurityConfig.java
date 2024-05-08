@@ -73,7 +73,6 @@ public class SecurityConfig {
                 .headers(headers -> headers.addHeaderWriter(new XFrameOptionsHeaderWriter(XFrameOptionsHeaderWriter.XFrameOptionsMode.SAMEORIGIN)))
                 // form 로그인 off
                 .formLogin((auth) -> auth.disable())
-
                 // http basic 인증방식 disable
                 .httpBasic((auth) -> auth.disable())
                 .authorizeHttpRequests(
@@ -103,7 +102,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*"));
+        //flyio가 default protocol을 https 로 사용하면서 통신불능 장애 발생
+        configuration.setAllowedOrigins(Arrays.asList("*", "https://puzzly-back.fly.dev", "http://puzzly-back.fly.dev"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
         configuration.setAllowedHeaders(Arrays.asList("X-Requested-With", "Content-Type", "Authorization", "X-XSRF-token"));
         configuration.setAllowCredentials(false);
