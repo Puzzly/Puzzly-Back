@@ -23,5 +23,4 @@ public class UserCalSyncs {
     @JoinColumn(name = "userId", nullable=false)
     private User user;
     @Column private LocalDateTime lastSyncTime;
-    @Column private String syncEmail;
 }

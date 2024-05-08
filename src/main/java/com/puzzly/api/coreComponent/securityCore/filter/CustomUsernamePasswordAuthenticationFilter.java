@@ -11,6 +11,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.io.IOException;
+
 // 필터 자체는 class로만 만들고, securityConfig에서 추가하여 처리
 public class CustomUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     public CustomUsernamePasswordAuthenticationFilter(AuthenticationManager authenticationManager) {
@@ -21,7 +23,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
     public Authentication attemptAuthentication(
             HttpServletRequest request,
             HttpServletResponse response
-    ) throws AuthenticationException {
+    ) throws AuthenticationException, FailException {
 
         UsernamePasswordAuthenticationToken attemptToken;
         ObjectMapper objectMapper = new ObjectMapper();
@@ -29,8 +31,11 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
             UserRequestDto user = objectMapper.readValue(request.getInputStream(), UserRequestDto.class);
             attemptToken = new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword());
             setDetails(request, attemptToken);
-        } catch (Exception e) {
-            throw new FailException("Attempt Token create failed", 400);
+        } catch (AuthenticationException e) {
+            e.printStackTrace();
+            throw e;
+        } catch (IOException ie){
+            throw new FailException(ie.getMessage(), 400);
         }
 
         // Authentication 객체를 반환한다.

@@ -2,15 +2,13 @@ package com.puzzly.api.entity;
 
 //import com.puzzly.api.dto.request.UserExRequestDto;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Optional;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
@@ -23,8 +21,8 @@ public class UserEx {
     @JoinColumn(name = "userId")
     private User user;
 
-    @Column boolean firstTermAgreement;
-    @Column boolean secondTermAgreement;
+    @Column Boolean firstTermAgreement;
+    @Column Boolean secondTermAgreement;
     @Column private String statusMessage;
     @Column private String profileFilePath;
 

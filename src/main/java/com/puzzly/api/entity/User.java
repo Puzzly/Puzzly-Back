@@ -1,6 +1,5 @@
 package com.puzzly.api.entity;
 
-import com.puzzly.api.domain.AccountAuthority;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Setter
+// Edit 가능하게 별도 setter 선언 필요
 @Entity
 @Builder
 // TODO Class Builder 제거하고 AllArgsConstructor 지워야한다.
@@ -28,12 +29,17 @@ public class User {
     @Column private String password;
     @Column private String phoneNumber;
     @Column private LocalDate birth;
-    @Column private boolean gender;
-    @Enumerated(EnumType.STRING) private AccountAuthority accountAuthority;
+    @Column private Boolean gender;
+    //@Enumerated(EnumType.STRING) private List<AccountAuthority> accountAuthority;
+
+    @OneToMany(mappedBy="user", fetch = FetchType.EAGER)
+    private List<UserAccountAuthority> userAccountAuthorityList = new ArrayList<>();
+
     @Column private LocalDateTime createDateTime;
     @Column private LocalDateTime modifyDateTime;
     @Column private LocalDateTime deleteDateTime;
     @Column private String status;
+    @Column private Boolean isDeleted;
 
     // 사용자 추가정보
     @OneToOne(mappedBy="user")
@@ -43,22 +49,28 @@ public class User {
     @OneToMany(mappedBy="user")
     private List<CalendarUserRel> calendarUserRelList = new ArrayList<>();
 
+    /*
     // 소유한 캘린더 정보
-    @OneToMany(mappedBy="user")
+    @OneToMany(mappedBy="createUser")
     private List<Calendar> calendarList = new ArrayList<>();
+     */
 
+    /*
     // 내가 쓴 켈린더 컨텐츠
-    @OneToMany(mappedBy="user")
+    @OneToMany(mappedBy="createUser")
     private List<CalendarContents> calendarContentList = new ArrayList<>();
-
+     */
+    /*
     // 내가 만든 켈린더 라벨 정보
     @OneToMany(mappedBy="user")
     private List<CalendarLabel> calendarLabelList = new ArrayList<>();
 
     // 내가 만든 켈린더 첨부파일 정보
-    @OneToMany(mappedBy = "user")
-    private List<CalendarAttachments> calendarAttachmentsList = new ArrayList<>();
+    @OneToMany(mappedBy = "createUser")
+    private List<CalendarContentsAttachments> calendarAttachmentsList = new ArrayList<>();
 
+
+     */
     // 체크리스트 정보
     @OneToMany(mappedBy="user")
     private List<CheckList> checklistList = new ArrayList<>();
@@ -70,8 +82,6 @@ public class User {
 
     @OneToMany(mappedBy="user")
     private List<UserCalSyncs> syncList = new ArrayList<>();
-
-
 
 
 

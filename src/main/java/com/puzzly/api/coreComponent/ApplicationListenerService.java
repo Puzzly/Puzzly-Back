@@ -1,8 +1,12 @@
 package com.puzzly.api.coreComponent;
 
 import com.puzzly.api.domain.AccountAuthority;
-import com.puzzly.api.dto.request.UserExRequestDto;
+import com.puzzly.api.domain.SecurityUser;
+import com.puzzly.api.dto.request.CalendarRequestDto;
 import com.puzzly.api.dto.request.UserRequestDto;
+import com.puzzly.api.entity.Calendar;
+import com.puzzly.api.entity.User;
+import com.puzzly.api.service.CalendarService;
 import com.puzzly.api.service.UserService;
 import com.puzzly.api.util.JwtUtils;
 import lombok.RequiredArgsConstructor;
@@ -22,21 +26,34 @@ import java.time.format.DateTimeFormatter;
 public class ApplicationListenerService implements ApplicationListener<ContextRefreshedEvent> {
 
     private final UserService userService;
+    private final CalendarService calendarService;
 
     private final JwtUtils jwtUtils;
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
         log.info("[++] Application ready");
         log.error("jwt key : " + jwtUtils.getJwtSecretKey());
-        // test용 ADMIN 추가
-        // TODO 나중에  DTO 만들면 set쪽 활성화해서 주석풀기
+
         UserRequestDto user = new UserRequestDto();
+        user.setUserName("admin");
+        user.setNickName("관리자");
         user.setEmail("admin@puzzly.com");
         user.setPassword("admin");
+        user.setPhoneNumber("010-1111-2222");
         user.setBirth(LocalDate.parse("1994-01-01", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         user.setAccountAuthority(AccountAuthority.ROLE_ADMIN);
-        user.setUserExRequestDto(new UserExRequestDto());
+        user.setFirstTermAgreement(true);
+        user.setSecondTermAgreement(true);
+        user.setGender(true);
         userService.insertUser(user);
+        SecurityUser securityUser = new SecurityUser();
+        securityUser.setUser(userService.findById((long)1).orElse(null));
+
+        CalendarRequestDto calendarRequestDto = new CalendarRequestDto();
+        calendarRequestDto.setCalendarName("PuzzlyCalendar");
+        calendarRequestDto.setUserId(securityUser.getUser().getUserId());
+        calendarService.createCalendar(securityUser, calendarRequestDto);
+
 
     }
 }

@@ -23,7 +23,7 @@ public class CalenderAttachments {
     @JoinColumn(name = "contentsId", nullable=false)
     private CalendarContents calendarContents ;
     @Column private String extension;
-    @Column private String originalName;
+    @Column private String originName;
     @Column private String filePath;
     @Column private LocalDateTime createDateTime;
     @Column private LocalDateTime modifyDateTime;

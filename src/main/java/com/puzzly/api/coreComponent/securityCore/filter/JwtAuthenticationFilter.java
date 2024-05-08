@@ -1,9 +1,10 @@
 package com.puzzly.api.coreComponent.securityCore.filter;
 
-import com.puzzly.api.domain.AccountAuthority;
 import com.puzzly.api.domain.SecurityUser;
 import com.puzzly.api.entity.User;
+import com.puzzly.api.exception.FailException;
 import com.puzzly.api.util.JwtUtils;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -19,6 +23,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -27,6 +32,7 @@ import java.util.regex.Pattern;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
+
     private final UserDetailsService userDetailsService;
 
     /*
@@ -37,11 +43,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException, FailException, AuthenticationException {
         // TODO Check : Security permitAll() 안먹혀서 별도로 처리중
         List<String> list = Arrays.asList(
                 "/api/user/login",
-                "/api/user/join",
+                //"/api/user/join",
                 "/login",
                 "/css/**",
                 "/js/**",
@@ -49,7 +55,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "/swagger-ui/**",
                 "/swagger-ui/index.html",
                 "/favicon.ico",
-                "/api/auth/refresh"
+                "/api/auth/refresh",
+                "/error"
         );
         if (list.contains(request.getRequestURI())) {
             filterChain.doFilter(request, response);
@@ -62,22 +69,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authorization = request.getHeader("Authorization");
 
         if (authorization == null || !authorization.startsWith("Bearer ")) {
-            log.error("token null");
+            request.setAttribute("exception", "TOKEN_NULL");
             filterChain.doFilter(request, response);
+
+            //throw new FailException("Token null", 400);
             return;
         }
         String token = authorization.split(" ")[1];
-        if (jwtUtils.isExpired(token)) {
-            log.error("token expired");
-            filterChain.doFilter(request, response);
-            return;
+        try{
+            if (jwtUtils.isExpired(token)) {
+                request.setAttribute("exception", "TOKEN_EXPIRED");
+                filterChain.doFilter(request, response);
+            }
+        } catch (ExpiredJwtException eje){
+            request.setAttribute("exception", "TOKEN_EXPIRED");
+            //throw new FailException("Token expired", 403);
         }
-        String email = jwtUtils.getEmailFromToken(token);
-        String authority = jwtUtils.getAuthorityFromToken(token);
 
-        User user = User.builder().email(email).password("PROTECTED").accountAuthority(AccountAuthority.valueOf(authority)).build();
+        String email = jwtUtils.getEmailFromToken(token);
+        List<String> authorities = jwtUtils.getAuthorityFromToken(token);
+        Long userId = jwtUtils.getUserIdFromToken(token);
+        User user = User.builder().userId(userId).email(email).password("PROTECTED").build();
 
         SecurityUser securityUser = new SecurityUser(user);
+        securityUser.setAuthorities(getSimpleAuthorityListFromJwt(authorities));
         Authentication authToken = new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
 
         SecurityContextHolder.getContext().setAuthentication(authToken);
@@ -131,11 +146,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         ArrayList<Pattern> swaggerUi = new ArrayList<>();
         swaggerUi.add(Pattern.compile("/swagger-ui/*"));
         swaggerUi.add(Pattern.compile("/v3/api-docs/*"));
+        swaggerUi.add(Pattern.compile("/v3/demo/*"));
         for (Pattern pt : swaggerUi) {
             if (pt.matcher(request.getRequestURI()).find()) {
                 return true;
             }
         }
         return false;
+    }
+
+    public Collection<? extends GrantedAuthority> getSimpleAuthorityListFromJwt(List<String> accountAuthorityArrayList) {
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        for(String authority : accountAuthorityArrayList){
+            authorities.add(new SimpleGrantedAuthority(authority));
+        }
+        return authorities;
     }
 }

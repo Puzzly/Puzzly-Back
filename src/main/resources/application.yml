@@ -1,9 +1,17 @@
 server:
   port: 8080
+  error:
+    whitelabel:
+      enabled: false
+    include-binding-errors: always
+    include-message: always
+    include-stacktrace: always
 
 spring:
   profiles:
     active: local
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration
 jwt:
   secretKey: 89e3d9b82f6908ddae0f2f20ce7bbcd7307b14e6938fa54e2990e8ee498632e7680474fd37098932f1d4605b7b3768bca12bf8b5454ed26f8316ee1de8a6948b
 
@@ -13,6 +21,13 @@ mybatis:
     use-generated-keys: true
     map-underscore-to-camel-case: true
 
+
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha
+    default-models-expand-depth: 2
+  show-login-endpoint: true
+  enable-spring-security: true
 #--- local
 ---
 spring:
@@ -25,7 +40,6 @@ spring:
       settings:
         web-allow-others: true
       path: /h2-console
-
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -37,14 +51,13 @@ spring:
     url: jdbc:h2:mem:testdb;MODE=mysql;
     username: sa
     password:
+puzzly:
+  filePath: /Users/junhoon.lee/sideP/PuzzlyFile
 logging:
   level:
-    root: info
-springdoc:
-  show-login-endpoint: true
-  enable-spring-security: true
-#--- dev
+    root: debug
 
+#--- dev
 ---
 spring:
   config:
@@ -68,6 +81,8 @@ spring:
     url: jdbc:h2:mem:testdb;MODE=mysql;
     username: sa
     password:
+puzzly:
+  filePath: /opt/PuzzlyFile
 logging:
   level:
     root: info

@@ -2,7 +2,9 @@ package com.puzzly.api.domain;
 
 import com.puzzly.api.entity.User;
 import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -11,7 +13,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 
-@Data
+@Getter
+@Setter
 @Slf4j
 @RequiredArgsConstructor
 public class SecurityUser implements UserDetails {
@@ -24,7 +27,8 @@ public class SecurityUser implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority(user.getAccountAuthority().toString()));
+        //return Collections.singletonList(new SimpleGrantedAuthority(user.getUserAccountAuthorityList().toString()));
+        return authorities;
     }
     public String getEmail(){
         return user.getEmail();

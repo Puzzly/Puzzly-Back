@@ -3,7 +3,39 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.puzzly.api.repository.mybatis.UserMybatisRepository">
-    <select id="selectUser" resultType="com.puzzly.api.entity.User">
-        select * from tb_users where user_id = #{userId}
+    <select id="selectUser" resultType="com.puzzly.api.dto.response.UserResponseDto">
+        select tu.user_id, user_name, nick_name, email, phone_number,
+               birth, gender, create_date_time, modify_date_time, delete_date_time,
+               status, tue.user_ex_id, tue.first_term_agreement, tue.second_term_agreement,
+               tue.profile_file_path, tue.status_message
+        from tb_users tu
+        INNER JOIN
+            tb_users_ex tue
+        ON
+            tue.user_id = tu.user_id
+        where tu.user_id = #{userId}
+    </select>
+
+    <select id="selectUserByEmail" resultType="com.puzzly.api.entity.User">
+        select * from tb_users where email = #{email}
+    </select>
+
+    <select id="selectUserByCalendarId" resultType="com.puzzly.api.dto.response.UserResponseDto">
+        SELECT tu.user_id, tu.user_name, tu.nick_name, tu.email, tu.phone_number, tu.gender
+        FROM
+            tb_users tu
+        INNER JOIN
+            tb_calendar_user_rels tcur
+        ON
+            tcur.user_id = tu.user_id
+        where
+            tcur.calendar_id = #{calendarId}
+    </select>
+
+
+    <select id="selectUserAuthority" resultType="string">
+        select account_authority
+        from tb_user_account_authorities
+        where user_id = #{userId}
     </select>
 </mapper>

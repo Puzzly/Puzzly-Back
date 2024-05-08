@@ -2,6 +2,7 @@ package com.puzzly.api.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @Table(name="tb_calendar_user_rels")
+@Builder
 public class CalendarUserRel {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
@@ -23,5 +25,5 @@ public class CalendarUserRel {
     @JoinColumn(name="calendarId")
     private Calendar calendar;
 
-    @Column private String authority;
+    @Column private int authority;
 }

@@ -17,16 +17,14 @@ public class SwaggerConfig {
         Info info = new Info()
                 .version("Dev 0.0.0")
                 .title("Puzzly API")
-                .description("");
+                .description("** NOTIFICATION : API마다 생략가능한 값이나 무시되는 값이 별도로 존재합니다. 각 API 설명 참고 부탁드립니다..");
         SecurityRequirement securityRequirement = new SecurityRequirement().addList("JWT");
         Components components = new Components().addSecuritySchemes("JWT", new SecurityScheme()
                 .name("JWT")
                 .type(SecurityScheme.Type.HTTP)
                 .scheme("bearer")
                 .bearerFormat("JWT")
-                .description("When you using swagger-ui, \"Bearer \" string value will be automatically added in authorization value\n" +
-                        "so you should remove string \"Bearer \" value from access token.\n" +
-                        "On the other hand, if you using your own application, You should maintain \"Bearer \" value in access token.")
+                .description(" Swagger로 테스트하실때에는 login-end-point의 response 값중 Bearar 값은 빼고 여기에 입력해주세요.\n\n Swagger가 자동으로 한번 더 붙여서 보내서 에러납니다..")
         );
         return new OpenAPI().info(info).addSecurityItem(securityRequirement).components(components);
     }

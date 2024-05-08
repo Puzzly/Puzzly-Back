@@ -15,24 +15,24 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 
-@ControllerAdvice
 @RestControllerAdvice
+@ControllerAdvice
 @Log4j2
-@RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
-    private final ObjectMapper objectMapper;
-
     @ExceptionHandler(FailException.class)
-    protected ResponseEntity<?> handleException(Exception e, HttpServletRequest req) throws JsonMappingException, JsonProcessingException {
-        HashMap<String, Object> eMap = objectMapper.readValue(e.getMessage(), HashMap.class);
-        HttpStatus status =HttpStatus.valueOf((int)eMap.get("code"));
-        String message = (String)eMap.get("message");
+    protected ResponseEntity<?> handleFailException(FailException e, HttpServletRequest req) throws JsonMappingException, JsonProcessingException {
+        HttpStatus status = HttpStatus.valueOf(e.getStatus());
+        e.printStackTrace();
+        ResponseEntity res = new ResponseEntity(e, status);
+        return res;
+    }
 
+    @ExceptionHandler(Exception.class)
+    protected ResponseEntity<?> handleException(Exception e) {
         e.printStackTrace();
         log.error(e);
-
-        FailException failException = new FailException(message, status.value());
-        return new ResponseEntity<>(failException, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(new FailException(e), HttpStatus.BAD_REQUEST);
     }
+
 }
