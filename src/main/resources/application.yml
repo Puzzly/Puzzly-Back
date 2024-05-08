@@ -22,13 +22,14 @@ mybatis:
     use-generated-keys: true
     map-underscore-to-camel-case: true
 
-
 springdoc:
   swagger-ui:
     tags-sorter: alpha
     default-models-expand-depth: 2
   show-login-endpoint: true
   enable-spring-security: true
+
+
 #--- local
 ---
 spring:
@@ -54,6 +55,8 @@ spring:
     password:
 puzzly:
   filePath: /Users/junhoon.lee/sideP/PuzzlyFile
+  swagger-ui:
+    server-url: http://localhost
 logging:
   level:
     root: info
@@ -83,6 +86,8 @@ spring:
     password:
 puzzly:
   filePath: /opt/PuzzlyFile
+  swagger-ui:
+    server-url: https://puzzly-back.fly.dev
 logging:
   level:
     root: info

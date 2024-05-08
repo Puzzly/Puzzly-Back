@@ -8,6 +8,7 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,6 +18,10 @@ import java.util.List;
 @Configuration
 @Slf4j
 public class SwaggerConfig {
+
+    @Value("${puzzly.swagger-ui.server-url}")
+    private String serverUrl;
+
     @Bean
     public OpenAPI openAPI(){
         Info info = new Info()
@@ -33,9 +38,8 @@ public class SwaggerConfig {
         );
         // 나중에 Server Object 쓰게되면 nginx 앞단에 세워서 upstream은 http 통신 하도록 적용하는것이 간단하게 처리할 수 있어보임.
         return new OpenAPI().info(info).addSecurityItem(securityRequirement).components(components).servers(List.of(
-                new Server().url("https://puzzly-back.fly.dev").description("Avail on flyio"),
-                new Server().url("http://localhost:8080").description("Avail on local")
-        ));
+                new Server().url(serverUrl).description("referencing application.yml puzzly.swagger-ui.server-url")
+        );
     }
     /*
     @Bean
