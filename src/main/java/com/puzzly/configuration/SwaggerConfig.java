@@ -39,7 +39,7 @@ public class SwaggerConfig {
         // 나중에 Server Object 쓰게되면 nginx 앞단에 세워서 upstream은 http 통신 하도록 적용하는것이 간단하게 처리할 수 있어보임.
         return new OpenAPI().info(info).addSecurityItem(securityRequirement).components(components).servers(List.of(
                 new Server().url(serverUrl).description("referencing application.yml puzzly.swagger-ui.server-url")
-        );
+        ));
     }
     /*
     @Bean
