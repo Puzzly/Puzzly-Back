@@ -5,21 +5,13 @@ Puzzly Back End
 - 프로그램 언어: Java 17
 - 프레임워크: Spring boot 3.2
 - 라이브러리
-  - jpa
-  - mybatis
-  - web
-  - security
+  - jpa / mybatis
+  - Springboot-web
+  - Springboot-security
+  - Springdoc-api
   - lombok
-  - springdoc (swagger)
   - jjwt
-  - objectmapper
-  - h2 (local)
-  - mariadb (in dev, oper , as planning)
-
----
-## database structure
-** 이준훈에게 파일을 요청해주시거나 혹은 notion을 제안해주세요
-![Puzzly_DBSTRC_FIN](https://github.com/Puzzly/Puzzly-Back/assets/48429012/4b613f7b-8897-4c5e-b938-d7832ccf2032)
+  - h2 (local) / mariadb (dev/deploy)
 
 ---
 ## Mybatis, JPA 사용 기준
@@ -34,38 +26,38 @@ Puzzly Back End
 - 스케쥴로 제어하는 CRUDL
 - 단순 C 후 FE에 결과 리턴을 제외한 쿼리의 결과값을 FrontEnd로 내릴 목적이 있는 객체, FrontEnd로 내리기 전에 추가적인 조작이 필요한 경우
 
+---
+## release 버전 기준
 
-<!--
-## 패키지 구조
+- Major.Minor.patch
 
+- Major ↑ : N차 MVP 기능 개발이 패치 될 경우
+- Minor ↑ : API 군이 새로 패치 될 경우
+- patch ↑ : 이외의 모든 상황 (디버깅패치, chore패치, etc..)
 
-📂com  
-┗ 📂puzzly  
-  ┣ 📂 api
-    ┣ 📂 controller
-      ┗ auth, user ..etc controller
-    ┣ 📂 coreComponent
-      ┣ 📂 securityCore
-        ┗ springSecurity@Configuration , UserDetails를 제외한 security 관련 .java
-      ┗ ApplicationListenerService, GlobalExceptionHandler .java
-    ┣ 📂 domain
-      ┗ DB에 저장되지 않을 객체 및 enum .java
-    ┣ 📂 dto
-      ┗ 📂 Request DTO (package) 
-      ┗ 📂 Response DTO (package)
-    ┣ 📂 entity
-      ┗ DB 객체 .java
-    ┣ 📂 enums
-      ┗ enum 최상위객체, typeHandler .java
-    ┣ 📂 exception
-      ┗ Custom Exception
-    ┣ 📂 repository
-      ┗ 📂 jpa repository (package) interfaces
-      ┗ 📂 mybatis repository (package) interfaces
-    ┣ 📂 service
-      ┗ auth, user ..etc service
-    ┗ 📂 util
-      ┗ jwtUtil, Global Util ..etc
-  ┣ 📂 configuration 
-    ┣ configs.java (Swagger, Security, ObjectMapper, H2Server, BcryptPassword, Database (Database Configuration is temporary @Deprecated) 
-    -->
+--- 
+## response 기준
+
+- 정상 리턴 (SUCCESS)
+  ```
+  {
+    "status": 200,
+    "message": "SUCCESS",
+    "timestamp": "2024-05-10 01:19:15",
+    "result": {
+      {{결과값}}
+    }
+  }
+  // result 내부에 단일 객체면 변수명 그대로 (예 : user: {})
+  // result 내부에 리스트 형태가 있으면 List 추가 (예 : userList: [{},{},{}])
+  ```
+- 실패 리턴 (Fail)
+  ```
+  {
+    "status": 400,
+    "timestamp": "2024-05-10 01:10:30",
+    "message": "SERVER_MESSAGE_USER_INFO_NOT_FOUND"
+    // message가 SERVER_MESSAGE_* 이면 의도된 예외처리, FE로 오류메시지를 출력해주길 바라는 상황 (위 예시 : ID/PW가 틀렸습니다?)
+    // SERVER_MESSAGE_* 가 아닐경우 내부에서 발생한 오류. 발생하는 케이스를 확인해서 고치거나 SERVER_MESSAGE_* 형태로 변경해야함
+  }
+  ```
