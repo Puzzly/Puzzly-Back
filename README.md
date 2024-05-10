@@ -27,13 +27,21 @@ Puzzly Back End
 - 단순 C 후 FE에 결과 리턴을 제외한 쿼리의 결과값을 FrontEnd로 내릴 목적이 있는 객체, FrontEnd로 내리기 전에 추가적인 조작이 필요한 경우
 
 ---
-## release 버전 기준
+## git branch 관리
+
+- 개발 : develop 브랜치에서 새 브랜치 생성하여 작업
+- PR : 새 브랜치에서 작업 종료되면 해당 브랜치로 remote push, 새브랜치 -> develop 브랜치 PR
+- Deploy : develop -> main PR, release note 작성
+
+- 업무 종류 : feature(기능개발), chore(기능에 영향을 미치지 않는 잡일, 예시: md update), bugfix(버그수정), refactor(로직은 변하지 않으나 코드 수정이 발생한 리펙터링) 
+
+## git.release 버전 기준
 
 - Major.Minor.patch
 
 - Major ↑ : N차 MVP 기능 개발이 패치 될 경우
-- Minor ↑ : API 군이 새로 패치 될 경우
-- patch ↑ : 이외의 모든 상황 (디버깅패치, chore패치, etc..)
+- Minor ↑ : API 군이 새로 패치 될 경우 (Major 업데이트 될 경우 초기화)
+- patch ↑ : 이외의 모든 상황 (디버깅패치, chore패치, etc..) (Minor 업데이트 될 경우 초기화)
 
 --- 
 ## response 기준
