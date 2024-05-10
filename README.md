@@ -57,7 +57,7 @@ Puzzly Back End
     }
   }
   // result 내부에 단일 객체면 변수명 그대로 (예 : user: {})
-  // result 내부에 리스트 형태가 있으면 List 추가 (예 : userList: [{},{},{}])
+  // result 내부에 리스트 형태가 있으면 변수명에 List 붙여서 리턴 (예 : userList: [{},{},{}])
   ```
 - 실패 리턴 (Fail)
   ```
