@@ -56,7 +56,7 @@ spring:
 puzzly:
   filePath: /Users/junhoon.lee/sideP/PuzzlyFile
   swagger-ui:
-    server-url: http://localhost
+    server-url: http://localhost:8080
 logging:
   level:
     root: info

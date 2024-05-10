@@ -23,6 +23,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -144,8 +145,8 @@ public class CalendarService {
         if(user == null){
             throw new FailException("SERVER_MESSAGE_INVITE_USER_NOT_EXISTS", 404);
         }
-        CalendarUserRel calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUser(user);
-        if(calendarUserRel == null){
+        List<CalendarUserRel> calendarUserRelList = calendarUserRelJpaRepository.findCalendarUserRelByCalendarAndUser(calendar, user);
+        if(ObjectUtils.isEmpty(calendarUserRelList)){
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATED_IN_CALENDAR", 404);
         }
         Map<String, Object> map = new HashMap<>();

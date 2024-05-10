@@ -16,4 +16,6 @@ public interface CalendarUserRelJpaRepository extends JpaRepository<CalendarUser
     public CalendarUserRel findCalendarUserRelByUserAndCalendar(User user, Calendar calendar);
 
     public List<CalendarUserRel> findCalendarUserRelByCalendar(Calendar calendar);
+
+    public List<CalendarUserRel> findCalendarUserRelByCalendarAndUser(Calendar calendar, User user);
 }
