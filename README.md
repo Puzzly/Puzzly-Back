@@ -40,7 +40,7 @@ Puzzly Back End
 - Major.Minor.patch
 
 - Major ↑ : N차 MVP 기능 개발이 패치 될 경우
-- Minor ↑ : API 군이 새로 패치 될 경우 (Major 업데이트 될 경우 초기화)
+- Minor ↑ : 신규 API가 생성되었을 경우, API 리턴값이 변경될 경우 (Controller의 URL, Parameter, Return 형태 변경) (Major 업데이트 될 경우 초기화)
 - patch ↑ : 이외의 모든 상황 (디버깅패치, chore패치, etc..) (Minor 업데이트 될 경우 초기화)
 
 --- 
