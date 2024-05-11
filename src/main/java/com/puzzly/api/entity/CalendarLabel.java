@@ -20,6 +20,9 @@ public class CalendarLabel {
 
     @Column private String contents;
 
+    @Column private String colorCode;
+    @Column private Integer order;
+
     // 라벨 생성자
     @ManyToOne(fetch = FetchType.LAZY)
     //@JoinColumn(name = "createId", referencedColumnName = "userId", nullable=false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))

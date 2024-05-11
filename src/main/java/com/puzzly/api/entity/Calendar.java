@@ -94,6 +94,9 @@ public class Calendar {
     @JoinColumn(name = "deleteId", referencedColumnName = "userId")
     private User deleteUser;
     // 그룹관계정일
+
+    // 역방향 매핑 취소. 쿼리로 제어
+    /*
     @OneToMany(mappedBy="calendar")
     private List<CalendarUserRel> calendarUserRelList = new ArrayList<>();
 
@@ -105,6 +108,8 @@ public class Calendar {
     @OneToMany(mappedBy = "calendar")
     private List<CalendarLabelCalendarRel> calendarLabelCalendarRelList = new ArrayList<>();
 
+
+     */
     /*
     public void setCalendarType(String calendarType) {
         this.calendarType = calendarType;

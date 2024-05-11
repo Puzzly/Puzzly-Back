@@ -17,6 +17,8 @@
                     tb_calendar_user_rels
                 WHERE
                     user_id = #{userId}
+                AND
+                    is_deleted = #{isDeleted}
                 )
         ORDER BY calendar_id desc
         LIMIT #{pageSize} OFFSET #{offset}

@@ -1,14 +1,12 @@
 package com.puzzly.api.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @NoArgsConstructor
 @Getter
+@Setter
 @AllArgsConstructor
 @Table(name="tb_calendar_user_rels")
 @Builder
@@ -26,4 +24,5 @@ public class CalendarUserRel {
     private Calendar calendar;
 
     @Column private int authority;
+    @Column private Boolean isDeleted;
 }
