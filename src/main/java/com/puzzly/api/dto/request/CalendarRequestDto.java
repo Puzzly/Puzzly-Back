@@ -41,5 +41,4 @@ public class CalendarRequestDto {
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, defaultValue = "퍼즐리 캘린더", description = "calendar 이름")
     private String calendarName;
 
-
 }

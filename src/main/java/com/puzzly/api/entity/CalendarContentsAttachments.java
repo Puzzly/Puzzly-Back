@@ -22,7 +22,7 @@ public class CalendarContentsAttachments {
     @ManyToOne(fetch = FetchType.LAZY)
     //@JoinColumn(name = "contentsId", nullable=false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     @JoinColumn(name = "contentsId", nullable=false)
-    private CalendarContents calendarContents ;
+    private CalendarContents calendarContents;
     @Column private String extension;
     @Column private String originName;
     @Column private String filePath;

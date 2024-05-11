@@ -43,6 +43,55 @@ import java.util.Map;
 public class CalendarController {
 
     private final CalendarService calendarService;
+
+    @PostMapping("/invitationCode")
+    @Operation(summary="캘린더 초대코드 생성, 토큰필요 O", description = "캘린더 초대코드 생성, 토큰필요 O, 현시점 유효시간 무제한, 향후 24시간으로 조정 예정",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content={
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schemaProperties = {
+                                            @SchemaProperty(name = "calendarId", schema = @Schema(type="string", defaultValue="1", requiredMode = Schema.RequiredMode.REQUIRED))
+                                    }
+                            )
+                    }
+            ))
+    public ResponseEntity<?> createInvitationCode(
+            HttpServletRequest request,
+            @RequestBody Map<String, Long> requestMap
+    ) throws FailException, Exception{
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+
+        String invitationCode = calendarService.createInviteCode(securityUser, MapUtils.getLong(requestMap, "calendarId"));
+        restResponse.setResult(invitationCode);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/join")
+    @Operation(summary="초대코드로 캘린더 가입, JWT토큰 필요", description = "초대코드로 캘린더 가입, JWT토큰 필요",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content={
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schemaProperties = {
+                                            @SchemaProperty(name = "invitationCode", schema = @Schema(type="string", defaultValue="", requiredMode = Schema.RequiredMode.REQUIRED))
+                                    }
+                            )
+                    }
+            ))
+    public ResponseEntity<?> joinByInvitationCode(
+            HttpServletRequest request,
+            @RequestBody HashMap<String, String> map
+    )throws FailException, Exception{
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+
+        CalendarResponseDto calendar = calendarService.joinCalendarByInviteCode(securityUser, map.get("invitationCode"));
+        restResponse.setResult(calendar);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
     @GetMapping("/list")
     @Operation(summary = "내가 참여한 켈린더 목록 조회, 토큰필요 O", description = "내가 참여한 모든 켈린더 조회, 토큰필요 O")
     public ResponseEntity<?> getCalendarList(
@@ -54,7 +103,7 @@ public class CalendarController {
     )throws FailException {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
-        List<CalendarResponseDto> calendarList = calendarService.getSimpleCalendarList(securityUser, offset, pageSize);
+        List<CalendarResponseDto> calendarList = calendarService.getSimpleCalendarList(securityUser, offset, pageSize, false);
         restResponse.setResult(calendarList);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
@@ -85,7 +134,7 @@ public class CalendarController {
     @PutMapping()
     @Operation(summary = "캘린더 수정, 토큰필요 O", description = "캘린더 수정, 토큰 필요 O")
     @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarResponseDto.class)))
-    public ResponseEntity<?> updateeCalendar(
+    public ResponseEntity<?> updateCalendar(
             HttpServletRequest request,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description="이 API에서 아래의 값은 생략이 가능함\n\n" +
@@ -104,51 +153,17 @@ public class CalendarController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @PostMapping("/invitationCode")
-    @Operation(summary="캘린더 초대코드 생성, 토큰필요 O", description = "캘린더 초대코드 생성, 토큰필요 O, 현시점 유효시간 무제한, 향후 24시간으로 조정 예정",
-                requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                        content={
-                                @Content(
-                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                        schemaProperties = {
-                                                @SchemaProperty(name = "calendarId", schema = @Schema(type="string", defaultValue="1", requiredMode = Schema.RequiredMode.REQUIRED))
-                                        }
-                                )
-                        }
-                ))
-    public ResponseEntity<?> createInvitationCode(
+    @DeleteMapping()
+    @Operation(summary = "캘린더 삭제, 토큰필요 O", description = "캘린더 삭제, 내가 생성한 캘린더만 삭제할 수 있음")
+    public ResponseEntity<?> getCalendarList(
             HttpServletRequest request,
-            @RequestBody Map<String, Long> requestMap
-    ) throws FailException, Exception{
+            @Parameter(description="삭제하려는 CalendarId")
+            @RequestParam Long calendarId
+    )throws FailException {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
-
-        String invitationCode = calendarService.createInviteCode(securityUser, MapUtils.getLong(requestMap, "calendarId"));
-        restResponse.setResult(invitationCode);
-        return new ResponseEntity<>(restResponse, HttpStatus.OK);
-    }
-
-    @PostMapping("/join")
-    @Operation(summary="초대코드로 캘린더 가입, JWT토큰 필요", description = "초대코드로 캘린더 가입, JWT토큰 필요",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            content={
-                    @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schemaProperties = {
-                                    @SchemaProperty(name = "invitationCode", schema = @Schema(type="string", defaultValue="", requiredMode = Schema.RequiredMode.REQUIRED))
-                            }
-                    )
-            }
-    ))
-    public ResponseEntity<?> joinByInvitationCode(
-            HttpServletRequest request,
-            @RequestBody HashMap<String, String> map
-    )throws FailException, Exception{
-        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        RestResponse restResponse = new RestResponse();
-
-        CalendarResponseDto calendar = calendarService.joinCalendarByInviteCode(securityUser, map.get("invitationCode"));
-        restResponse.setResult(calendar);
+        String result = calendarService.removeCalendar(securityUser, calendarId);
+        restResponse.setResult(result);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
@@ -172,7 +187,7 @@ public class CalendarController {
 
         LocalDateTime startTargetDateTime = LocalDateTime.parse(startTargetDateTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         LocalDateTime limitTargetDateTime = LocalDateTime.parse(limitTargetDateTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        List<CalendarContentsResponseDto> calendarContentsList = calendarService.getCalendarContentsList(securityUser, calendarId, startTargetDateTime, limitTargetDateTime);
+        List<CalendarContentsResponseDto> calendarContentsList = calendarService.getCalendarContentsList(securityUser, calendarId, startTargetDateTime, limitTargetDateTime, false);
 
         restResponse.setResult(calendarContentsList);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
@@ -205,7 +220,7 @@ public class CalendarController {
 
     @GetMapping(value = "/contents")
     @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(schema = @Schema(implementation = CalendarContentsResponseDto.class)))
-    @Operation(summary="캘린더 컨텐츠 조회, JWT 토큰 필요", description = "캘린더 컨텐츠 등록, JWT토큰 필요")
+    @Operation(summary="캘린더 컨텐츠 조회, JWT 토큰 필요", description = "캘린더 컨텐츠 조회, JWT토큰 필요")
     public ResponseEntity<?> getCalendarContents(
             HttpServletRequest request,
             @Parameter(description="일정 Id")
@@ -259,7 +274,6 @@ public class CalendarController {
         // FE에 노출되는 변수명으로 인해 변수명 재조정
         calendarService.downloadCalendarContentsAttachments(securityUser, attachmentId, request, response);
     }
-
 
     /*
     @PostMapping("/label")

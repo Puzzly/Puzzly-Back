@@ -12,7 +12,7 @@ import java.util.Map;
 public interface CalendarContentsMybatisRepository {
 
     //
-    public List<CalendarContentsResponseDto> selectCalendarContentsByStartDateTimeAndCalendar(@Param("calendarId") Long calendarId, @Param("startDateTime") LocalDateTime startDateTime, @Param("limitStartDateTime") LocalDateTime limitStartDateTime);
+    public List<CalendarContentsResponseDto> selectCalendarContentsByStartDateTimeAndCalendar(@Param("calendarId") Long calendarId, @Param("startDateTime") LocalDateTime startDateTime, @Param("limitStartDateTime") LocalDateTime limitStartDateTime, @Param("isDeleted") boolean isDeleted);
     public List<Map<String, Object>> selectCalendarContentsAttachmentsByContentsId(@Param("contentsId") Long contentsId);
 
     public CalendarContentsResponseDto selectCalendarContentsByContentsId(@Param("contentsId") Long contentsId);

@@ -9,7 +9,7 @@
         SELECT tcc.contents_id, tcc.calendar_id, tc.calendar_name, tcc.create_id, tcc.delete_id,
                tcc.start_date_time, tcc.end_date_time, tcc.contents, tcc.notify, tcc.notify_time,
                tcc.memo, tcc.location,
-               tcc.create_date_time, tcc.modify_date_time, tcc.delete_date_time,
+               tcc.create_date_time, tcc.modify_date_time, tcc.delete_date_time, tcc.is_deleted
         FROM tb_calendar_contents tcc
         INNER JOIN
             tb_calendars tc
@@ -17,6 +17,8 @@
             tcc.calendar_id = tc.calendar_id
         WHERE
             tcc.calendar_id = #{calendarId}
+        AND
+            tcc.is_deleted = #{isDeleted}
         AND
             tcc.start_date_time &gt;= #{startDateTime}
         AND
