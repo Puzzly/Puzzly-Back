@@ -22,10 +22,13 @@ public class SwaggerConfig {
     @Value("${puzzly.swagger-ui.server-url}")
     private String serverUrl;
 
+    @Value("${puzzly.version}")
+    private String version;
+
     @Bean
     public OpenAPI openAPI(){
         Info info = new Info()
-                .version("Dev 0.0.0")
+                .version("Dev " + version)
                 .title("Puzzly API")
                 .description("** NOTIFICATION : API마다 생략가능한 값이나 무시되는 값이 별도로 존재합니다. 각 API 설명 참고 부탁드립니다..");
         SecurityRequirement securityRequirement = new SecurityRequirement().addList("JWT");
