@@ -35,10 +35,12 @@ Puzzly Back End
 ## git branch 관리
 
 - 개발 : develop 브랜치에서 새 브랜치 생성하여 작업
+- 예시 (feature/calendarCreate)
+
 - PR : 새 브랜치에서 작업 종료되면 해당 브랜치로 remote push, 새브랜치 -> develop 브랜치 PR
 - Deploy : develop -> main PR, release note 작성
 
-- 업무 종류 : feature(기능개발), chore(기능에 영향을 미치지 않는 잡일, 예시: md update), bugfix(버그수정), refactor(로직은 변하지 않으나 코드 수정이 발생한 리펙터링) 
+- 업무 종류 : feature(기능개발), chore(기능에 영향을 미치지 않는 잡일, 예시: md update), bugfix(버그수정), refactor(로직은 변하지 않으나 코드 수정이 발생한 리펙터링), etc(분류하기애매함)
 
 ## git.release 버전 기준
 
