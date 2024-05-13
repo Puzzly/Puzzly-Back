@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +70,7 @@ public class CalendarController {
     }
 
     @PostMapping("/join")
-    @Operation(summary="초대코드로 캘린더 가입, JWT토큰 필요", description = "초대코드로 캘린더 가입, JWT토큰 필요",
+    @Operation(summary="캘린더 초대코드로 가입, JWT토큰 필요", description = "초대코드로 캘린더 가입, JWT토큰 필요",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content={
                             @Content(
@@ -219,7 +220,7 @@ public class CalendarController {
     @Operation(summary="캘린더 컨텐츠 조회, JWT 토큰 필요", description = "캘린더 컨텐츠 조회, JWT토큰 필요")
     public ResponseEntity<?> getCalendarContents(
             HttpServletRequest request,
-            @Parameter(description="일정 Id")
+            @Parameter(description="캘린더 컨텐츠 Id")
             @RequestParam(name="contentsId") Long contentsId
     ) throws FailException{
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -234,7 +235,7 @@ public class CalendarController {
     @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarContentsResponseDto.class)))
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
-    @Operation(summary="캘린더 컨텐츠 수정하기, JWT 토큰 필요", description = "캘린더 컨텐츠 수정하기, JWT 토큰 필요")
+    @Operation(summary="캘린더 컨텐츠 수정, JWT 토큰 필요", description = "캘린더 컨텐츠 수정하기, JWT 토큰 필요")
     public ResponseEntity<?> updateCalendarContents(
             HttpServletRequest request,
             @Parameter(
@@ -254,14 +255,32 @@ public class CalendarController {
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/download/file")
+    @DeleteMapping(value="/contents")
+    @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarContentsResponseDto.class)))
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
+    @Operation(summary="캘린더 컨텐츠 삭제, JWT 토큰 필요", description = "캘린더 컨텐츠 삭제, JWT 토큰 필요")
+    public ResponseEntity<?> removeCalendarContents(
+            HttpServletRequest request,
+            @Parameter(description="캘린더 컨텐츠 Id")
+            @RequestParam(name="contentsId") Long calendarContentsId
+    ) throws FailException{
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+        String result = calendarService.removeCalendarContents(securityUser, calendarContentsId);
+
+        restResponse.setResult(result);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/contents/file")
     @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(schema = @Schema(implementation = CalendarContentsResponseDto.class)))
     @Operation(summary="캘린더 첨부파일 다운로드", description = "캘린더 첨부파일 다운로드, JWT토큰 필요, 해당 캘린더에 참여해있어야 함")
     public void downloadCalendarContentsAttachments(
             HttpServletRequest request,
             HttpServletResponse response,
             @Parameter(description="첨부파일 Id")
-            @RequestParam(name="contentsId") Long attachmentsId
+            @RequestParam(name="attachmentsId") Long attachmentsId
     ) throws FailException, IOException {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
@@ -269,7 +288,7 @@ public class CalendarController {
         calendarService.downloadCalendarContentsAttachments(securityUser, attachmentsId, request, response);
     }
 
-    @PostMapping(value = "/upload/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/contents/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(schema = @Schema(implementation = CalendarContentsResponseDto.class)))
     @Operation(summary="캘린더 첨부파일 업로드", description = "캘린더 첨부파일 업로드, JWT토큰 필요")
     public ResponseEntity<?> uploadCalendarContentsAttachments(
@@ -281,6 +300,21 @@ public class CalendarController {
         RestResponse restResponse = new RestResponse();
         List<Long> attachmentsIdList = calendarService.uploadCalendarContentsAttachments(securityUser, fileList);
         restResponse.setResult(attachmentsIdList);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
+    @DeleteMapping(value = "/contents/file")
+    @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(schema = @Schema(implementation = CalendarContentsResponseDto.class)))
+    @Operation(summary="캘린더 첨부파일 다운로드", description = "캘린더 첨부파일 다운로드, JWT토큰 필요, 해당 캘린더에 참여해있어야 함")
+    public ResponseEntity<?> removeCalendarContentsAttachments(
+            HttpServletRequest request,
+            @Parameter(description="삭제할 첨부파일 Id")
+            @RequestParam(name="attachmentsId") Long attachmentsId
+    ) throws FailException, IOException {
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+        String result = calendarService.removeCalendarContentsAttachments(securityUser, attachmentsId);
+        restResponse.setResult(result);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 

@@ -34,4 +34,12 @@ public interface CalendarContentsAttachmentsJpaRepository extends JpaRepository<
              */
     //public void bulkUpdateIsDeletedCalendarContentsAttachments(Calendar calendar);
     public void bulkUpdateIsDeletedCalendarContentsAttachments(Long calendarId);
+
+    @Modifying(clearAutomatically = true)
+    @Query(nativeQuery = true,
+        value="UPDATE tb_calendar_contents_attachments tcca" +
+                "SET tcca.is_deleted = true"+
+                "WHERE tcca.contents_id =:contentsId"
+        )
+    public void bulkUpdateIsDeletedCalendarContentsAttachmentsByContentsId(Long contentsId);
 }
