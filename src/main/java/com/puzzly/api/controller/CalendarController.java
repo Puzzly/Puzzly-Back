@@ -193,13 +193,11 @@ public class CalendarController {
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/contents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/contents")
     @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(schema = @Schema(implementation = CalendarContentsResponseDto.class)))
     @Operation(summary="캘린더 컨텐츠 등록, JWT 토큰 필요", description = "캘린더 컨텐츠 등록, JWT토큰 필요")
     public ResponseEntity<?> createCalendarContents(
             HttpServletRequest request,
-            @Parameter(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
-            @RequestPart(required = false) List<MultipartFile> fileList,
             @Parameter(
                     description="이 API에서 아래의 값은 생략이 가능함\n\n" +
                             "* ContentsId (생략 가능, 값 생성/변경은 서버에서 수행함. 값이 주어지면 무시됨)\n\n"+
@@ -207,13 +205,11 @@ public class CalendarController {
                             "이 API에서 주의사항은 아래와 같음\n\n",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
             )
-            // CalendarContents 변수가 FE에 노출되는 변수명이므로 RequestDto는 변수명에서 제거
-            @RequestPart CalendarContentsRequestDto calendarContents
+            @RequestBody CalendarContentsRequestDto calendarContents
     ) throws FailException{
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
-        // FE에 노출되는 변수명으로 인해 변수명 재조정
-        CalendarContentsResponseDto calendarContentsResponse = calendarService.createCalendarContents(securityUser, calendarContents, fileList);
+        CalendarContentsResponseDto calendarContentsResponse = calendarService.createCalendarContents(securityUser, calendarContents);
         restResponse.setResult(calendarContentsResponse);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
@@ -234,15 +230,13 @@ public class CalendarController {
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
-    @PutMapping(value="/contents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value="/contents")
     @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarContentsResponseDto.class)))
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
-    @Operation(summary="캘린더 일정 수정하기, JWT 토큰 필요", description = "캘린더 일정 수정하기, JWT 토큰 필요")
+    @Operation(summary="캘린더 컨텐츠 수정하기, JWT 토큰 필요", description = "캘린더 컨텐츠 수정하기, JWT 토큰 필요")
     public ResponseEntity<?> updateCalendarContents(
             HttpServletRequest request,
-            @Parameter(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
-            @RequestPart(required = false) List<MultipartFile> fileList,
             @Parameter(
                     description="이 API에서 아래의 값은 생략이 가능함\n\n" +
                             "* 변경이 발생하지 않은 Parameter값은 서버로 보내지 않고 생략 가능"+
@@ -250,11 +244,11 @@ public class CalendarController {
                             "이 API에서 주의사항은 아래와 같음\n\n",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
             )
-            @RequestPart CalendarContentsRequestDto calendarContents
+            @RequestBody CalendarContentsRequestDto calendarContents
     ) throws FailException{
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
-        CalendarContentsResponseDto calendarContentsResponse = calendarService.updateCalendarContents(securityUser, calendarContents, fileList);
+        CalendarContentsResponseDto calendarContentsResponse = calendarService.updateCalendarContents(securityUser, calendarContents);
 
         restResponse.setResult(calendarContentsResponse);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
@@ -267,12 +261,27 @@ public class CalendarController {
             HttpServletRequest request,
             HttpServletResponse response,
             @Parameter(description="첨부파일 Id")
-            @RequestParam(name="contentsId") Long attachmentId
+            @RequestParam(name="contentsId") Long attachmentsId
     ) throws FailException, IOException {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
         // FE에 노출되는 변수명으로 인해 변수명 재조정
-        calendarService.downloadCalendarContentsAttachments(securityUser, attachmentId, request, response);
+        calendarService.downloadCalendarContentsAttachments(securityUser, attachmentsId, request, response);
+    }
+
+    @PostMapping(value = "/upload/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(schema = @Schema(implementation = CalendarContentsResponseDto.class)))
+    @Operation(summary="캘린더 첨부파일 업로드", description = "캘린더 첨부파일 업로드, JWT토큰 필요")
+    public ResponseEntity<?> uploadCalendarContentsAttachments(
+            HttpServletRequest request,
+            //@Parameter(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
+            @RequestPart(required = false) List<MultipartFile> fileList
+    ) throws FailException, IOException {
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+        List<Long> attachmentsIdList = calendarService.uploadCalendarContentsAttachments(securityUser, fileList);
+        restResponse.setResult(attachmentsIdList);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
     /*

@@ -2,14 +2,10 @@ package com.puzzly.api.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
 import lombok.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter
@@ -61,6 +57,8 @@ public class CalendarContentsRequestDto {
     @Schema(description = "일정이 진행될 위치, 위경도값, \",\"로 위경도 구분", defaultValue = "")
     private String location;
 
+    @Schema(description = "캘린더에 등록할 파일 PK List", defaultValue = "")
+    private ArrayList<Long> createAttachmentsList;
     @Schema(description = "삭제할 파일 PK List", defaultValue = "")
-    private ArrayList<Long> deleteFileList;
+    private ArrayList<Long> deleteAttachmentsList;
 }

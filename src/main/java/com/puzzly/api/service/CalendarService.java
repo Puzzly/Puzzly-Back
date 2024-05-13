@@ -234,7 +234,7 @@ public class CalendarService {
     }
 
     @Transactional
-    public CalendarContentsResponseDto createCalendarContents(SecurityUser securityUser, CalendarContentsRequestDto calendarContentsRequestDto, List<MultipartFile> fileList){
+    public CalendarContentsResponseDto createCalendarContents(SecurityUser securityUser, CalendarContentsRequestDto calendarContentsRequestDto){
         Calendar calendar = calendarJpaRepository.findById(calendarContentsRequestDto.getCalendarId()).orElse(null);
         if(calendar == null){
             throw new FailException("SERVER_MESSAGE_CALENDAR_NOT_EXISTS", 400);
@@ -248,6 +248,7 @@ public class CalendarService {
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
 
+        // 켈린더 컨텐츠 등록
         CalendarContents calendarContents = CalendarContents.builder()
                 .calendar(calendar)
                 .createUser(user)
@@ -263,30 +264,9 @@ public class CalendarService {
                 .memo(calendarContentsRequestDto.getMemo())
                 //.calendarLabel()
                 .build();
-        calendarContentsJpaRepository.save(calendarContents).getContentsId();
-        ArrayList<Map<String, Object>> files = new ArrayList<>();
+        calendarContentsJpaRepository.save(calendarContents);
 
-        if(fileList != null) {
-            // 파일처리
-            fileList.forEach((file) -> {
-                HashMap<String, Object> fileResult = customUtils.uploadFile(context, file);
-                CalendarContentsAttachments calendarContentsAttachments = CalendarContentsAttachments.builder()
-                        .calendarContents(calendarContents)
-                        .extension(MapUtils.getString(fileResult, "extension"))
-                        .filePath(MapUtils.getString(fileResult, "dirPath") + "/" + MapUtils.getString(fileResult, "fileName"))
-                        .fileSize(MapUtils.getLong(fileResult, "fileSize"))
-                        .createDateTime(LocalDateTime.now())
-                        .originName(MapUtils.getString(fileResult, "originName"))
-                        .isDeleted(false)
-                        .createUser(user)
-                        .build();
-                calendarContentsAttachmentsJpaRepository.save(calendarContentsAttachments);
-                fileResult.put("attachmentId", calendarContentsAttachments.getAttachmentId());
-                files.add(fileResult);
-                // 굳이 DTO까지 만들 필요 없을것같아서 Map으로 진행
-            });
-        }
-
+        // 캘린더 응답 생성
         CalendarContentsResponseDto contentsResponseDto = CalendarContentsResponseDto.builder()
                 .calendarId(calendar.getCalendarId())
                 .contentsId(calendarContents.getContentsId())
@@ -304,14 +284,38 @@ public class CalendarService {
                 .notify(calendarContents.getNotify())
                 .notifyTime(calendarContents.getNotifyTime())
                 .memo(calendarContents.getMemo())
-                .fileList(files)
                 //.calendarLabel(null)
                 .build();
+
+        // 켈린더 첨부파일 등록
+        if(calendarContentsRequestDto.getCreateAttachmentsList() != null && ObjectUtils.isNotEmpty(calendarContentsRequestDto.getCreateAttachmentsList())) {
+            ArrayList<HashMap<String, Object>> attachmentsList = new ArrayList<>();
+            calendarContentsRequestDto.getCreateAttachmentsList().forEach(attachmentsId -> {
+                CalendarContentsAttachments calendarContentsAttachments = calendarContentsAttachmentsJpaRepository.findById(attachmentsId).orElse(null);
+                if(calendarContentsAttachments != null) {
+                    calendarContentsAttachments.setCalendarContents(calendarContents);
+                    calendarContentsAttachmentsJpaRepository.save(calendarContentsAttachments);
+                    attachmentsList.add(new HashMap<String, Object>() {{
+                        put("attachmentsId", calendarContentsAttachments.getAttachmentsId());
+                        put("contentsId", calendarContentsAttachments.getCalendarContents().getContentsId());
+                        put("extension", calendarContentsAttachments.getExtension());
+                        put("originName", calendarContentsAttachments.getOriginName());
+                        put("filePath", calendarContentsAttachments.getFilePath());
+                        put("fileSize", calendarContentsAttachments.getFileSize());
+                        put("createId", calendarContentsAttachments.getCreateUser().getUserId());
+                        put("deleteId", ObjectUtils.isEmpty(calendarContentsAttachments.getDeleteUser()) ? null : calendarContentsAttachments.getDeleteUser().getUserId());
+                    }
+                    });
+                }
+            });
+            contentsResponseDto.setAttachmentsList(attachmentsList);
+        }
+
         return contentsResponseDto;
     }
 
     @Transactional
-    public CalendarContentsResponseDto updateCalendarContents(SecurityUser securityUser, CalendarContentsRequestDto calendarContentsRequestDto, List<MultipartFile> fileList){
+    public CalendarContentsResponseDto updateCalendarContents(SecurityUser securityUser, CalendarContentsRequestDto calendarContentsRequestDto){
         Calendar calendar = calendarJpaRepository.findById(calendarContentsRequestDto.getCalendarId()).orElse(null);
         if(calendar == null){
             throw new FailException("SERVER_MESSAGE_CALENDAR_NOT_EXISTS", 400);
@@ -344,9 +348,11 @@ public class CalendarService {
                 throw new FailException("SERVER_MESSAGE_NOTIFY_TRUE_BUT_NOTIFY_TIME_NULL", 400);
             }
         }
+        calendarContentsJpaRepository.save(calendarContents);
+
         ArrayList<Long> deletedFiles = new ArrayList<>();
-        if(calendarContentsRequestDto.getDeleteFileList() != null){
-            calendarContentsRequestDto.getDeleteFileList().forEach((fileId) -> {
+        if(calendarContentsRequestDto.getDeleteAttachmentsList() != null){
+            calendarContentsRequestDto.getDeleteAttachmentsList().forEach((fileId) -> {
                     if (fileId != 0) {
                         CalendarContentsAttachments calendarContentsAttachments = calendarContentsAttachmentsJpaRepository.findById(fileId).orElse(null);
                         if (calendarContentsAttachments != null) {
@@ -361,28 +367,29 @@ public class CalendarService {
             );
         }
 
-        ArrayList<Map<String, Object>> files = new ArrayList<>();
-        if(fileList != null) {
+        ArrayList<HashMap<String, Object>> attachmentsList = new ArrayList<>();
+
+        if(calendarContentsRequestDto.getCreateAttachmentsList() != null) {
             // 파일처리
-            fileList.forEach((file) -> {
-                HashMap<String, Object> fileResult = customUtils.uploadFile(context, file);
-                CalendarContentsAttachments calendarContentsAttachments = CalendarContentsAttachments.builder()
-                        .calendarContents(calendarContents)
-                        .extension(MapUtils.getString(fileResult, "extension"))
-                        .filePath(MapUtils.getString(fileResult, "dirPath") + "/" + MapUtils.getString(fileResult, "fileName"))
-                        .fileSize(MapUtils.getLong(fileResult, "fileSize"))
-                        .createDateTime(LocalDateTime.now())
-                        .originName(MapUtils.getString(fileResult, "originName"))
-                        .isDeleted(false)
-                        .createUser(user)
-                        .build();
-                calendarContentsAttachmentsJpaRepository.save(calendarContentsAttachments);
-                files.add(fileResult);
-                // 굳이 DTO까지 만들 필요 없을것같아서 Map으로 진행
+            calendarContentsRequestDto.getCreateAttachmentsList().forEach(attachmentsId -> {
+                CalendarContentsAttachments calendarContentsAttachments = calendarContentsAttachmentsJpaRepository.findById(attachmentsId).orElse(null);
+                if(calendarContentsAttachments != null) {
+                    calendarContentsAttachments.setCalendarContents(calendarContents);
+                    calendarContentsAttachmentsJpaRepository.save(calendarContentsAttachments);
+                    attachmentsList.add(new HashMap<String, Object>() {{
+                        put("attachmentsId", calendarContentsAttachments.getAttachmentsId());
+                        put("contentsId", calendarContentsAttachments.getCalendarContents().getContentsId());
+                        put("extension", calendarContentsAttachments.getExtension());
+                        put("originName", calendarContentsAttachments.getOriginName());
+                        put("filePath", calendarContentsAttachments.getFilePath());
+                        put("fileSize", calendarContentsAttachments.getFileSize());
+                        put("createId", calendarContentsAttachments.getCreateUser().getUserId());
+                        put("deleteId", ObjectUtils.isEmpty(calendarContentsAttachments.getDeleteUser()) ? null : calendarContentsAttachments.getDeleteUser().getUserId());
+                    }
+                    });
+                }
             });
         }
-        //if(calendarContentsRequestDto.getLabelId() != null) calendarContents.setCalendarLabel();
-        calendarContentsJpaRepository.save(calendarContents);
 
         CalendarContentsResponseDto contentsResponseDto = CalendarContentsResponseDto.builder()
                 .calendarId(calendar.getCalendarId())
@@ -399,11 +406,43 @@ public class CalendarService {
                 .notify(calendarContents.getNotify())
                 .notifyTime(calendarContents.getNotifyTime())
                 .memo(calendarContents.getMemo())
-                .fileList(files)
-                .deleteFileList(deletedFiles)
+                .attachmentsList(attachmentsList)
+                //.deleteAttachmentsList(deletedFiles)
                 //.calendarLabel(null)
                 .build();
         return contentsResponseDto;
+    }
+    public List<Long> uploadCalendarContentsAttachments(SecurityUser securityUser, List<MultipartFile> fileList ){
+        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
+        if(user == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
+        }
+        ArrayList<Long> attachmentsIdList = new ArrayList<>();
+
+        try {
+            if (fileList != null) {
+                // 파일처리
+                fileList.forEach((file) -> {
+                    HashMap<String, Object> fileResult = customUtils.uploadFile(context, file);
+                    CalendarContentsAttachments calendarContentsAttachments = CalendarContentsAttachments.builder()
+                            //.calendarContents(calendarContents)
+                            .extension(MapUtils.getString(fileResult, "extension"))
+                            .filePath(MapUtils.getString(fileResult, "dirPath") + MapUtils.getString(fileResult, "fileName"))
+                            .fileSize(MapUtils.getLong(fileResult, "fileSize"))
+                            .createDateTime(LocalDateTime.now())
+                            .originName(MapUtils.getString(fileResult, "originName"))
+                            .isDeleted(false)
+                            .createUser(user)
+                            .build();
+                    calendarContentsAttachmentsJpaRepository.save(calendarContentsAttachments);
+                    attachmentsIdList.add(calendarContentsAttachments.getAttachmentsId());
+                    // 굳이 DTO까지 만들 필요 없을것같아서 Map으로 진행
+                });
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return attachmentsIdList;
     }
 
     //public List<CalendarContentsResponseDto> getCalendarContentsList(SecurityUser securityUser, Long calendarId, Period period, LocalDate targetDate){
@@ -448,7 +487,7 @@ public class CalendarService {
         List<CalendarContentsResponseDto> calendarContentsList = calendarContentsMybatisRepository.selectCalendarContentsByStartDateTimeAndCalendar(calendarId, startTargetDateTime, limitTargetDateTime, isDeleted);
         calendarContentsList.forEach((calendarContents) -> {
             // TODO createTime Map에서 localDateTime이 timestamp로 매핑되는 현상 고쳐야함
-            calendarContents.setFileList(calendarContentsMybatisRepository.selectCalendarContentsAttachmentsByContentsId(calendarContents.getContentsId()));
+            calendarContents.setAttachmentsList(calendarContentsMybatisRepository.selectCalendarContentsAttachmentsByContentsId(calendarContents.getContentsId()));
         });
         return calendarContentsList;
     }
@@ -456,7 +495,7 @@ public class CalendarService {
     public CalendarContentsResponseDto getCalendarContents(SecurityUser securityUser, Long contentsId){
         //TODO Authentication Verified
         CalendarContentsResponseDto calendarContentsResponseDto = calendarContentsMybatisRepository.selectCalendarContentsByContentsId(contentsId);
-        calendarContentsResponseDto.setFileList(calendarContentsMybatisRepository.selectCalendarContentsAttachmentsByContentsId(contentsId));
+        calendarContentsResponseDto.setAttachmentsList(calendarContentsMybatisRepository.selectCalendarContentsAttachmentsByContentsId(contentsId));
 
         return calendarContentsResponseDto;
     }
@@ -465,12 +504,12 @@ public class CalendarService {
         return calendarMybatisRepository.getCalendar(calendarId);
     }
 
-    public void downloadCalendarContentsAttachments(SecurityUser securityUser, Long attachmentId, HttpServletRequest request, HttpServletResponse response) throws IOException, FailException{
+    public void downloadCalendarContentsAttachments(SecurityUser securityUser, Long attachmentsId, HttpServletRequest request, HttpServletResponse response) throws IOException, FailException{
         User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
         if(user == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
         }
-        CalendarContentsAttachments calendarContentsAttachments = calendarContentsAttachmentsJpaRepository.findById(attachmentId).orElse(null);
+        CalendarContentsAttachments calendarContentsAttachments = calendarContentsAttachmentsJpaRepository.findById(attachmentsId).orElse(null);
         if(calendarContentsAttachments == null){
             throw new FailException("SERVER_MESSAGE_ATTACHMENT_NOT_EXISTS", 400);
         }

@@ -1,13 +1,12 @@
 package com.puzzly.api.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.puzzly.api.entity.CalendarLabel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Builder
 @Getter
@@ -79,10 +78,14 @@ public class CalendarContentsResponseDto {
 
     // 굳이 DTO까지 필요할지 고민하다 map으로 처
     @Schema(description = "일정에 첨부되어있는 파일 리스트")
-    private List<Map<String, Object>> fileList;
+    private List<HashMap<String, Object>> attachmentsList;
 
+
+    /*
     // TODO 삭제된 파일 리스트도 보여줘야할지, 언제까지보여줘야할지, 평생 보관되어야하는지?
     @Schema(description = "일정에서 삭제된 파일 리스트, 현 시점Update API에서만 유효한 값을 가지며 이외에는 null")
-    private List<Long> deleteFileList;
+    private List<Long> deleteAttachmentsList;
     //private List<Files> multipartFile;
+
+     */
 }
