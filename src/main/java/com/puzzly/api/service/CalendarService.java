@@ -201,35 +201,34 @@ public class CalendarService {
 
     @Transactional
     public String removeCalendar(SecurityUser securityUser, Long calendarId) throws FailException{
-        Calendar calendar = calendarJpaRepository.findById(calendarId).orElse(null);
-        if(calendar == null){
-            throw new FailException("SERVER_MESSAGE_CALENDAR_NOT_EXISTS", 400);
-        }
-        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
-        if(user == null){
-            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
-        }
-        if(!calendar.getCreateUser().getUserId().equals(user.getUserId())){
-            throw new FailException("SERVER_MESSAGE_USER_NOT_OWN_CALENDAR", 400);
-        }
-        try{
-            // 첨부파일 삭제
-            calendarContentsAttachmentsJpaRepository.bulkUpdateIsDeletedCalendarContentsAttachments(calendar.getCalendarId());
-            // 캘린더 컨텐츠 삭제
-            calendarContentsJpaRepository.bulkUpdateIsDeletedCalendarContentsByCalendar(calendar);
-            // 라벨삭제
-            //calendarLabelJpaRepository.bulkUpdateCalendarContentsByCalendar(calendar);
-            // 캘린더 관계 삭제
-            calendarUserRelJpaRepository.bulkUpdateIsDeletedCalendarUserRelByCalendar(calendar);
-            // 캘린더 삭제
-            calendar.setIsDeleted(true);
-            calendarJpaRepository.save(calendar);
+            Calendar calendar = calendarJpaRepository.findById(calendarId).orElse(null);
+            if(calendar == null){
+                throw new FailException("SERVER_MESSAGE_CALENDAR_NOT_EXISTS", 400);
+            }
+            User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
+            if(user == null){
+                throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
+            }
+            if(!calendar.getCreateUser().getUserId().equals(user.getUserId())){
+                throw new FailException("SERVER_MESSAGE_USER_NOT_OWN_CALENDAR", 400);
+            }
+            try{
+                // 첨부파일 삭제
+                calendarContentsAttachmentsJpaRepository.bulkUpdateIsDeletedCalendarContentsAttachments(calendar.getCalendarId());
+                // 캘린더 컨텐츠 삭제
+                calendarContentsJpaRepository.bulkUpdateIsDeletedCalendarContentsByCalendar(calendar);
+                // 라벨삭제
+                //calendarLabelJpaRepository.bulkUpdateCalendarContentsByCalendar(calendar);
+                // 캘린더 관계 삭제
+                calendarUserRelJpaRepository.bulkUpdateIsDeletedCalendarUserRelByCalendar(calendar);
+                // 캘린더 삭제
+                calendar.setIsDeleted(true);
+                calendarJpaRepository.save(calendar);
 
-        } catch(Exception e){
-            e.printStackTrace();
-            throw new FailException(e.getMessage(), 500);
-        }
-
+            } catch(Exception e) {
+                e.printStackTrace();
+                throw new FailException(e.getMessage(), 500);
+            }
         return "SUCCESS";
     }
 
@@ -412,6 +411,30 @@ public class CalendarService {
                 .build();
         return contentsResponseDto;
     }
+
+    public String removeCalendarContents(SecurityUser securityUser, Long contentsId) throws FailException{
+        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
+        if(user == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
+        }
+        CalendarContents calendarContents = calendarContentsJpaRepository.findById(contentsId).orElse(null);
+        if(calendarContents == null){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_CONTENTS_NOT_EXISTS", 400);
+        }
+        CalendarUserRel calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendarContents.getCalendar(), false);
+        if(calendarUserRel == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
+        }
+
+        // 첨부파일 전체 삭제
+        calendarContentsAttachmentsJpaRepository.bulkUpdateIsDeletedCalendarContentsAttachmentsByContentsId(calendarContents.getContentsId());
+
+        // 캘린더 컨텐츠 삭제
+        calendarContents.setIsDeleted(true);
+        calendarContentsJpaRepository.save(calendarContents);
+        return "SUCCESS";
+    }
+
     public List<Long> uploadCalendarContentsAttachments(SecurityUser securityUser, List<MultipartFile> fileList ){
         User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
         if(user == null){
@@ -525,6 +548,25 @@ public class CalendarService {
         String extension = calendarContentsAttachments.getExtension();
         customUtils.downloadFile(fileFullPath, originName, extension, request, response);
     }
+
+    public String removeCalendarContentsAttachments(SecurityUser securityUser, Long attachmentsId){
+        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
+        CalendarContentsAttachments calendarContentsAttachments = calendarContentsAttachmentsJpaRepository.findById(attachmentsId).orElse(null);
+        if(calendarContentsAttachments == null){
+            throw new FailException("SERVER_MESSAGE_ATTACHMENT_NOT_EXISTS", 400);
+        }
+        Long contentsId = calendarContentsAttachments.getCalendarContents().getContentsId();
+        CalendarContents calendarContents = calendarContentsJpaRepository.findById(contentsId).orElse(null);
+        CalendarUserRel calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendarContents.getCalendar(), false);
+        if(calendarUserRel == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
+        }
+        calendarContentsAttachments.setIsDeleted(true);
+        calendarContentsAttachmentsJpaRepository.save(calendarContentsAttachments);
+
+        return "SUCCESS";
+    }
+
 
     private CalendarUserRel generateCalendarUserRel(Calendar calendar, User user, boolean isDeleted){
         return CalendarUserRel.builder().user(user).calendar(calendar).authority(32).isDeleted(isDeleted).build();
