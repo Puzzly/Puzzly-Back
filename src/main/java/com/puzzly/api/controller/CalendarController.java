@@ -31,7 +31,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,17 +45,15 @@ public class CalendarController {
     private final CalendarService calendarService;
 
     @PostMapping("/invitationCode")
-    @Operation(summary="캘린더 초대코드 생성, 토큰필요 O", description = "캘린더 초대코드 생성, 토큰필요 O, 현시점 유효시간 무제한, 향후 24시간으로 조정 예정",
+    @Operation(summary="캘린더 초대코드 생성, 토큰필요 O", description = "캘린더 초대코드 생성, 토큰필요 O",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    content={
-                            @Content(
-                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schemaProperties = {
-                                            @SchemaProperty(name = "calendarId", schema = @Schema(type="string", defaultValue="1", requiredMode = Schema.RequiredMode.REQUIRED))
-                                    }
-                            )
+                    content={@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                schemaProperties = {
+                                    @SchemaProperty(name = "calendarId", schema = @Schema(type="string", defaultValue="1", requiredMode = Schema.RequiredMode.REQUIRED))
+                                })
                     }
-            ))
+            )
+    )
     public ResponseEntity<?> createInvitationCode(
             HttpServletRequest request,
             @RequestBody Map<String, Long> requestMap
@@ -64,31 +61,29 @@ public class CalendarController {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
 
-        String invitationCode = calendarService.createInviteCode(securityUser, MapUtils.getLong(requestMap, "calendarId"));
-        restResponse.setResult(invitationCode);
+        HashMap<String, String> result = calendarService.createInviteCode(securityUser, MapUtils.getLong(requestMap, "calendarId"));
+        restResponse.setResult(result);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
     @PostMapping("/join")
-    @Operation(summary="캘린더 초대코드로 가입, JWT토큰 필요", description = "초대코드로 캘린더 가입, JWT토큰 필요",
+    @Operation(summary="캘린더 초대코드로 가입, 토큰필요 O", description = "캘린더 초대코드로 가입, 토큰필요 O",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    content={
-                            @Content(
-                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    content={@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                                     schemaProperties = {
-                                            @SchemaProperty(name = "invitationCode", schema = @Schema(type="string", defaultValue="", requiredMode = Schema.RequiredMode.REQUIRED))
-                                    }
-                            )
+                                        @SchemaProperty(name = "inviteCode", schema = @Schema(type="string", defaultValue="", requiredMode = Schema.RequiredMode.REQUIRED))
+                                    })
                     }
-            ))
+            )
+    )
     public ResponseEntity<?> joinByInvitationCode(
             HttpServletRequest request,
             @RequestBody HashMap<String, String> map
-    )throws FailException, Exception{
+    )throws FailException{
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
 
-        CalendarResponseDto calendar = calendarService.joinCalendarByInviteCode(securityUser, map.get("invitationCode"));
+        CalendarResponseDto calendar = calendarService.joinCalendarByInviteCode(securityUser, map.get("inviteCode"));
         restResponse.setResult(calendar);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
@@ -104,7 +99,8 @@ public class CalendarController {
     )throws FailException {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
-        List<CalendarResponseDto> calendarList = calendarService.getSimpleCalendarList(securityUser, offset, pageSize, false);
+
+        List<CalendarResponseDto> calendarList = calendarService.getCalendarList(securityUser, offset, pageSize, false);
         restResponse.setResult(calendarList);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }

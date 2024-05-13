@@ -1,5 +1,6 @@
 package com.puzzly.api.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.puzzly.api.domain.SecurityUser;
@@ -37,12 +38,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CalendarService {
-    Logger logger = LoggerFactory.getLogger(CalendarService.class);
+    private static final Logger logger = LoggerFactory.getLogger(CalendarService.class);
     private final CalendarJpaRepository calendarJpaRepository;
     private final CalendarMybatisRepository calendarMybatisRepository;
     private final CalendarUserRelJpaRepository calendarUserRelJpaRepository;
@@ -58,13 +60,13 @@ public class CalendarService {
 
     private final String context = "calendar";
 
-    public String createInviteCode(SecurityUser securityUser, Long calendarId) throws FailException, Exception{
+    /** 초대코드 생성*/
+    public HashMap<String, String> createInviteCode(SecurityUser securityUser, Long calendarId) throws FailException, Exception{
+        HashMap<String, String> result = new HashMap<>();
         if(calendarId == null) {
             throw new FailException("SERVER_MESSAGE_PARAMETER_NOT_GIVEN", 400);
         }
-        // Calendar의 존재 여부를 확인한다.
         Calendar calendar = calendarJpaRepository.findById(calendarId).orElse(null);
-
         if(calendar == null){
             throw new FailException("SERVER_MESSAGE_CALENDAR_NOT_EXISTS", 404);
         }
@@ -72,68 +74,73 @@ public class CalendarService {
         if(user == null){
             throw new FailException("SERVER_MESSAGE_INVITE_USER_NOT_EXISTS", 404);
         }
-        CalendarUserRel calendarUserRelList = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendar, false);
+        CalendarUserRelation calendarUserRelList = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendar, false);
         if(ObjectUtils.isEmpty(calendarUserRelList)){
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATED_IN_CALENDAR", 404);
         }
+
         Map<String, Object> map = new HashMap<>();
         map.put("calendarId", calendar.getCalendarId());
         map.put("createId", securityUser.getUser().getUserId());
 
         JsonNode jsonNode = objectMapper.valueToTree(map);
 
-        String invitationCode = CustomUtils.aesCBCEncode(jsonNode.toString());
-        return invitationCode;
+        String inviteCode = CustomUtils.aesCBCEncode(jsonNode.toString());
+        result.put("inviteCode", inviteCode);
+        return result;
     }
 
+    /** 초대코드로 캘린더 가입*/
     @Transactional
-    public CalendarResponseDto joinCalendarByInviteCode(SecurityUser securityUser, String invitationCode) throws Exception{
-        String decodedJsonString = CustomUtils.aesCBCDecode(invitationCode);
-        Map<String, Object> invitationMap = objectMapper.readValue(decodedJsonString,HashMap.class);
+    public CalendarResponseDto joinCalendarByInviteCode(SecurityUser securityUser, String inviteCode) throws FailException{
+        User invitedUser = securityUser.getUser();
+        Map<String, Object> invitationMap = null;
+        String decodedJsonString = CustomUtils.aesCBCDecode(inviteCode);
+        try{
+            invitationMap = objectMapper.readValue(decodedJsonString, HashMap.class);
+        } catch (JsonProcessingException je){
+            je.printStackTrace();
+            throw new FailException("SERVER_MESSAGE_JSON_PARSING_ERROR_PARAMETER_CHECK_REQUIRED", 400);
+        }
 
-        User user = userService.findById(MapUtils.getLong(invitationMap, "createId")).orElse(null);
+        User inviter = userService.findById(MapUtils.getLong(invitationMap, "createId")).orElse(null);
         Calendar calendar = calendarJpaRepository.findById(MapUtils.getLong(invitationMap, "calendarId")).orElse(null);
-        if (user == null){
+        if (inviter == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_FOUND", 404);
         }
-        if(securityUser.getUser().getUserId().equals(user.getUserId())){
-            throw new FailException("SERVER_MESSAGE_CANNOT_JOIN_CALENDAR_IN_POSSESSION", 400);
+        if(securityUser.getUser().getUserId().equals(inviter.getUserId())){
+            throw new FailException("SERVER_MESSAGE_CANNOT_JOIN_CALENDAR_BY_OWN_INVITATION", 400);
         }
-        CalendarUserRel calendarCreateUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendar, false);
-        if(calendarCreateUserRel == null){
+        CalendarUserRelation calendarInviterRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(inviter, calendar, false);
+        if(calendarInviterRel == null){
             throw new FailException("SERVER_MESSAGE_INVITED_USER_KICKED_OUT_FROM_CALENDAR", 400);
         }
-        CalendarUserRel calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(securityUser.getUser(), calendar, false);
-        if(calendarUserRel != null){
+        Boolean isRelationExists = calendarUserRelJpaRepository.existsCalendarUserRelation(invitedUser.getUserId(), calendar.getCalendarId(), false);
+        if(isRelationExists){
             throw new FailException("SERVER_MESSAGE_INVITED_USER_ALREADY_JOINED_IN", 400);
         }
-
-        CalendarUserRel newRel = generateCalendarUserRel(calendar, user, false);
+        // 관계생성
+        CalendarUserRelation newRel = buildCalendarUserRel(calendar, invitedUser, false);
         calendarUserRelJpaRepository.save(newRel);
-
+        // 캘린더 타입변경
         calendar.setCalendarType("TEAM");
         calendarJpaRepository.save(calendar);
-        CalendarResponseDto calendarResponseDto = CalendarResponseDto.builder().calendarId(calendar.getCalendarId())
-                .calendarName(calendar.getCalendarName())
-                .createId(user.getUserId())
-                .createNickName(user.getNickName())
-                .calendarType(calendar.getCalendarType())
-                // JPA로 간단하게 구현할 방법이 마땅히 떠오르지 않아 Mybatis로 구현 수행
-                .userList(userService.findByCalendarRel(calendar.getCalendarId()))
-                .build();
+        // 응답객체생성
+        CalendarResponseDto calendarResponseDto = buildCalendarResponseDto(calendar);
         return calendarResponseDto;
     }
 
-    public List<CalendarResponseDto> getSimpleCalendarList(SecurityUser securityUser, int offset, int pageSize, boolean isDeleted){
+    /** 캘린더 리스트 조회*/
+    public List<CalendarResponseDto> getCalendarList(SecurityUser securityUser, int offset, int pageSize, boolean isDeleted){
         User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
         List<CalendarResponseDto> calendarList = calendarMybatisRepository.getSimpleCalendarDtoListJoinRel(user.getUserId(), offset, pageSize, isDeleted);
         calendarList.stream().forEach((calendarResponseDto -> {
-            // JPA로 간단하게 구현할 방법이 생각나지 않아 Mybatis로 구현 수행
             calendarResponseDto.setUserList(userService.findByCalendarRel(calendarResponseDto.getCalendarId()));
         }));
         return calendarList;
     }
 
+    /** 캘린더 생성*/
     @Transactional
     public CalendarResponseDto createCalendar(SecurityUser securityUser, CalendarRequestDto calendarRequestDto){
         User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
@@ -145,12 +152,12 @@ public class CalendarService {
         }
         Calendar calendar = Calendar.builder().createUser(user).calendarName(calendarRequestDto.getCalendarName()).calendarType("PRIVATE")
                 .isDeleted(false)
-                .createDateTime(calendarRequestDto.getCreateDateTime()).build();
+                .createDateTime(LocalDateTime.now()).build();
 
         // 캘린더 생성
         calendarJpaRepository.save(calendar);
         // 캘린더 관계 생성
-        CalendarUserRel calendarUserRel = generateCalendarUserRel(calendar, user, false);
+        CalendarUserRelation calendarUserRel = buildCalendarUserRel(calendar, user, false);
         calendarUserRelJpaRepository.save(calendarUserRel);
 
         ArrayList<UserResponseDto> userList = new ArrayList<>();
@@ -242,7 +249,7 @@ public class CalendarService {
         if(user == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
         }
-        CalendarUserRel calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendar, false);
+        CalendarUserRelation calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendar, false);
         if(calendarUserRel == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
@@ -323,7 +330,7 @@ public class CalendarService {
         if(user == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
         }
-        CalendarUserRel calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendar, false);
+        CalendarUserRelation calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendar, false);
         if(calendarUserRel == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
@@ -421,7 +428,7 @@ public class CalendarService {
         if(calendarContents == null){
             throw new FailException("SERVER_MESSAGE_CALENDAR_CONTENTS_NOT_EXISTS", 400);
         }
-        CalendarUserRel calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendarContents.getCalendar(), false);
+        CalendarUserRelation calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendarContents.getCalendar(), false);
         if(calendarUserRel == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
@@ -478,7 +485,7 @@ public class CalendarService {
         if(user == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
         }
-        CalendarUserRel calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendar, false);
+        CalendarUserRelation calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendar, false);
         if(calendarUserRel == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
@@ -538,7 +545,7 @@ public class CalendarService {
         }
         Long contentsId = calendarContentsAttachments.getCalendarContents().getContentsId();
         CalendarContents calendarContents = calendarContentsJpaRepository.findById(contentsId).orElse(null);
-        CalendarUserRel calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendarContents.getCalendar(), false);
+        CalendarUserRelation calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendarContents.getCalendar(), false);
         if(calendarUserRel == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
@@ -557,7 +564,7 @@ public class CalendarService {
         }
         Long contentsId = calendarContentsAttachments.getCalendarContents().getContentsId();
         CalendarContents calendarContents = calendarContentsJpaRepository.findById(contentsId).orElse(null);
-        CalendarUserRel calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendarContents.getCalendar(), false);
+        CalendarUserRelation calendarUserRel = calendarUserRelJpaRepository.findCalendarUserRelByUserAndCalendarAndIsDeleted(user, calendarContents.getCalendar(), false);
         if(calendarUserRel == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
@@ -567,9 +574,29 @@ public class CalendarService {
         return "SUCCESS";
     }
 
-
-    private CalendarUserRel generateCalendarUserRel(Calendar calendar, User user, boolean isDeleted){
-        return CalendarUserRel.builder().user(user).calendar(calendar).authority(32).isDeleted(isDeleted).build();
+    /** 캘린더 정보로 캘린더 관계 조회 */
+    private List<CalendarUserRelation> findCalendarUserRelationByCalendar(Calendar calendar){
+        return calendarUserRelJpaRepository.findCalendarUserRelByCalendar(calendar);
     }
 
+    /** 캘린더-유저 관계 빌드 메서드*/
+    private CalendarUserRelation buildCalendarUserRel(Calendar calendar, User user, boolean isDeleted){
+        return CalendarUserRelation.builder().user(user).calendar(calendar).authority(32).isDeleted(isDeleted).build();
+    }
+
+    /** 캘린더 -> 캘린더 응답 DTO 빌드 메서드*/
+    private CalendarResponseDto buildCalendarResponseDto(Calendar calendar){
+        List<UserResponseDto> userList = findCalendarUserRelationByCalendar(calendar).stream().map((relation) -> {
+            User user = relation.getUser();
+            return UserResponseDto.builder().userId(user.getUserId()).userName(user.getUserName()).userName(user.getNickName()).build();
+        }).collect(Collectors.toList());
+
+        return CalendarResponseDto.builder().calendarId(calendar.getCalendarId())
+                .calendarName(calendar.getCalendarName())
+                .createId(calendar.getCreateUser().getUserId())
+                .createNickName(calendar.getCreateUser().getNickName())
+                .calendarType(calendar.getCalendarType())
+                .userList(userList)
+                .build();
+    }
 }
