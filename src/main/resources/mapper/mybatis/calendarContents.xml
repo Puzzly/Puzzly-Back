@@ -31,7 +31,7 @@
     <!-- 첨부파일 조회 -->
     <select id="selectCalendarContentsAttachmentsByContentsId" resultType="map">
         SELECT
-            attachment_id, contents_id, extension, origin_name, file_path, file_size, create_date_time,
+            attachments_id, contents_id, extension, origin_name, file_path, file_size, create_date_time,
             tcca.create_id, (SELECT nick_name from tb_users where user_id = tcca.create_id) AS create_user_nick_name, is_deleted, delete_date_time, tcca.delete_id
         FROM
             tb_calendar_contents_attachments tcca

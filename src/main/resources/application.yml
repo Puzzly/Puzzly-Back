@@ -13,6 +13,10 @@ spring:
   autoconfigure:
     # whitelabel redirect disable. +@ ErrorController, Error redirecting.
     exclude: org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
 jwt:
   secretKey: 89e3d9b82f6908ddae0f2f20ce7bbcd7307b14e6938fa54e2990e8ee498632e7680474fd37098932f1d4605b7b3768bca12bf8b5454ed26f8316ee1de8a6948b
 
@@ -49,6 +53,9 @@ spring:
     show-sql: true
     generate-ddl: true
     defer-datasource-initialization: true
+    properties:
+      hibernate:
+        format_sql: true
   datasource:
     driver-class-name: org.h2.Driver
     url: jdbc:h2:mem:testdb;MODE=mysql;
@@ -61,6 +68,14 @@ puzzly:
 logging:
   level:
     root: info
+    org:
+      hibernate:
+        orm:
+          jdbc:
+            bind: trace
+        type:
+          descriptor:
+            sql: trace
 
 #--- dev
 ---
