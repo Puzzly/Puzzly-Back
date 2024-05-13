@@ -45,10 +45,13 @@ public class User {
     @OneToOne(mappedBy="user")
     private UserEx userEx;
 
+    /*
     // 소속 켈린더 정보
     @OneToMany(mappedBy="user")
     private List<CalendarUserRel> calendarUserRelList = new ArrayList<>();
 
+
+     */
     /*
     // 소유한 캘린더 정보
     @OneToMany(mappedBy="createUser")
@@ -68,9 +71,9 @@ public class User {
     // 내가 만든 켈린더 첨부파일 정보
     @OneToMany(mappedBy = "createUser")
     private List<CalendarContentsAttachments> calendarAttachmentsList = new ArrayList<>();
+*/
 
-
-     */
+/*
     // 체크리스트 정보
     @OneToMany(mappedBy="user")
     private List<CheckList> checklistList = new ArrayList<>();
@@ -83,10 +86,7 @@ public class User {
     @OneToMany(mappedBy="user")
     private List<UserCalSyncs> syncList = new ArrayList<>();
 
-
-
-
-
+*/
     /*
     @OneToMany(mappedBy="calendarId")
     private List<Calendar> calendarList = new ArrayList<>();

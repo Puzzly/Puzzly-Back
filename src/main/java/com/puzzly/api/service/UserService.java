@@ -76,7 +76,7 @@ public class UserService {
                 .gender(userRequestDto.getGender())
                 .createDateTime(LocalDateTime.now())
                 .status(StringUtils.isEmpty(userRequestDto.getStatus()) ? "CREATE" : userRequestDto.getStatus())
-                .isDeleted(ObjectUtils.isEmpty(userRequestDto.getIsDeleted()) ? false : userRequestDto.getIsDeleted())
+                .isDeleted(false)
                 .build();
 
         User savedEntity = userJpaRepository.save(user);

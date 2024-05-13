@@ -63,9 +63,6 @@ public class UserRequestDto {
     private LocalDateTime deleteDateTime;*/
     @Schema(defaultValue = "CREATE", description = "계정상태. CREATE: 정상 / DELETED : 탈퇴")
     private String status;
-    @Schema(defaultValue = "false", description = "계정상태. false : 사용중 / true : 탈퇴 / 아직 status로할지 isdeleted로 할지 결정중")
-    private Boolean isDeleted;
-
     // 사용자 추가정보
     //private UserExRequestDto userExRequestDto;
     // 사용자 추가정보
