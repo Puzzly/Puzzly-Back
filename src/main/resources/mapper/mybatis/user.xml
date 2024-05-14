@@ -20,12 +20,12 @@
         select * from tb_users where email = #{email}
     </select>
 
-    <select id="selectUserByCalendarId" resultType="com.puzzly.api.dto.response.UserResponseDto">
+    <select id="selectUserByCalendar" resultType="com.puzzly.api.dto.response.UserResponseDto">
         SELECT tu.user_id, tu.user_name, tu.nick_name, tu.email, tu.phone_number, tu.gender
         FROM
             tb_users tu
         INNER JOIN
-            tb_calendar_user_rels tcur
+            calendar_user_relation tcur
         ON
             tcur.user_id = tu.user_id
         where

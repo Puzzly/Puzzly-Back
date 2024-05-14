@@ -58,12 +58,15 @@ public class CalendarContents {
     @JoinColumn(name = "calendarId", referencedColumnName = "calendarId", nullable=false)
     private Calendar calendar;
 
+    /*
     // 켈린더 라벨
     @ManyToOne(fetch=FetchType.LAZY)
     // @JoinColumn(name="labelId", referencedColumnName = "labelId", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     @JoinColumn(name="labelId", referencedColumnName = "labelId")
     private CalendarLabel calendarLabel;
 
+
+     */
     // 켈린더 첨부파일
     // 서비스 레벨에서 첨부파일 제어할것임.
 

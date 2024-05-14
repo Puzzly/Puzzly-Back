@@ -13,7 +13,7 @@ public interface UserMybatisRepository {
 
     public User selectUserByEmail(@Param("email") String email);
 
-    public List<UserResponseDto> selectUserByCalendarId(@Param("calendarId") Long calendarId);
+    public List<UserResponseDto> selectUserByCalendar(@Param("calendarId") Long calendarId);
 
 
     public List<String> selectUserAuthority(@Param("userId") Long userId);

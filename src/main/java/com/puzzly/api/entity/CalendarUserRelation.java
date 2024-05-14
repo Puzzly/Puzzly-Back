@@ -18,11 +18,11 @@ public class CalendarUserRelation {
     private Long relationId;
 
     @Comment("캘린더 팀원 PK")
-    @ManyToOne @JoinColumn(name="userId")
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name="userId")
     private User user;
 
     @Comment("캘린더 PK")
-    @ManyToOne @JoinColumn(name="calendarId")
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name="calendarId")
     private Calendar calendar;
 
     @Comment("캘린더 권한")

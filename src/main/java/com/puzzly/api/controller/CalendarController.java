@@ -61,8 +61,8 @@ public class CalendarController {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
 
-        HashMap<String, String> result = calendarService.createInviteCode(securityUser, MapUtils.getLong(requestMap, "calendarId"));
-        restResponse.setResult(result);
+        HashMap<String, String> resultMap = calendarService.createInviteCode(securityUser, MapUtils.getLong(requestMap, "calendarId"));
+        restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
@@ -83,8 +83,8 @@ public class CalendarController {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
 
-        CalendarResponseDto calendar = calendarService.joinCalendarByInviteCode(securityUser, map.get("inviteCode"));
-        restResponse.setResult(calendar);
+        HashMap<String, Object> resultMap = calendarService.joinCalendarByInviteCode(securityUser, map.get("inviteCode"));
+        restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
@@ -100,8 +100,8 @@ public class CalendarController {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
 
-        List<CalendarResponseDto> calendarList = calendarService.getCalendarList(securityUser, offset, pageSize, false);
-        restResponse.setResult(calendarList);
+        HashMap<String, Object> resultMap = calendarService.getCalendarList(securityUser, offset, pageSize, false);
+        restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
@@ -131,7 +131,7 @@ public class CalendarController {
     @PutMapping()
     @Operation(summary = "캘린더 수정, 토큰필요 O", description = "캘린더 수정, 토큰 필요 O")
     @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarResponseDto.class)))
-    public ResponseEntity<?> updateCalendar(
+    public ResponseEntity<?> modifyCalendar(
             HttpServletRequest request,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description="이 API에서 아래의 값은 생략이 가능함\n\n" +
@@ -145,21 +145,22 @@ public class CalendarController {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse response = new RestResponse();
 
-        CalendarResponseDto calendar = calendarService.updateCalendar(securityUser, calendarRequestDto);
-        response.setResult(calendar);
+        HashMap<String, Object> resultMap = calendarService.updateCalendar(securityUser, calendarRequestDto);
+        response.setResult(resultMap);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @DeleteMapping()
     @Operation(summary = "캘린더 삭제, 토큰필요 O", description = "캘린더 삭제, 내가 생성한 캘린더만 삭제할 수 있음")
-    public ResponseEntity<?> getCalendarList(
+    public ResponseEntity<?> removeCalendarList(
             HttpServletRequest request,
             @Parameter(description="삭제하려는 CalendarId")
             @RequestParam Long calendarId
     )throws FailException {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
-        String result = calendarService.removeCalendar(securityUser, calendarId);
+
+        HashMap<String, Object> result = calendarService.removeCalendar(securityUser, calendarId);
         restResponse.setResult(result);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }

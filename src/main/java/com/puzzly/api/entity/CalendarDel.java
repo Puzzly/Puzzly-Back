@@ -19,8 +19,8 @@ import java.util.List;
 public class CalendarDel {
 
     @Comment("PK, autoIncrement")
-    @Id
-    private long calendarId;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long calendarId;
 
     /** 캘린더에 한명만 참여하고있으면 PRIVATE, 두명 이상이 참여중이면 TEAM 값을 가짐*/
     @Comment("캘린더 종류")

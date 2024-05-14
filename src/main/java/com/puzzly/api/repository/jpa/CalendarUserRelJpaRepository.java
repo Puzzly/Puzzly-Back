@@ -13,9 +13,16 @@ import java.util.List;
 @Repository
 public interface CalendarUserRelJpaRepository extends JpaRepository<CalendarUserRelation, Long> {
 
-    public CalendarUserRelation findCalendarUserRelByUser(User user);
+    //public CalendarUserRelation findCalendarUserRelByUser(User user);
 
-    public CalendarUserRelation findCalendarUserRelByUserAndCalendarAndIsDeleted(User user, Calendar calendar, boolean isDeleted);
+    //public CalendarUserRelation findCalendarUserRelByUserAndCalendarAndIsDeleted(User user, Calendar calendar, boolean isDeleted);
+
+    @Query("SELECT cur.relationId, cur.user, cur.calendar, cur.authority " +
+            "FROM CalendarUserRelation cur " +
+            "WHERE cur.calendar.calendarId = :#{#calendar.calendarId} " +
+            "AND cur.user.userId = :#{#user.userId} " +
+            "AND cur.isDeleted =:isDeleted")
+    public CalendarUserRelation findCalendarUserRelation(Calendar calendar, User user, Boolean isDeleted);
 
     public List<CalendarUserRelation> findCalendarUserRelByCalendar(Calendar calendar);
 
