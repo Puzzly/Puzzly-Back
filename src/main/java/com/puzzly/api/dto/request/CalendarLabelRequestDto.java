@@ -24,6 +24,6 @@ public class CalendarLabelRequestDto {
     @Schema(description = "라벨 순서")
     private Integer orderNum;
 
-    @Schema(description = "calendar PK")
+    @Schema(description = "calendar PK", defaultValue = "1")
     private Long calendarId;
 }

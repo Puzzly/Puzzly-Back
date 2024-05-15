@@ -578,18 +578,22 @@ public class CalendarService {
             throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NAME_DUPLICATE", 400);
         }
 
-        // 캘린더 관계 설정
         Calendar calendar = calendarJpaRepository.findById(calendarLabelRequestDto.getCalendarId()).orElse(null);
+
+        if(calendar == null){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_NOT_EXISTS", 400);
+        }
 
         // max 순서
         Integer maxOrder = calendarLabelJpaRepository.getMaxOrder(Objects.requireNonNull(calendar).getCalendarId());
-        if(maxOrder == null) maxOrder = 1;
+        if(maxOrder == null) maxOrder = 0;
 
         CalendarLabel calendarLabel = CalendarLabel.builder().labelName(calendarLabelRequestDto.getLabelName())
                 .colorCode(calendarLabelRequestDto.getColorCode())
                 .orderNum(maxOrder+1)
-                .user(user)
+                .createUser(user)
                 .calendar(calendar)
+                .createDateTime(LocalDateTime.now())
                 .build();
 
         // 캘린더 생성
