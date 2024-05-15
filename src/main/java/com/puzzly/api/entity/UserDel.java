@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.Comment;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,64 +16,40 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @ToString
-@Table(name="tb_users_del")
+@Comment("삭제 사용자 테이블")
+/* User가 예약어 회피를 위해 Users로 명명, 이에따라 del 테이블도 Users로 명명*/
+@Table(name="users_del")
 public class UserDel {
-    @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
+
+    @Comment("Pk, autoIncrement")
+    @Id
     private Long userId;
+    @Comment("사용자 이름")
     @Column private String userName;
+    @Comment("사용자 별명")
     @Column private String nickName;
-    @Column private String email;
+    @Comment("사용자 email")
+    @Column(unique = true) private String email;
+    @Comment("사용자 비밀번호")
     @Column private String password;
+    @Comment("사용자 전화번호")
     @Column private String phoneNumber;
+    @Comment("사용자 생일")
     @Column private LocalDate birth;
-    @Column private boolean gender;
-    @Enumerated(EnumType.STRING) private AccountAuthority accountAuthority;
+    @Comment("사용자 성별")
+    @Column private Boolean gender;
+    @Comment("사용자 생성시각")
     @Column private LocalDateTime createDateTime;
+    @Comment("사용자 수정시각")
     @Column private LocalDateTime modifyDateTime;
+    @Comment("사용자 삭제시각")
     @Column private LocalDateTime deleteDateTime;
+    @Comment("사용자 계정상태")
     @Column private String status;
+    @Comment("사용자 삭제여부")
+    @Column private Boolean isDeleted;
 
-    // del 테이블은 생성시점에 제어할것이며, 팀 캘린더의 경우 지우면 안됨.
-    // 또한 아래 정보들은 생성시점에서 tb테이블이 알 필요 없고 (del정보임), 이에따라 엔티티도 몰라야함.
-    // 논리제어 필요
-
-/*    // 사용자 추가정보
-    @OneToOne(mappedBy="user")
-    @PrimaryKeyJoinColumn
-    private UserEx userEx;
-
-
-    */
-/*    // 소속 켈린더 정보
-    @OneToMany(mappedBy="user")
-    private List<CalendarUserRel> calendarUserRelList = new ArrayList<>();
-
-    // 소유한 캘린더 정보
-    @OneToMany(mappedBy="user")
-    private List<Calendar> calendarList = new ArrayList<>();
-
-    // 내가 쓴 켈린더 컨텐츠
-    @OneToMany(mappedBy="user")
-    private List<CalendarContent> calendarContentList = new ArrayList<>();
-
-    // 내가 만든 켈린더 라벨 정보
-    @OneToMany(mappedBy="user")
-    private List<CalendarLabel> calendarLabelList = new ArrayList<>();
-
-    // 내가 만든 켈린더 첨부파일 정보
-    @OneToMany(mappedBy = "user")
-    private List<CalendarAttachments> calendarAttachmentsList = new ArrayList<>();
-
-    // 체크리스트 정보
-    @OneToMany(mappedBy="user")
-    private List<CheckList> checklistList = new ArrayList<>();
-
-    // 체크리스트, 다이어리는 본인소유이므로 본인이 업로드한 첨부파일 목록 양방향 X 처리
-    // 필요하다면 mybatis로 처리
-    @OneToMany(mappedBy="user")
-    private List<Diary> diaryList = new ArrayList<>();
-
-    @OneToMany(mappedBy="user")
-    private List<UserCalSyncs> syncList = new ArrayList<>();*/
-
+    @Comment("사용자 확장정보")
+    @Column
+    private Long extensionId;
 }

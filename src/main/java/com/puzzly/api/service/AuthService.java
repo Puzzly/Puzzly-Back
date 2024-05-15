@@ -41,7 +41,7 @@ public class AuthService {
 
         if(user != null){
 
-            newToken.setAccessToken(jwtUtils.generateJwtToken(user));
+            //newToken.setAccessToken(jwtUtils.generateJwtToken(user));
             newToken.setRefreshToken(jwtUtils.generateRefreshToken("refreshToken"));
             newToken.setEmail(user.getEmail());
 

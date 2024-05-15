@@ -9,7 +9,6 @@ import com.puzzly.api.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,8 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @Slf4j
@@ -35,7 +33,7 @@ public class UserController {
 
     @PostMapping()
     @Operation(summary = "회원가입, 로그인 및 JWT 토큰 필요 X", description = "회원가입, 토큰필요 X")
-    @ApiResponse(responseCode = "200", description = "SUCCESS")
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:user 의 value로 사용자 정보 제공")
     @ApiResponse(responseCode = "4**", description = "SERVER_MESSAGE_* 메시지는 의도된 예외처리")
     public ResponseEntity<?> createUser(
             HttpServletRequest request,
@@ -54,30 +52,32 @@ public class UserController {
             @RequestBody UserRequestDto userRequestDto
             ) throws FailException {
         RestResponse response = new RestResponse();
-        UserResponseDto user = userService.insertUser(userRequestDto);
-        response.setResult(user);
+        HashMap<String, Object> resultMap = userService.createUser(userRequestDto);
+
+        response.setResult(resultMap);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping()
     @Operation(summary = "사용자 정보 조회, JWT 토큰필요 O", description = "내 정보 조회, 토큰 필요 O")
-    @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserResponseDto.class)))
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:user의 value로 사용자 정보 제공", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserResponseDto.class)))
     @ApiResponse(responseCode = "4**", description = "SERVER_MESSAGE_* 메시지는 의도된 예외처리")
-    public ResponseEntity<?> getUserMybatis(
+    public ResponseEntity<?> getUser(
             HttpServletRequest request,
             @Parameter(description = "조회하려는 사용자PK (생략 가능. 생략시 본인 정보 조회, 주어질경우 해당 유저 조회)")
             @RequestParam(name="userId", required = false) Long userId
     ) throws FailException{
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        UserResponseDto user = userService.selectUserMybatis(userId == null ? securityUser.getUser().getUserId() : userId);
         RestResponse response = new RestResponse();
-        response.setResult(user);
+
+        HashMap<String, Object> resultMap = userService.getUser(userId == null ? securityUser.getUser().getUserId() : userId);
+        response.setResult(resultMap);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PutMapping()
     @Operation(summary = "내 정보 변경하기 (프로필사진 업로드 기능은 추후개발 (5월 3주차)", description = "내 정보 수정, 토큰 필요 O")
-    public ResponseEntity<?> updateUser(
+    public ResponseEntity<?> modifyUser(
             HttpServletRequest request,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description="이 API에서 아래의 값은 생략이 가능하며 변경사항이 발생하지 않은 값은 전송하지 않아도 됌.\n\n" +
@@ -92,12 +92,12 @@ public class UserController {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse response = new RestResponse();
 
-        UserResponseDto user = userService.updateUser(securityUser.getUser().getUserId(), userRequestDto);
-        response.setResult(user);
+        HashMap<String, Object> resultMap = userService.modifyUser(securityUser.getUser().getUserId(), userRequestDto);
+        response.setResult(resultMap);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Deprecated
+    @Deprecated(forRemoval = true)
     @GetMapping("/jpa")
     @Operation(summary = "@Deprecated 내 정보 조회", description = "@Deprecated. 내 정보 조회 ")
     @ApiResponse(responseCode = "200", description = "SUCCESS")

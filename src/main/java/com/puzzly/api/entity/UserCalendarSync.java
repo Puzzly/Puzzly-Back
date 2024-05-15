@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.Comment;
 
 import java.time.LocalDateTime;
 
@@ -11,16 +12,17 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor
 @ToString
-@Table(name="tb_user_cal_syncs")
-public class UserCalSyncs {
-    @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
-    private Long calSyncId;
+@Comment("사용자 타 달력 동기화 정보")
+@Table(name="user_calendar_sync")
+public class UserCalendarSync {
+    @Comment("PK, autoIncrement")
+    @Id @GeneratedValue(strategy= GenerationType.IDENTITY)
+    private Long syncId;
 
-    // User를 외래키로 지정하는 방법
+    @Comment("사용자 PK")
     @ManyToOne(fetch = FetchType.LAZY)
-    //@JoinColumn(name = "userId", nullable=false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     @JoinColumn(name = "userId", nullable=false)
     private User user;
+    @Comment("최종 동기화 시각")
     @Column private LocalDateTime lastSyncTime;
 }

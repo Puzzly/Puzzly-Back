@@ -33,7 +33,7 @@
     <select id="selectCalendarContentAttachmentsByContentId" resultType="com.puzzly.api.dto.response.CalendarContentAttachmentsResponseDto">
         SELECT
             attachments_id, content_id, extension, origin_name, file_path, file_size, create_date_time,
-            tcca.create_id, (SELECT nick_name from tb_users where user_id = tcca.create_id) AS create_user_nick_name, is_deleted, delete_date_time, tcca.delete_id
+            tcca.create_id, (SELECT nick_name from users where user_id = tcca.create_id) AS create_user_nick_name, is_deleted, delete_date_time, tcca.delete_id
         FROM
             calendar_content_attachments tcca
         WHERE
@@ -45,11 +45,11 @@
     <select id="selectCalendarContentByContentId" resultType="com.puzzly.api.dto.response.CalendarContentResponseDto">
         SELECT
             tcc.calendar_id, tc.calendar_name, tcc.content_id, tcc.label_id, tcc.title, tcc.create_id,
-            (SELECT nick_name from tb_users tu where tu.user_id = tcc.create_id) AS create_nick_name,
+            (SELECT nick_name from users tu where tu.user_id = tcc.create_id) AS create_nick_name,
             tcc.modify_id,
-            (SELECT nick_name from tb_users tu where tu.user_id = tcc.modify_id) AS modify_nick_name,
+            (SELECT nick_name from users tu where tu.user_id = tcc.modify_id) AS modify_nick_name,
             tcc.delete_id,
-            (SELECT nick_name from tb_users tu where tu.user_id = tcc.delete_id) AS delete_nick_name,
+            (SELECT nick_name from users tu where tu.user_id = tcc.delete_id) AS delete_nick_name,
             tcc.start_date_time, tcc.end_date_time, tcc.content, tcc.notify,
             <!--tcc.notify_time,--> tcc.memo, tcc.location,
             tcc.create_date_time, tcc.modify_date_time, tcc.delete_date_time,
