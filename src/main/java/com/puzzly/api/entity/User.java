@@ -2,6 +2,7 @@ package com.puzzly.api.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Comment;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,97 +19,42 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor(access= AccessLevel.PROTECTED)
 @ToString
-@Table(name="tb_users")
+@Comment("사용자 정보")
+/** DB 예약어 user를 피하기 위해 사용자테이블만 복수형으로 선언*/
+@Table(name="users")
 public class User {
 
+    @Comment("Pk, autoIncrement")
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long userId;
+    @Comment("사용자 이름")
     @Column private String userName;
+    @Comment("사용자 별명")
     @Column private String nickName;
-    @Column private String email;
+    @Comment("사용자 email")
+    @Column(unique = true) private String email;
+    @Comment("사용자 비밀번호")
     @Column private String password;
+    @Comment("사용자 전화번호")
     @Column private String phoneNumber;
+    @Comment("사용자 생일")
     @Column private LocalDate birth;
+    @Comment("사용자 성별")
     @Column private Boolean gender;
-    //@Enumerated(EnumType.STRING) private List<AccountAuthority> accountAuthority;
-
-    @OneToMany(mappedBy="user", fetch = FetchType.EAGER)
-    private List<UserAccountAuthority> userAccountAuthorityList = new ArrayList<>();
-
+    @Comment("사용자 생성시각")
     @Column private LocalDateTime createDateTime;
+    @Comment("사용자 수정시각")
     @Column private LocalDateTime modifyDateTime;
+    @Comment("사용자 삭제시각")
     @Column private LocalDateTime deleteDateTime;
+    @Comment("사용자 계정상태")
     @Column private String status;
+    @Comment("사용자 삭제여부")
     @Column private Boolean isDeleted;
 
-    // 사용자 추가정보
-    @OneToOne(mappedBy="user")
-    private UserEx userEx;
-
-    // 소속 켈린더 정보
-    @OneToMany(mappedBy="user")
-    private List<CalendarUserRel> calendarUserRelList = new ArrayList<>();
-
-    /*
-    // 소유한 캘린더 정보
-    @OneToMany(mappedBy="createUser")
-    private List<Calendar> calendarList = new ArrayList<>();
-     */
-
-    /*
-    // 내가 쓴 켈린더 컨텐츠
-    @OneToMany(mappedBy="createUser")
-    private List<CalendarContents> calendarContentList = new ArrayList<>();
-     */
-    /*
-    // 내가 만든 켈린더 라벨 정보
-    @OneToMany(mappedBy="user")
-    private List<CalendarLabel> calendarLabelList = new ArrayList<>();
-
-    // 내가 만든 켈린더 첨부파일 정보
-    @OneToMany(mappedBy = "createUser")
-    private List<CalendarContentsAttachments> calendarAttachmentsList = new ArrayList<>();
-
-
-     */
-    // 체크리스트 정보
-    @OneToMany(mappedBy="user")
-    private List<CheckList> checklistList = new ArrayList<>();
-
-    // 체크리스트, 다이어리는 본인소유이므로 본인이 업로드한 첨부파일 목록 양방향 X 처리
-    // 필요하다면 mybatis로 처리
-    @OneToMany(mappedBy="user")
-    private List<Diary> diaryList = new ArrayList<>();
-
-    @OneToMany(mappedBy="user")
-    private List<UserCalSyncs> syncList = new ArrayList<>();
-
-
-
-
-
-    /*
-    @OneToMany(mappedBy="calendarId")
-    private List<Calendar> calendarList = new ArrayList<>();
-
-     */
-/*
-    public User(UserRequestDto userDto, UserExRequestDto userExDto){
-
-        this.userId = userDto.getUserId();
-        this.userName=userDto.getUserName();
-        this.nickName=userDto.getNickName();
-        this.email=userDto.getEmail();
-        this.password=userDto.getPassword();
-        this.phoneNumber=userDto.getPhoneNumber();
-        this.birth=userDto.getBirth();
-        this.gender=userDto.isGender();
-        this.accountAuthority=userDto.getAccountAuthority();
-        this.createDateTime=userDto.getCreateDateTime();
-        this.modifyDateTime=userDto.getModifyDateTime();
-        this.deleteDateTime=userDto.getDeleteDateTime();
-        this.status=userDto.getStatus();
-        this.userEx = new UserEx(userExDto);
-    }*/
+    @Comment("사용자 확장정보")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "extensionId")
+    private UserExtension userExtension;
 
 }

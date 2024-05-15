@@ -1,9 +1,9 @@
 package com.puzzly.api.controller;
 
 import com.puzzly.api.domain.SecurityUser;
-import com.puzzly.api.dto.request.CalendarContentsRequestDto;
+import com.puzzly.api.dto.request.CalendarContentRequestDto;
 import com.puzzly.api.dto.request.CalendarRequestDto;
-import com.puzzly.api.dto.response.CalendarContentsResponseDto;
+import com.puzzly.api.dto.response.CalendarContentResponseDto;
 import com.puzzly.api.dto.response.CalendarResponseDto;
 import com.puzzly.api.dto.wrapper.RestResponse;
 import com.puzzly.api.exception.FailException;
@@ -37,14 +37,62 @@ import java.util.Map;
 
 @RestController
 @Slf4j
-@Tag(name = "02.Calendar", description="Calendar Operations\n\n사용DTO: CalendarRequestDto, CalendarResponseDto, CalendarContentsRequestDto, CalendarConetnsResponseDto\n\nDTO설명은 이 페이지 최 하단부 schema 설명 참조")
+@Tag(name = "02.Calendar", description="Calendar Operations\n\n사용DTO: CalendarRequestDto, CalendarResponseDto, CalendarContentRequestDto, CalendarContentResponseDto\n\nDTO설명은 이 페이지 최 하단부 schema 설명 참조\n\n 일반적으로 응답은 status, message, timestamp, result의 key를 가지는 map 구조임")
 @RequestMapping("/api/calendar")
 @RequiredArgsConstructor
 public class CalendarController {
 
     private final CalendarService calendarService;
+
+    @PostMapping("/invitationCode")
+    @Operation(summary="캘린더 초대코드 생성, 토큰필요 O", description = "캘린더 초대코드 생성, 토큰필요 O",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content={@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                schemaProperties = {
+                                    @SchemaProperty(name = "calendarId", schema = @Schema(type="string", defaultValue="1", requiredMode = Schema.RequiredMode.REQUIRED))
+                                })
+                    }
+            )
+    )
+    @ApiResponse(responseCode = "200", description = "성공시 result 내 key:inviteCode의 value로 초대 코드 제공")
+    public ResponseEntity<?> createInvitationCode(
+            HttpServletRequest request,
+            @RequestBody Map<String, Long> requestMap
+    ) throws FailException, Exception{
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+
+        HashMap<String, String> resultMap = calendarService.createInviteCode(securityUser, MapUtils.getLong(requestMap, "calendarId"));
+        restResponse.setResult(resultMap);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/join")
+    @Operation(summary="캘린더 초대코드로 가입, 토큰필요 O", description = "캘린더 초대코드로 가입, 토큰필요 O",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content={@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schemaProperties = {
+                                        @SchemaProperty(name = "inviteCode", schema = @Schema(type="string", defaultValue="", requiredMode = Schema.RequiredMode.REQUIRED))
+                                    })
+                    }
+            )
+    )
+    @ApiResponse(responseCode = "200", description = "성공시 result 내 key:calendar 의 value로 가입에 성공한 캘린더 정보 제공")
+    public ResponseEntity<?> joinByInvitationCode(
+            HttpServletRequest request,
+            @RequestBody HashMap<String, String> map
+    )throws FailException{
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+
+        HashMap<String, Object> resultMap = calendarService.joinCalendarByInviteCode(securityUser, map.get("inviteCode"));
+        restResponse.setResult(resultMap);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
     @GetMapping("/list")
     @Operation(summary = "내가 참여한 켈린더 목록 조회, 토큰필요 O", description = "내가 참여한 모든 켈린더 조회, 토큰필요 O")
+    @ApiResponse(responseCode = "200", description = "성공시 result 내 key:calendarList 의 value로 캘린더 리스트 제공")
     public ResponseEntity<?> getCalendarList(
             HttpServletRequest request,
             @Parameter(description="페이지 번호, 0부터 시작, 파라미터로 주어지지 않으면 BE에서 자동으로 0으로 셋팅")
@@ -54,14 +102,15 @@ public class CalendarController {
     )throws FailException {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
-        List<CalendarResponseDto> calendarList = calendarService.getSimpleCalendarList(securityUser, offset, pageSize);
-        restResponse.setResult(calendarList);
+
+        HashMap<String, Object> resultMap = calendarService.getCalendarList(securityUser, offset, pageSize, false);
+        restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
     @PostMapping()
     @Operation(summary = "캘린더 생성, 토큰필요 O", description = "캘린더 생성, 토큰 필요 O")
-    @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarResponseDto.class)))
+    @ApiResponse(responseCode = "200", description = "성공시 result 내 key:calendar의 value 로 캘린더 정보 제공", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarResponseDto.class)))
     public ResponseEntity<?> createCalendar(
             HttpServletRequest request,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -77,15 +126,15 @@ public class CalendarController {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse response = new RestResponse();
 
-        CalendarResponseDto calendar = calendarService.createCalendar(securityUser, calendarRequestDto);
-        response.setResult(calendar);
+        CalendarResponseDto resultMap = calendarService.createCalendar(securityUser, calendarRequestDto);
+        response.setResult(resultMap);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PutMapping()
     @Operation(summary = "캘린더 수정, 토큰필요 O", description = "캘린더 수정, 토큰 필요 O")
-    @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarResponseDto.class)))
-    public ResponseEntity<?> updateeCalendar(
+    @ApiResponse(responseCode = "200", description = "성공시 result 내 key:calendar 의 value로 캘린더 정보 제공", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarResponseDto.class)))
+    public ResponseEntity<?> modifyCalendar(
             HttpServletRequest request,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description="이 API에서 아래의 값은 생략이 가능함\n\n" +
@@ -99,65 +148,55 @@ public class CalendarController {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse response = new RestResponse();
 
-        CalendarResponseDto calendar = calendarService.updateCalendar(securityUser, calendarRequestDto);
-        response.setResult(calendar);
+        HashMap<String, Object> resultMap = calendarService.modifyCalendar(securityUser, calendarRequestDto);
+        response.setResult(resultMap);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @PostMapping("/invitationCode")
-    @Operation(summary="캘린더 초대코드 생성, 토큰필요 O", description = "캘린더 초대코드 생성, 토큰필요 O, 현시점 유효시간 무제한, 향후 24시간으로 조정 예정",
-                requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                        content={
-                                @Content(
-                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                        schemaProperties = {
-                                                @SchemaProperty(name = "calendarId", schema = @Schema(type="string", defaultValue="1", requiredMode = Schema.RequiredMode.REQUIRED))
-                                        }
-                                )
-                        }
-                ))
-    public ResponseEntity<?> createInvitationCode(
+    @DeleteMapping()
+    @Operation(summary = "캘린더 삭제, 토큰필요 O", description = "캘린더 삭제, 내가 생성한 캘린더만 삭제할 수 있음")
+    @ApiResponse(responseCode = "200", description = "성공시 result 내 key:calendarId 의 value로 삭제한 캘린더의 Id(PK) 제공", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarResponseDto.class)))
+    public ResponseEntity<?> removeCalendarList(
             HttpServletRequest request,
-            @RequestBody Map<String, Long> requestMap
-    ) throws FailException, Exception{
+            @Parameter(description="삭제하려는 CalendarId")
+            @RequestParam Long calendarId
+    )throws FailException {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
 
-        String invitationCode = calendarService.createInviteCode(securityUser, MapUtils.getLong(requestMap, "calendarId"));
-        restResponse.setResult(invitationCode);
+        HashMap<String, Object> resultMap = calendarService.removeCalendar(securityUser, calendarId);
+        restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
-    @PostMapping("/join")
-    @Operation(summary="초대코드로 캘린더 가입, JWT토큰 필요", description = "초대코드로 캘린더 가입, JWT토큰 필요",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            content={
-                    @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schemaProperties = {
-                                    @SchemaProperty(name = "invitationCode", schema = @Schema(type="string", defaultValue="", requiredMode = Schema.RequiredMode.REQUIRED))
-                            }
-                    )
-            }
-    ))
-    public ResponseEntity<?> joinByInvitationCode(
+    @PostMapping(value = "/content")
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:content 의 value로 캘린더 컨텐트(일정) 제공", content = @Content(schema = @Schema(implementation = CalendarContentResponseDto.class)))
+    @Operation(summary="캘린더 컨텐트(일정) 등록, JWT 토큰 필요", description = "캘린더 컨텐트(일정) 등록, JWT토큰 필요")
+    public ResponseEntity<?> createCalendarContent(
             HttpServletRequest request,
-            @RequestBody HashMap<String, String> map
-    )throws FailException, Exception{
+            @Parameter(
+                    description="이 API에서 아래의 값은 생략이 가능함\n\n" +
+                            "* ContentId (생략 가능, 값 생성/변경은 서버에서 수행함. 값이 주어지면 무시됨)\n\n"+
+                            "상기 명시되지 않은 값을 생략할 경우 400에러 발생\n\n" +
+                            "이 API에서 주의사항은 아래와 같음\n\n",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
+            )
+            @RequestBody CalendarContentRequestDto contentRequestDto
+    ) throws FailException{
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
 
-        CalendarResponseDto calendar = calendarService.joinCalendarByInviteCode(securityUser, map.get("invitationCode"));
-        restResponse.setResult(calendar);
+        HashMap<String, Object> resultMap = calendarService.createCalendarContent(securityUser, contentRequestDto);
+        restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
-    @GetMapping("/contents/list")
-    @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarContentsResponseDto.class)))
+    @GetMapping("/content/list")
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:contentList value로 캘린더 컨텐트(일정) 제공", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarContentResponseDto.class)))
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
-    @Operation(summary="캘린더 일정 리스트 가져오기, JWT 토큰 필요", description = "캘린더 일정 리스트 가져오기, JWT 토큰 필요")
-    public ResponseEntity<?> getCalendarContents(
+    @Operation(summary="캘린더 컨텐트(일정) 리스트 가져오기, JWT 토큰 필요", description = "캘린더 컨텐트(일정) 리스트 가져오기, JWT 토큰 필요")
+    public ResponseEntity<?> getCalendarContent(
             HttpServletRequest request,
             @Parameter(description="조회하려는 캘린더의 PK")
             @RequestParam(name="calendarId") Long calendarId,
@@ -172,62 +211,35 @@ public class CalendarController {
 
         LocalDateTime startTargetDateTime = LocalDateTime.parse(startTargetDateTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         LocalDateTime limitTargetDateTime = LocalDateTime.parse(limitTargetDateTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        List<CalendarContentsResponseDto> calendarContentsList = calendarService.getCalendarContentsList(securityUser, calendarId, startTargetDateTime, limitTargetDateTime);
+        HashMap<String, Object> resultMap = calendarService.getCalendarContentList(securityUser, calendarId, startTargetDateTime, limitTargetDateTime, false);
 
-        restResponse.setResult(calendarContentsList);
+        restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/contents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(schema = @Schema(implementation = CalendarContentsResponseDto.class)))
-    @Operation(summary="캘린더 컨텐츠 등록, JWT 토큰 필요", description = "캘린더 컨텐츠 등록, JWT토큰 필요")
-    public ResponseEntity<?> createCalendarContents(
+    @GetMapping(value = "/content")
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:content의 value로 캘린더 컨텐트(일정) 제공", content = @Content(schema = @Schema(implementation = CalendarContentResponseDto.class)))
+    @Operation(summary="캘린더 컨텐트(일정) 조회, JWT 토큰 필요", description = "캘린더 컨텐트(일정) 조회, JWT토큰 필요")
+    public ResponseEntity<?> getCalendarContent(
             HttpServletRequest request,
-            @Parameter(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
-            @RequestPart(required = false) List<MultipartFile> fileList,
-            @Parameter(
-                    description="이 API에서 아래의 값은 생략이 가능함\n\n" +
-                            "* ContentsId (생략 가능, 값 생성/변경은 서버에서 수행함. 값이 주어지면 무시됨)\n\n"+
-                            "상기 명시되지 않은 값을 생략할 경우 400에러 발생\n\n" +
-                            "이 API에서 주의사항은 아래와 같음\n\n",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
-            )
-            // CalendarContents 변수가 FE에 노출되는 변수명이므로 RequestDto는 변수명에서 제거
-            @RequestPart CalendarContentsRequestDto calendarContents
+            @Parameter(description="캘린더 컨텐츠 Id")
+            @RequestParam(name= "contentId") Long contentId
     ) throws FailException{
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
-        // FE에 노출되는 변수명으로 인해 변수명 재조정
-        CalendarContentsResponseDto calendarContentsResponse = calendarService.createCalendarContents(securityUser, calendarContents, fileList);
-        restResponse.setResult(calendarContentsResponse);
+
+        HashMap<String, Object> resultMap = calendarService.getCalendarContent(securityUser, contentId);
+        restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/contents")
-    @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(schema = @Schema(implementation = CalendarContentsResponseDto.class)))
-    @Operation(summary="캘린더 컨텐츠 조회, JWT 토큰 필요", description = "캘린더 컨텐츠 등록, JWT토큰 필요")
-    public ResponseEntity<?> getCalendarContents(
-            HttpServletRequest request,
-            @Parameter(description="일정 Id")
-            @RequestParam(name="contentsId") Long contentsId
-    ) throws FailException{
-        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        RestResponse restResponse = new RestResponse();
-        // FE에 노출되는 변수명으로 인해 변수명 재조정
-        CalendarContentsResponseDto calendarContentsResponse = calendarService.getCalendarContents(securityUser, contentsId);
-        restResponse.setResult(calendarContentsResponse);
-        return new ResponseEntity<>(restResponse, HttpStatus.OK);
-    }
-
-    @PutMapping(value="/contents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarContentsResponseDto.class)))
+    @PutMapping(value="/content")
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:content의 value로 캘린더 컨텐트(일정) 제공", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarContentResponseDto.class)))
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
-    @Operation(summary="캘린더 일정 수정하기, JWT 토큰 필요", description = "캘린더 일정 수정하기, JWT 토큰 필요")
-    public ResponseEntity<?> updateCalendarContents(
+    @Operation(summary="캘린더 컨텐트(일정) 수정, JWT 토큰 필요", description = "캘린더 컨텐트(일정) 수정하기, JWT 토큰 필요")
+    public ResponseEntity<?> modifyCalendarContent(
             HttpServletRequest request,
-            @Parameter(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
-            @RequestPart(required = false) List<MultipartFile> fileList,
             @Parameter(
                     description="이 API에서 아래의 값은 생략이 가능함\n\n" +
                             "* 변경이 발생하지 않은 Parameter값은 서버로 보내지 않고 생략 가능"+
@@ -235,31 +247,83 @@ public class CalendarController {
                             "이 API에서 주의사항은 아래와 같음\n\n",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
             )
-            @RequestPart CalendarContentsRequestDto calendarContents
+            @RequestBody CalendarContentRequestDto contentRequestDto
     ) throws FailException{
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
-        CalendarContentsResponseDto calendarContentsResponse = calendarService.updateCalendarContents(securityUser, calendarContents, fileList);
+        HashMap<String, Object> resultMap = calendarService.modifyCalendarContent(securityUser, contentRequestDto);
 
-        restResponse.setResult(calendarContentsResponse);
+        restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/download/file")
-    @ApiResponse(responseCode = "200", description = "SUCCESS", content = @Content(schema = @Schema(implementation = CalendarContentsResponseDto.class)))
-    @Operation(summary="캘린더 첨부파일 다운로드", description = "캘린더 첨부파일 다운로드, JWT토큰 필요, 해당 캘린더에 참여해있어야 함")
-    public void downloadCalendarContentsAttachments(
+    @DeleteMapping(value="/content")
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:contentId value로 삭제된 켈린더 컨텐트(일정) Id 제공")
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
+    @Operation(summary="캘린더 컨텐트 삭제, JWT 토큰 필요", description = "캘린더 컨텐츠 삭제, JWT 토큰 필요")
+    public ResponseEntity<?> removeCalendarContent(
             HttpServletRequest request,
-            HttpServletResponse response,
-            @Parameter(description="첨부파일 Id")
-            @RequestParam(name="contentsId") Long attachmentId
+            @Parameter(description="캘린더 컨텐트 Id")
+            @RequestParam(name= "contentId") Long contentId
+    ) throws FailException{
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+        HashMap<String, Object> resultMap = calendarService.removeCalendarContent(securityUser, contentId);
+
+        restResponse.setResult(resultMap);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/content/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:attachmentsIdList 의 value로 업로드 성공한 첨부파일 Id 제공")
+    @Operation(summary="캘린더 첨부파일 업로드", description = "캘린더 첨부파일 업로드, JWT토큰 필요")
+    public ResponseEntity<?> uploadCalendarContentAttachments(
+            HttpServletRequest request,
+            //@Parameter(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
+            @RequestPart(required = false) List<MultipartFile> attachmentsList
     ) throws FailException, IOException {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
-        // FE에 노출되는 변수명으로 인해 변수명 재조정
-        calendarService.downloadCalendarContentsAttachments(securityUser, attachmentId, request, response);
+
+        HashMap<String, Object> resultMap = calendarService.uploadCalendarContentAttachments(securityUser, attachmentsList);
+        restResponse.setResult(resultMap);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
+    @GetMapping(value = "/content/file")
+    @ApiResponse(responseCode = "200", description = "SUCCESS")
+    @Operation(summary="캘린더 첨부파일 다운로드", description = "캘린더 첨부파일 다운로드, JWT토큰 필요, 해당 캘린더에 참여해있어야 함")
+    public void downloadCalendarContentAttachments(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @Parameter(description="첨부파일 Id")
+            @RequestParam(name="attachmentsId") Long attachmentsId
+    ) throws FailException, IOException {
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        calendarService.downloadCalendarContentAttachments(securityUser, attachmentsId, request, response);
+    }
+
+    //FE 에서 자체적으로 파일을 삭제할 수단을 제공하지 않음. 일정 수정을 통해서 수행
+    /*
+    @DeleteMapping(value = "/content/file")
+    @ApiResponse(responseCode = "200", description = "성공 시 result의 key:attachmentsId 로 삭제에 성공한 첨부파일 Id 제공")
+    @Operation(summary="캘린더 첨부파일 삭제", description = "캘린더 첨부파일 삭제, JWT토큰 필요, 해당 캘린더에 참여해있어야 함")
+    public ResponseEntity<?> removeCalendarContentAttachments(
+            HttpServletRequest request,
+            @Parameter(description="삭제할 첨부파일 Id")
+            @RequestParam(name="attachmentsId") Long attachmentsId
+    ) throws FailException, IOException {
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+
+        HashMap<String, Object> resultMap = calendarService.removeCalendarContentAttachments(securityUser, attachmentsId);
+        restResponse.setResult(resultMap);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
+     */
 
     /*
     @PostMapping("/label")

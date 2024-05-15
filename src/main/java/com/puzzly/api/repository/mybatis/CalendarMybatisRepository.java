@@ -7,8 +7,8 @@ import java.util.List;
 
 @Mapper
 public interface CalendarMybatisRepository {
-    List<CalendarResponseDto> getSimpleCalendarDtoListJoinRel(Long userId, int offset, int pageSize);
+    List<CalendarResponseDto> selectCalendarList(Long userId, int offset, int pageSize, boolean isDeleted);
 
-    CalendarResponseDto getCalendar(Long calendarId);
+    CalendarResponseDto selectCalendar(Long calendarId);
 
 }

@@ -1,15 +1,8 @@
 package com.puzzly.api.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
-import com.puzzly.api.domain.AccountAuthority;
-import com.puzzly.api.entity.UserAccountAuthority;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -62,7 +55,7 @@ public class UserResponseDto {
 
     // 사용자 추가정보
     @Schema(defaultValue = "1", description = "사용자 추가정보 PK")
-    private Long userExId;
+    private Long extensionId;
     @Schema(defaultValue = "true", description = "약관 1 동의여부")
     private Boolean firstTermAgreement;
     @Schema(defaultValue = "true", description = "약관 2 동의여부")

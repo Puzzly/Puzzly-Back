@@ -1,5 +1,6 @@
 package com.puzzly.api.util;
 
+import com.puzzly.api.domain.SecurityUser;
 import com.puzzly.api.entity.User;
 import com.puzzly.api.entity.UserAccountAuthority;
 import com.puzzly.api.service.UserService;
@@ -26,18 +27,18 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class JwtUtils implements InitializingBean {
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
-    //private static final String jwtSecretKey = "89e3d9b82f6908ddae0f2f20ce7bbcd7307b14e6938fa54e2990e8ee498632e7680474fd37098932f1d4605b7b3768bca12bf8b5454ed26f8316ee1de8a6948b";
     @Value("${jwt.secretKey}")
     private String jwtSecretKey;
-    //private final Key key = Keys.hmacShaKeyFor(jwtSecretKey.getBytes(StandardCharsets.UTF_8));
-    // @constructorBinding?
+
+    private final UserService userService;
+
     private Key key;
     private final String principal = "email";
     private final String authority = "authorities";
 
     private final String userId = "userId";
 
-    private final int expiredMilsForAccess = 10 * 60 * 1000;
+    private final int expiredMilsForAccess = 100 * 60 * 1000;
     private final int expiredMilsForRefresh = 6 * 60 * 60 * 1000;
 
     @Override
@@ -47,7 +48,7 @@ public class JwtUtils implements InitializingBean {
     public String generateJwtToken(User user) {
         Claims claims = Jwts.claims();
         claims.put("email", user.getEmail());
-        claims.put("authorities", getUserAccountAuthorityList(user.getUserAccountAuthorityList()));
+        claims.put("authorities", getUserAccountAuthorityList(userService.findAccountAuhorityByUser(user)));
         claims.put("userId", user.getUserId());
 
         JwtBuilder builder = Jwts.builder()

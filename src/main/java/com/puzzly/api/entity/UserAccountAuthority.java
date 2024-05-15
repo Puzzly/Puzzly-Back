@@ -4,15 +4,15 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.puzzly.api.domain.AccountAuthority;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Comment;
 
 @Getter
 @Entity
 @Builder
-// TODO Class Builder 제거하고 AllArgsConstructor 지워야한다.
-// TODO constructor builder로 가야한다.
 @AllArgsConstructor
 @NoArgsConstructor(access= AccessLevel.PROTECTED)
-@Table(name="tb_user_account_authorities")
+@Comment("사용자 계정 권한 정보")
+@Table(name="user_account_authority")
 public class UserAccountAuthority {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)

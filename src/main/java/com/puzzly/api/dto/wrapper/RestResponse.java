@@ -23,7 +23,6 @@ public class RestResponse {
 /*    private List fields;
     private List results;*/
     private Object result;
-
     public RestResponse() {
         this.status = HttpStatus.OK.value();
         this.message = "SUCCESS";

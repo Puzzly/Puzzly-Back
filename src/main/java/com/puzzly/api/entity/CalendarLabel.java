@@ -4,32 +4,32 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.hibernate.annotations.Comment;
 
 @Getter
 @Entity
 @NoArgsConstructor
 @ToString
-@Table(name="tb_calendar_labels")
+@Table(name="calendar_label")
 public class CalendarLabel {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Comment("PK, autoIncrement")
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long labelId;
 
-    @Column private String contents;
+    @Comment("라벨 이름")
+    @Column private String labelName;
+    @Comment("라벨 색상")
+    @Column private String colorCode;
+    @Comment("라벨 순서")
+    @Column private Integer orderNum;
 
-    // 라벨 생성자
-    @ManyToOne(fetch = FetchType.LAZY)
-    //@JoinColumn(name = "createId", referencedColumnName = "userId", nullable=false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
-    @JoinColumn(name = "createId", referencedColumnName = "userId", nullable=false)
+    @Comment("라벨 생성자")
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "createId", referencedColumnName = "userId", nullable=false)
     private User user;
 
-    // 라벨에 소속된 캘린더 컨텐츠 목록
-    // 논리제어할것임
-    @OneToMany(mappedBy="calendarLabel")
-    private List<CalendarContents> calendarContentsList = new ArrayList<>();
-
-
+    //라벨이 소속된 캘린더 정보
+    @Comment("캘린더 PK")
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "calendarId", referencedColumnName = "calendarId", nullable=false)
+    private Calendar calendar;
 }

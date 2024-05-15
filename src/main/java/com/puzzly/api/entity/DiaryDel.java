@@ -22,7 +22,7 @@ public class DiaryDel {
     @JoinColumn(name = "createId", nullable=false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     //@JoinColumn(name = "createId", nullable=false)
     private User user;
-    @Lob private String contents;
+    @Lob private String content;
     // Create Time 자체가 "작성일, == Target Date" 로 동작 (다이어리, 일기장)
     @Column private LocalDateTime createDateTime;
     @Column private LocalDateTime modifyDateTime;

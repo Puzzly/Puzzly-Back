@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Table(name="tb_checklist_attachments")
 public class CheckListAttachments {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long attachmentId;
+    private long attachmentsId;
 
     // 조회시점에서 포스트정보 필요하지않나..
     @ManyToOne(fetch = FetchType.EAGER)
