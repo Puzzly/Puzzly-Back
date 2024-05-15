@@ -24,7 +24,7 @@ public class CheckList {
     private User user;
 
     @Column private int orderNum;
-    @Lob private String contents;
+    @Lob private String content;
     @Column private String memo;
     @Column private boolean notify;
     @Column private LocalDateTime notifyLocalDateTime;

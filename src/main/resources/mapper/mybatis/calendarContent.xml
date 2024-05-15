@@ -2,17 +2,18 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.puzzly.api.repository.mybatis.CalendarContentsMybatisRepository">
-    <select id="selectCalendarContentsByStartDateTimeAndCalendar" resultType="com.puzzly.api.dto.response.CalendarContentsResponseDto">
+<mapper namespace="com.puzzly.api.repository.mybatis.CalendarContentMybatisRepository">
+    <select id="selectCalendarContentByDateTimeAndCalendar" resultType="com.puzzly.api.dto.response.CalendarContentResponseDto">
         <!-- 추후 개선사항 (page, limit를 사용하지 말고 정렬기준을 통해서 Fetch 로 처리하자
          REFER : https://binux.tistory.com/148-->
-        SELECT tcc.contents_id, tcc.calendar_id, tc.calendar_name, tcc.create_id, tcc.delete_id,
-               tcc.start_date_time, tcc.end_date_time, tcc.contents, tcc.notify, tcc.notify_time,
+        SELECT tcc.content_id, tcc.calendar_id, tc.calendar_name, tcc.create_id, tcc.delete_id,
+               tcc.start_date_time, tcc.end_date_time, tcc.content, tcc.notify,
+                <!--tcc.notify_time,-->
                tcc.memo, tcc.location,
                tcc.create_date_time, tcc.modify_date_time, tcc.delete_date_time, tcc.is_deleted
-        FROM tb_calendar_contents tcc
+        FROM calendar_content tcc
         INNER JOIN
-            tb_calendars tc
+            calendar tc
         ON
             tcc.calendar_id = tc.calendar_id
         WHERE
@@ -24,39 +25,43 @@
         AND
             tcc.start_date_time &lt;= #{limitStartDateTime}
         <!-- 혹은 <![CDATA[<=]]> -->
-        ORDER BY tcc.start_date_time asc, tcc.contents_id desc, tcc.create_date_time desc
+        ORDER BY tcc.start_date_time asc, tcc.content_id desc, tcc.create_date_time desc
     </select>
 
 
     <!-- 첨부파일 조회 -->
-    <select id="selectCalendarContentsAttachmentsByContentsId" resultType="map">
+    <select id="selectCalendarContentAttachmentsByContentId" resultType="com.puzzly.api.dto.response.CalendarContentAttachmentsResponseDto">
         SELECT
-            attachments_id, contents_id, extension, origin_name, file_path, file_size, create_date_time,
+            attachments_id, content_id, extension, origin_name, file_path, file_size, create_date_time,
             tcca.create_id, (SELECT nick_name from tb_users where user_id = tcca.create_id) AS create_user_nick_name, is_deleted, delete_date_time, tcca.delete_id
         FROM
-            tb_calendar_contents_attachments tcca
+            calendar_content_attachments tcca
         WHERE
-            contents_id = #{contentsId}
+            content_id = #{contentId}
+        AND
+            tcca.is_deleted = #{isDeleted}
     </select>
 
-    <select id="selectCalendarContentsByContentsId" resultType="com.puzzly.api.dto.response.CalendarContentsResponseDto">
+    <select id="selectCalendarContentByContentId" resultType="com.puzzly.api.dto.response.CalendarContentResponseDto">
         SELECT
-            tcc.calendar_id, tc.calendar_name, contents_id, tcc.label_id, tcc.title, tcc.create_id,
+            tcc.calendar_id, tc.calendar_name, tcc.content_id, tcc.label_id, tcc.title, tcc.create_id,
             (SELECT nick_name from tb_users tu where tu.user_id = tcc.create_id) AS create_nick_name,
             tcc.modify_id,
             (SELECT nick_name from tb_users tu where tu.user_id = tcc.modify_id) AS modify_nick_name,
             tcc.delete_id,
             (SELECT nick_name from tb_users tu where tu.user_id = tcc.delete_id) AS delete_nick_name,
-            tcc.start_date_time, tcc.end_date_time, tcc.contents, tcc.notify, tcc.notify_time, tcc.memo, tcc.location,
+            tcc.start_date_time, tcc.end_date_time, tcc.content, tcc.notify,
+            <!--tcc.notify_time,--> tcc.memo, tcc.location,
             tcc.create_date_time, tcc.modify_date_time, tcc.delete_date_time,
         FROM
-            tb_calendar_contents tcc
+            calendar_content tcc
         INNER JOIN
-            tb_calendars tc
+            calendar tc
         ON
             tcc.calendar_id = tc.calendar_id
         WHERE
-            contents_id = #{contentsId}
-
+            tcc.content_id = #{contentId}
+        AND
+            tcc.is_deleted = #{isDeleted}
     </select>
 </mapper>

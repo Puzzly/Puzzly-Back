@@ -53,7 +53,7 @@ public class UserDel {
 
     // 내가 쓴 켈린더 컨텐츠
     @OneToMany(mappedBy="user")
-    private List<CalendarContents> calendarContentList = new ArrayList<>();
+    private List<CalendarContent> calendarContentList = new ArrayList<>();
 
     // 내가 만든 켈린더 라벨 정보
     @OneToMany(mappedBy="user")

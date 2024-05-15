@@ -11,17 +11,20 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface CalendarUserRelJpaRepository extends JpaRepository<CalendarUserRelation, Long> {
+public interface CalendarUserRelationJpaRepository extends JpaRepository<CalendarUserRelation, Long> {
 
     //public CalendarUserRelation findCalendarUserRelByUser(User user);
 
     //public CalendarUserRelation findCalendarUserRelByUserAndCalendarAndIsDeleted(User user, Calendar calendar, boolean isDeleted);
 
-    @Query("SELECT cur.relationId, cur.user, cur.calendar, cur.authority " +
-            "FROM CalendarUserRelation cur " +
-            "WHERE cur.calendar.calendarId = :#{#calendar.calendarId} " +
-            "AND cur.user.userId = :#{#user.userId} " +
-            "AND cur.isDeleted =:isDeleted")
+    @Query(nativeQuery = true,
+            // JPA select query 쓸 땐 특정 컬럼만 들고올 수 없다.
+            //value = "SELECT cur.relation_id, cur.user_id, cur.calendar_id, cur.authority" +
+            value = "SELECT * "+
+            "FROM calendar_user_relation cur " +
+            "WHERE cur.calendar_id = :#{#calendar.calendarId} " +
+            "AND cur.user_id = :#{#user.userId} " +
+            "AND cur.is_deleted =:isDeleted")
     public CalendarUserRelation findCalendarUserRelation(Calendar calendar, User user, Boolean isDeleted);
 
     public List<CalendarUserRelation> findCalendarUserRelByCalendar(Calendar calendar);
