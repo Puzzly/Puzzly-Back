@@ -78,7 +78,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         (auth) -> auth
                                 .requestMatchers("/resources/**").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/api/user").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/user").anonymous()
                                 .requestMatchers("/api/user/login", "/api/user/jwttest").permitAll()
                                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                                 .requestMatchers("/git/**").permitAll()

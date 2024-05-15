@@ -4,8 +4,6 @@ import com.puzzly.api.domain.AccountAuthority;
 import com.puzzly.api.domain.SecurityUser;
 import com.puzzly.api.dto.request.CalendarRequestDto;
 import com.puzzly.api.dto.request.UserRequestDto;
-import com.puzzly.api.entity.Calendar;
-import com.puzzly.api.entity.User;
 import com.puzzly.api.service.CalendarService;
 import com.puzzly.api.service.UserService;
 import com.puzzly.api.util.JwtUtils;
@@ -45,7 +43,7 @@ public class ApplicationListenerService implements ApplicationListener<ContextRe
         user.setFirstTermAgreement(true);
         user.setSecondTermAgreement(true);
         user.setGender(true);
-        userService.insertUser(user);
+        userService.createUser(user);
         SecurityUser securityUser = new SecurityUser();
         securityUser.setUser(userService.findById((long)1).orElse(null));
 

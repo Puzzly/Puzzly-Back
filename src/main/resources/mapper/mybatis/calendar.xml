@@ -8,8 +8,8 @@
          REFER : https://binux.tistory.com/148-->
         SELECT  calendar_id, calendar_type, calendar_name,
                 create_date_time, modify_date_time, delete_date_time,
-                create_id, (select nick_name from tb_users where user_id = create_id) as createNickName,
-                modify_id, (select nick_name from tb_users where user_id = modify_id) as modifyNickName,
+                create_id, (select nick_name from users where user_id = create_id) as createNickName,
+                modify_id, (select nick_name from users where user_id = modify_id) as modifyNickName,
         FROM calendar a
         WHERE
             calendar_id IN(

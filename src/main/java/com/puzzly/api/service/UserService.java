@@ -5,12 +5,11 @@ import com.puzzly.api.dto.request.UserRequestDto;
 import com.puzzly.api.dto.response.UserResponseDto;
 import com.puzzly.api.entity.User;
 import com.puzzly.api.entity.UserAccountAuthority;
-import com.puzzly.api.entity.UserEx;
+import com.puzzly.api.entity.UserExtension;
 import com.puzzly.api.exception.FailException;
-import com.puzzly.api.repository.jpa.UserAccountJpaRepository;
-import com.puzzly.api.repository.jpa.UserExJpaRepository;
+import com.puzzly.api.repository.jpa.UserAccountAuthorityJpaRepository;
+import com.puzzly.api.repository.jpa.userExtensionJpaRepository;
 import com.puzzly.api.repository.jpa.UserJpaRepository;
-import com.puzzly.api.repository.mybatis.UserExMybatisRepository;
 import com.puzzly.api.repository.mybatis.UserMybatisRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +22,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,19 +35,16 @@ public class UserService {
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     private final UserJpaRepository userJpaRepository;
-    private final UserExJpaRepository userExJpaRepository;
-
-    private final UserAccountJpaRepository userAccountJpaRepository;
-
+    private final userExtensionJpaRepository userExtensionJpaRepository;
+    private final UserAccountAuthorityJpaRepository userAccountAuthorityJpaRepository;
     private final UserMybatisRepository userMybatisRepository;
-
-    private final UserExMybatisRepository userExMybatisRepository;
-
-
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
+    /** 사용자 추가 */
     @Transactional
-    public UserResponseDto insertUser(UserRequestDto userRequestDto) throws FailException{
+    public HashMap<String, Object> createUser(UserRequestDto userRequestDto) throws FailException{
+        HashMap<String, Object> resultMap = new HashMap<>();
+
         if(ObjectUtils.isEmpty(userRequestDto.getUserName()) || ObjectUtils.isEmpty(userRequestDto.getNickName()) ||
         ObjectUtils.isEmpty(userRequestDto.getEmail()) || ObjectUtils.isEmpty(userRequestDto.getPassword()) ||
                 ObjectUtils.isEmpty(userRequestDto.getPhoneNumber()) || ObjectUtils.isEmpty(userRequestDto.getBirth())){
@@ -62,10 +59,14 @@ public class UserService {
         if(userMybatisRepository.selectUserByEmail(userRequestDto.getEmail()) != null){
             throw new FailException("SERVER_MESSAGE_EMAIL_ALREADY_EXISTS", 400);
         }
-        //if(ObjectUtils.isEmpty(userRequestDto.getCreateDateTime())) userRequestDto.setCreateDateTime(LocalDateTime.now());
         // TODO FE와 별도로 상의하여 통신구간 암호화를 구현하고, 복호화 > 암호화 혹은 그대로 때려박기 등을 구현해야 한다.
         userRequestDto.setPassword(bCryptPasswordEncoder.encode(userRequestDto.getPassword()));
 
+        UserExtension userExtension = UserExtension.builder()
+                .firstTermAgreement(userRequestDto.getFirstTermAgreement())
+                .secondTermAgreement(userRequestDto.getSecondTermAgreement())
+                .build();
+        userExtensionJpaRepository.save(userExtension);
         User user = User.builder()
                 .userName(userRequestDto.getUserName())
                 .nickName(userRequestDto.getNickName())
@@ -76,162 +77,102 @@ public class UserService {
                 .gender(userRequestDto.getGender())
                 .createDateTime(LocalDateTime.now())
                 .status(StringUtils.isEmpty(userRequestDto.getStatus()) ? "CREATE" : userRequestDto.getStatus())
+                .userExtension(userExtension)
                 .isDeleted(false)
                 .build();
-
-        User savedEntity = userJpaRepository.save(user);
-        log.error("savedEntity : USER" + savedEntity);
-
-        UserEx userEx = UserEx.builder()
-                .firstTermAgreement(userRequestDto.getFirstTermAgreement())
-                .secondTermAgreement(userRequestDto.getSecondTermAgreement())
-                .user(userJpaRepository.findById(savedEntity.getUserId()).orElse(null))
-                .build();
-        UserEx savedExEntity = userExJpaRepository.save(userEx);
-        logger.info("SAVEDENTITY : " + savedExEntity);
+        userJpaRepository.save(user);
 
         UserAccountAuthority userAccountAuthority = UserAccountAuthority.builder()
-                .user(savedEntity)
+                .user(user)
                 .accountAuthority(ObjectUtils.isEmpty(userRequestDto.getAccountAuthority()) ? AccountAuthority.ROLE_USER : userRequestDto.getAccountAuthority())
                 .build();
+        userAccountAuthorityJpaRepository.save(userAccountAuthority);
 
-        userAccountJpaRepository.save(userAccountAuthority);
         if(userAccountAuthority.getAccountAuthority().equals(AccountAuthority.ROLE_ADMIN)){
             UserAccountAuthority adminAccountAuthority = UserAccountAuthority.builder()
-                    .user(savedEntity)
+                    .user(user)
                     .accountAuthority(AccountAuthority.ROLE_USER)
                     .build();
-            userAccountJpaRepository.save(adminAccountAuthority);
+            userAccountAuthorityJpaRepository.save(adminAccountAuthority);
         }
-        return UserResponseDto.builder().userId(savedEntity.getUserId()).userName(user.getUserName()).email(savedEntity.getEmail()).
-                createDateTime(savedEntity.getCreateDateTime()).status(user.getStatus()).nickName(user.getNickName()).phoneNumber(user.getPhoneNumber())
-                .birth(user.getBirth()).gender(user.getGender())
-                //.userExResponseDto(UserExResponseDto.builder().userExId(userEx.getUserExId())
-                        .firstTermAgreement(userEx.getFirstTermAgreement())
-                        .secondTermAgreement(userEx.getSecondTermAgreement())
-                 //       .build())
-                //accountAuthority(savedEntity.getAccountAuthority()).build();
-                .accountAuthority(userAccountJpaRepository.findByUser(user).stream().map((ua) -> {
-                    return ua.getAccountAuthority().getText();
-                }).collect(Collectors.toList()))
-                .build();
+
+        UserResponseDto userResult = buildUserResponseDtoFromUser(user, userExtension);
+
+        resultMap.put("user", userResult);
+        return resultMap;
     }
 
+    /** 사용자 조회 */
+    public HashMap<String, Object> getUser(Long userId){
+        HashMap<String, Object> resultMap = new HashMap<>();
 
-    //public UserResponseDto
-
-    public UserResponseDto selectUserMybatis(Long userId){
         UserResponseDto user = userMybatisRepository.selectUser(userId);
         user.setAccountAuthority(userMybatisRepository.selectUserAuthority(userId));
 
-        /*
-        List<UserResponseDto> userList = userMybatisRepository.selectUser(userId).stream().map((user) -> {
-                    UserResponseDto dto = UserResponseDto.builder().userId(user.getUserId()).userName(user.getUserName()).nickName(user.getNickName())
-                            .email(user.getEmail()).phoneNumber(user.getPhoneNumber()).birth(user.getBirth()).gender(user.getGender())
-                            .accountAuthority(userAccountJpaRepository.findByUser(user).stream().map((ua) -> {
-                                return ua.getAccountAuthority().getText();
-                            }).collect(Collectors.toList())).createDateTime(user.getCreateDateTime()).status(user.getStatus())
-                            .build();
-                    UserEx userEx = userExMybatisRepository.selectUserEx(dto.getUserId());
-                    UserExResponseDto exDto = UserExResponseDto.builder()
-                            .userExId(userEx.getUserExId())
-                            .profileFilePath(userEx.getProfileFilePath())
-                            .firstTermAgreement(userEx.getFirstTermAgreement())
-                            .secondTermAgreement(userEx.getSecondTermAgreement())
-                            .statusMessage(userEx.getStatusMessage()).build();
-                    dto.setUserExResponseDto(exDto);
-                    return dto;
-                }
-        ).collect(Collectors.toList());
-         */
-        return user;
+        resultMap.put("user", user);
+        return resultMap;
     }
 
-    public UserResponseDto updateUser(Long userId, UserRequestDto userRequestDto){
-        User userEntity = userJpaRepository.findById(userId).orElse(null);
-        UserEx userExEntity = userEntity.getUserEx();
+    /** 사용자 수정 */
+    public HashMap<String, Object> modifyUser(Long userId, UserRequestDto userRequestDto){
+        HashMap<String, Object> resultMap = new HashMap<>();
 
-        if(userRequestDto.getUserName() != null) userEntity.setUserName(StringUtils.trim(userRequestDto.getUserName()));
-        if(userRequestDto.getNickName() != null) userEntity.setNickName(StringUtils.trim(userRequestDto.getNickName()));
-        if(userRequestDto.getPassword() != null) userEntity.setPassword(bCryptPasswordEncoder.encode(StringUtils.trim(userRequestDto.getPassword())));
-        if(userRequestDto.getPhoneNumber() != null) userEntity.setPhoneNumber(StringUtils.trim(userRequestDto.getPhoneNumber()));
-        if(userRequestDto.getBirth() != null) userEntity.setBirth(userRequestDto.getBirth());
-        if(userRequestDto.getGender() != null) userEntity.setGender(userRequestDto.getGender());
-        if(userRequestDto.getFirstTermAgreement() != null) userExEntity.setFirstTermAgreement(userRequestDto.getFirstTermAgreement());
-        if(userRequestDto.getSecondTermAgreement() != null) userExEntity.setSecondTermAgreement(userRequestDto.getSecondTermAgreement());
-        if(userRequestDto.getStatusMessage() != null) userExEntity.setStatusMessage(userRequestDto.getStatusMessage());
+        User user = userJpaRepository.findById(userId).orElse(null);
+        UserExtension userExtension = user.getUserExtension();
+
+        if(userRequestDto.getUserName() != null) user.setUserName(StringUtils.trim(userRequestDto.getUserName()));
+        if(userRequestDto.getNickName() != null) user.setNickName(StringUtils.trim(userRequestDto.getNickName()));
+        if(userRequestDto.getPassword() != null) user.setPassword(bCryptPasswordEncoder.encode(StringUtils.trim(userRequestDto.getPassword())));
+        if(userRequestDto.getPhoneNumber() != null) user.setPhoneNumber(StringUtils.trim(userRequestDto.getPhoneNumber()));
+        if(userRequestDto.getBirth() != null) user.setBirth(userRequestDto.getBirth());
+        if(userRequestDto.getGender() != null) user.setGender(userRequestDto.getGender());
+        if(userRequestDto.getFirstTermAgreement() != null) userExtension.setFirstTermAgreement(userRequestDto.getFirstTermAgreement());
+        if(userRequestDto.getSecondTermAgreement() != null) userExtension.setSecondTermAgreement(userRequestDto.getSecondTermAgreement());
+        if(userRequestDto.getStatusMessage() != null) userExtension.setStatusMessage(userRequestDto.getStatusMessage());
         //profile은 나중에
-        userEntity.setModifyDateTime(LocalDateTime.now());
+        user.setModifyDateTime(LocalDateTime.now());
 
-        userJpaRepository.save(userEntity);
-        userExJpaRepository.save(userExEntity);
+        userJpaRepository.save(user);
+        userExtensionJpaRepository.save(userExtension);
 
-        UserResponseDto user = selectUser(userId);
+        UserResponseDto userResult = buildUserResponseDtoFromUser(user, userExtension);
+        resultMap.put("user", userResult);
 
-        return user;
+        return resultMap;
     }
 
-    /** Interal Use (for update)*/
+    /** 사용자 정보 조회 */
+    @Deprecated
     public UserResponseDto selectUser(Long userId){
         // jpa 전용 failException 만들어서 orelseThrow 사용을 고려할것
         User userEntity = userJpaRepository.findById(userId).orElse(null);
-        UserEx userExEntity = userEntity.getUserEx();
+        UserExtension userExEntity = userEntity.getUserExtension();
         UserResponseDto user  = UserResponseDto.builder().userId(userEntity.getUserId()).userName(userEntity.getUserName()).nickName(userEntity.getNickName())
                 .email(userEntity.getEmail()).phoneNumber(userEntity.getPhoneNumber()).birth(userEntity.getBirth()).gender(userEntity.getGender())
-                .accountAuthority(userAccountJpaRepository.findByUser(userEntity).stream().map((ua) -> {
+                .accountAuthority(userAccountAuthorityJpaRepository.findByUser(userEntity).stream().map((ua) -> {
                     return ua.getAccountAuthority().getText();
                 }).collect(Collectors.toList())).createDateTime(userEntity.getCreateDateTime()).status(userEntity.getStatus())
                 .firstTermAgreement(userExEntity.getFirstTermAgreement())
                 .secondTermAgreement(userExEntity.getSecondTermAgreement())
-                .profileFilePath(userExEntity.getProfileFilePath())
+                //.profileFilePath(userExEntity.getProfileFilePath())
                 .statusMessage(userExEntity.getStatusMessage())
                 .build();
         return user;
-        /*
-        if(userId == null){
-            List<UserResponseDto> userList = userJpaRepository.findAll().stream().map((user) -> {
-                        UserResponseDto dto = UserResponseDto.builder().userId(user.getUserId()).userName(user.getUserName()).nickName(user.getNickName())
-                                .email(user.getEmail()).phoneNumber(user.getPhoneNumber()).birth(user.getBirth()).gender(user.getGender())
-                                .accountAuthority(userAccountJpaRepository.findByUser(user).stream().map((ua) -> {
-                                    return ua.getAccountAuthority().getText();
-                                }).collect(Collectors.toList())).createDateTime(user.getCreateDateTime()).status(user.getStatus())
-                                .build();
-                        UserEx userEx = user.getUserEx();
-                        UserExResponseDto exDto = UserExResponseDto.builder()
-                                .userExId(userEx.getUserExId())
-                                .profileFilePath(userEx.getProfileFilePath())
-                                .firstTermAgreement(userEx.getFirstTermAgreement())
-                                .secondTermAgreement(userEx.getSecondTermAgreement())
-                                .statusMessage(userEx.getStatusMessage()).build();
-                        dto.setUserExResponseDto(exDto);
-                        return dto;
-                    }
-            ).collect(Collectors.toList());
-            return userList;
-        } else {
-            List<UserAccountAuthority> ac = userAccountJpaRepository.findByUser(userJpaRepository.findById(userId).orElse(null));
-            List<UserResponseDto> userList = userJpaRepository.findById(userId).stream().map((user) -> {
-                        UserResponseDto dto = UserResponseDto.builder().userId(user.getUserId()).userName(user.getUserName()).nickName(user.getNickName())
-                                .email(user.getEmail()).phoneNumber(user.getPhoneNumber()).birth(user.getBirth()).gender(user.getGender())
-                                .accountAuthority(userAccountJpaRepository.findByUser(user).stream().map((ua) -> {
-                                    return ua.getAccountAuthority().getText();
-                                }).collect(Collectors.toList())).createDateTime(user.getCreateDateTime()).status(user.getStatus())
-                                .build();
-                        UserEx userEx = user.getUserEx();
-                        UserExResponseDto exDto = UserExResponseDto.builder().profileFilePath(userEx.getProfileFilePath())
-                                .firstTermAgreement(userEx.getFirstTermAgreement())
-                                .secondTermAgreement(userEx.getSecondTermAgreement())
-                                .statusMessage(userEx.getStatusMessage()).build();
-                        dto.setUserExResponseDto(exDto);
-                        return dto;
-                    }
-            ).collect(Collectors.toList());
-            return userList;
-        }
-
-         */
     }
 
+    /** User , UserExtension Entity로부터 user responseDto 생성*/
+    public UserResponseDto buildUserResponseDtoFromUser(User user, UserExtension userExtension){
+        return UserResponseDto.builder().userId(user.getUserId()).userName(user.getUserName()).email(user.getEmail()).
+                createDateTime(user.getCreateDateTime()).status(user.getStatus()).nickName(user.getNickName()).phoneNumber(user.getPhoneNumber())
+                .birth(user.getBirth()).gender(user.getGender())
+                .extensionId(userExtension.getExtensionId())
+                .firstTermAgreement(userExtension.getFirstTermAgreement())
+                .secondTermAgreement(userExtension.getSecondTermAgreement())
+                .accountAuthority(userAccountAuthorityJpaRepository.findByUser(user).stream().map((ua) -> {
+                    return ua.getAccountAuthority().getText();
+                }).collect(Collectors.toList()))
+                .build();
+    }
 
     public User findByEmail(String email){
         return userJpaRepository.findByEmail(email);
@@ -241,5 +182,9 @@ public class UserService {
 
     public List<UserResponseDto> selectUserByCalendar(Long calendarId){
         return userMybatisRepository.selectUserByCalendar(calendarId);
+    }
+
+    public List<UserAccountAuthority> findAccountAuhorityByUser(User user){
+        return userAccountAuthorityJpaRepository.findByUser(user);
     }
 }
