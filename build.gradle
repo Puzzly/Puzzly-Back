@@ -52,6 +52,12 @@ dependencies {
     //annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
     implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.4'
     implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.70'
+
+    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+    annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
+    annotationProcessor 'com.querydsl:querydsl-core:5.0.0'
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+    annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 }
 
 tasks.named('test') {
@@ -61,4 +67,19 @@ tasks.named('test') {
 // 불필요한 jar 파일 생성하지않음
 jar {
     enabled = false
+}
+
+// queryDSL
+def generated = "build/generated/querydsl"
+
+tasks.withType(JavaCompile) {
+    options.getGeneratedSourceOutputDirectory().set(file(generated))
+}
+
+sourceSets {
+    main.java.srcDirs += [ generated ]
+}
+
+clean {
+    delete file(generated)
 }

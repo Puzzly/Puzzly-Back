@@ -5,17 +5,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.puzzly.api.domain.SecurityUser;
 import com.puzzly.api.dto.request.CalendarContentRequestDto;
+import com.puzzly.api.dto.request.CalendarLabelRequestDto;
 import com.puzzly.api.dto.request.CalendarRequestDto;
-import com.puzzly.api.dto.response.CalendarContentAttachmentsResponseDto;
-import com.puzzly.api.dto.response.CalendarContentResponseDto;
-import com.puzzly.api.dto.response.CalendarResponseDto;
-import com.puzzly.api.dto.response.UserResponseDto;
+import com.puzzly.api.dto.response.*;
 import com.puzzly.api.entity.*;
+import com.puzzly.api.entity.Calendar;
 import com.puzzly.api.exception.FailException;
-import com.puzzly.api.repository.jpa.CalendarContentAttachmentsJpaRepository;
-import com.puzzly.api.repository.jpa.CalendarContentJpaRepository;
-import com.puzzly.api.repository.jpa.CalendarJpaRepository;
-import com.puzzly.api.repository.jpa.CalendarUserRelationJpaRepository;
+import com.puzzly.api.repository.jpa.*;
 import com.puzzly.api.repository.mybatis.CalendarContentMybatisRepository;
 import com.puzzly.api.repository.mybatis.CalendarMybatisRepository;
 import com.puzzly.api.util.CustomUtils;
@@ -32,13 +28,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,6 +47,8 @@ public class CalendarService {
     private final CalendarContentMybatisRepository calendarContentMybatisRepository;
 
     private final CalendarContentAttachmentsJpaRepository calendarContentAttachmentsJpaRepository;
+
+    private final CalendarLabelJpaRepository calendarLabelJpaRepository;
 
     private final CustomUtils customUtils;
     private final ObjectMapper objectMapper;
@@ -566,6 +560,51 @@ public class CalendarService {
         String originName = calendarContentAttachments.getOriginName();
         String extension = calendarContentAttachments.getExtension();
         customUtils.downloadFile(fileFullPath, originName, extension, request, response);
+    }
+
+    @Transactional
+    public CalendarLabelResponseDto createCalendarLabel(SecurityUser securityUser, CalendarLabelRequestDto calendarLabelRequestDto){
+        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
+        if(user == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
+        }
+        if(StringUtils.isEmpty(StringUtils.trim(calendarLabelRequestDto.getLabelName()))){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NAME_EMPTY", 400);
+        }
+        if(StringUtils.isEmpty(StringUtils.trim(calendarLabelRequestDto.getColorCode()))){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_COLOR_CODE_EMPTY", 400);
+        }
+        if(calendarLabelJpaRepository.findByLabelName(calendarLabelRequestDto.getLabelName()) != null) {
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NAME_DUPLICATE", 400);
+        }
+
+        // 캘린더 관계 설정
+        Calendar calendar = calendarJpaRepository.findById(calendarLabelRequestDto.getCalendarId()).orElse(null);
+
+        // max 순서
+        Integer maxOrder = calendarLabelJpaRepository.getMaxOrder(Objects.requireNonNull(calendar).getCalendarId());
+        if(maxOrder == null) maxOrder = 1;
+
+        CalendarLabel calendarLabel = CalendarLabel.builder().labelName(calendarLabelRequestDto.getLabelName())
+                .colorCode(calendarLabelRequestDto.getColorCode())
+                .orderNum(maxOrder+1)
+                .user(user)
+                .calendar(calendar)
+                .build();
+
+        // 캘린더 생성
+        calendarLabelJpaRepository.save(calendarLabel);
+
+        ArrayList<UserResponseDto> userList = new ArrayList<>();
+
+        userList.add(UserResponseDto.builder().userId(user.getUserId()).userName(user.getUserName()).nickName(user.getNickName()).build());
+
+        return CalendarLabelResponseDto.builder().labelId(calendarLabel.getLabelId())
+                .labelName(calendarLabel.getLabelName())
+                .colorCode(calendarLabel.getColorCode())
+                .orderNum(calendarLabel.getOrderNum())
+                .userList(userList)
+                .build();
     }
 
     public HashMap<String, Object> removeCalendarContentAttachments(SecurityUser securityUser, Long attachmentsId){

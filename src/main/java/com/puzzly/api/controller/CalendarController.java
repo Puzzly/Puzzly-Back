@@ -2,8 +2,10 @@ package com.puzzly.api.controller;
 
 import com.puzzly.api.domain.SecurityUser;
 import com.puzzly.api.dto.request.CalendarContentRequestDto;
+import com.puzzly.api.dto.request.CalendarLabelRequestDto;
 import com.puzzly.api.dto.request.CalendarRequestDto;
 import com.puzzly.api.dto.response.CalendarContentResponseDto;
+import com.puzzly.api.dto.response.CalendarLabelResponseDto;
 import com.puzzly.api.dto.response.CalendarResponseDto;
 import com.puzzly.api.dto.wrapper.RestResponse;
 import com.puzzly.api.exception.FailException;
@@ -335,4 +337,28 @@ public class CalendarController {
     }
 
      */
+
+    @PostMapping("label")
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:content 의 value로 캘린더 라벨 제공", content = @Content(schema = @Schema(implementation = CalendarLabelResponseDto.class)))
+    @Operation(summary="캘린더 라벨 등록, JWT 토큰 필요", description = "캘린더 라벨 등록, JWT토큰 필요")
+    public ResponseEntity<?> createCalendarLabel(
+            HttpServletRequest request,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description="이 API에서 아래의 값은 생략이 가능함\n\n" +
+                            "* labelId (생략가능, 서버에서 자동으로 값을 생성함)\n\n" +
+                            "* orderNum (생략, 서버에서 자동으로 값을 생성함)\n\n" +
+                            "* colorCode (생략 가능, default color: #000000, FE 값 전달 후 변경 예정)\n\n"+
+                            "상기 명시되지 않은 값을 생략할 경우 400에러 발생\n\n" +
+                            "이 API에서 주의사항은 아래와 같음\n\n" +
+                            "* labelName (생략되었거나 빈 값, 증복된 값인 경우 400에러 발생)"
+            )
+            @RequestBody CalendarLabelRequestDto calendarContentsLabel
+    ) throws FailException, Exception{
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+
+        CalendarLabelResponseDto calendarLabelResponseDto = calendarService.createCalendarLabel(securityUser, calendarContentsLabel);
+        restResponse.setResult(calendarLabelResponseDto);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
 }

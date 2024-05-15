@@ -1,15 +1,17 @@
 package com.puzzly.api.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.annotations.Comment;
 
 @Getter
-@Entity
+@Setter
+@Builder
+
+@AllArgsConstructor
 @NoArgsConstructor
-@ToString
+
+@Entity
 @Table(name="calendar_label")
 public class CalendarLabel {
 
