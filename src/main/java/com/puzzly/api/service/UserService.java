@@ -239,7 +239,7 @@ public class UserService {
 
     public Optional<User> findById(Long userId) {return userJpaRepository.findById(userId);}
 
-    public List<UserResponseDto> findByCalendarRel(Long calendarId){
-        return userMybatisRepository.selectUserByCalendarId(calendarId);
+    public List<UserResponseDto> selectUserByCalendar(Long calendarId){
+        return userMybatisRepository.selectUserByCalendar(calendarId);
     }
 }

@@ -37,7 +37,7 @@ public class JwtUtils implements InitializingBean {
 
     private final String userId = "userId";
 
-    private final int expiredMilsForAccess = 10 * 60 * 1000;
+    private final int expiredMilsForAccess = 100 * 60 * 1000;
     private final int expiredMilsForRefresh = 6 * 60 * 60 * 1000;
 
     @Override

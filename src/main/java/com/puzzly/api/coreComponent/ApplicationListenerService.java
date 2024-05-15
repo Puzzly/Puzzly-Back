@@ -51,7 +51,6 @@ public class ApplicationListenerService implements ApplicationListener<ContextRe
 
         CalendarRequestDto calendarRequestDto = new CalendarRequestDto();
         calendarRequestDto.setCalendarName("PuzzlyCalendar");
-        calendarRequestDto.setUserId(securityUser.getUser().getUserId());
         calendarService.createCalendar(securityUser, calendarRequestDto);
 
 

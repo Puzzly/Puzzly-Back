@@ -11,7 +11,7 @@ import lombok.*;
 // TODO constructor builder로 가야한다.
 @AllArgsConstructor
 @NoArgsConstructor(access= AccessLevel.PROTECTED)
-@Table(name="tb_calendar_invite_codes")
+@Table(name="calendar_invite_code")
 public class CalendarInviteCode {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long inviteCodeId;

@@ -23,7 +23,7 @@ public class CheckListLabel {
     @JoinColumn(name = "createId", nullable=false)
     private User user;
 
-    @Column private String contents;
+    @Column private String content;
     @OneToMany(mappedBy="checklistLabel")
     private List<CheckList> checkListList = new ArrayList<>();
 }

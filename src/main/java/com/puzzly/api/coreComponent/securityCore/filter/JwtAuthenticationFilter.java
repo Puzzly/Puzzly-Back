@@ -71,8 +71,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             request.setAttribute("exception", "TOKEN_NULL");
             filterChain.doFilter(request, response);
-
-            //throw new FailException("Token null", 400);
             return;
         }
         String token = authorization.split(" ")[1];
@@ -83,7 +81,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (ExpiredJwtException eje){
             request.setAttribute("exception", "TOKEN_EXPIRED");
-            //throw new FailException("Token expired", 403);
+            // throw failException 하지 않고, authenticationEntryPoint에서 처리
+            filterChain.doFilter(request, response);
         }
 
         String email = jwtUtils.getEmailFromToken(token);
