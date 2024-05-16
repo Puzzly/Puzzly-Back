@@ -361,4 +361,24 @@ public class CalendarController {
         restResponse.setResult(calendarLabelResponseDto);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
+
+    @GetMapping("label")
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:content 의 value로 캘린더 라벨 리스트 제공", content = @Content(schema = @Schema(implementation = CalendarLabelResponseDto.class)))
+    @Operation(summary="내가 참여한 라벨 목록 조회, 토큰필요 O, JWT 토큰 필요", description = "내가 참여한 모든 라벨 조회, JWT토큰 필요")
+    public ResponseEntity<?> getCalendarLabelList(
+            HttpServletRequest request,
+            @Parameter(description="페이지 번호, 0부터 시작, 파라미터로 주어지지 않으면 BE에서 자동으로 0으로 셋팅")
+            @RequestParam(required = false, defaultValue = "0") int offset,
+            @Parameter(description="한번에 가져갈 갯수, 파라미터로 주어지지 않으면 BE에서 자동으로 10으로 셋팅")
+            @RequestParam(required = false, defaultValue = "10") int pageSize,
+            @Parameter(description="캘린더 ID, 필수 값")
+    @RequestParam(required = true, defaultValue = "1") Long calendarId
+    ) throws FailException{
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+
+        HashMap<String, Object> resultMap = calendarService.getCalendarLabelList(securityUser, calendarId, offset, pageSize);
+        restResponse.setResult(resultMap);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
 }

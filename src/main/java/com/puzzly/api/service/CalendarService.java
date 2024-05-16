@@ -8,8 +8,8 @@ import com.puzzly.api.dto.request.CalendarContentRequestDto;
 import com.puzzly.api.dto.request.CalendarLabelRequestDto;
 import com.puzzly.api.dto.request.CalendarRequestDto;
 import com.puzzly.api.dto.response.*;
-import com.puzzly.api.entity.*;
 import com.puzzly.api.entity.Calendar;
+import com.puzzly.api.entity.*;
 import com.puzzly.api.exception.FailException;
 import com.puzzly.api.repository.jpa.*;
 import com.puzzly.api.repository.mybatis.CalendarContentMybatisRepository;
@@ -562,6 +562,7 @@ public class CalendarService {
         customUtils.downloadFile(fileFullPath, originName, extension, request, response);
     }
 
+    /** 캘린더 라벨 생성*/
     @Transactional
     public CalendarLabelResponseDto createCalendarLabel(SecurityUser securityUser, CalendarLabelRequestDto calendarLabelRequestDto){
         User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
@@ -596,7 +597,7 @@ public class CalendarService {
                 .createDateTime(LocalDateTime.now())
                 .build();
 
-        // 캘린더 생성
+        // 캘린더 라벨 생성
         calendarLabelJpaRepository.save(calendarLabel);
 
         ArrayList<UserResponseDto> userList = new ArrayList<>();
@@ -609,6 +610,16 @@ public class CalendarService {
                 .orderNum(calendarLabel.getOrderNum())
                 .userList(userList)
                 .build();
+    }
+
+    /** 캘린더 라벨 리스트 조회*/
+    public HashMap<String, Object> getCalendarLabelList(SecurityUser securityUser, Long calendarId, int offset, int pageSize){
+        HashMap<String, Object> resultMap = new HashMap<>();
+        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
+        List<CalendarLabelResponseDto> calendarList = calendarLabelJpaRepository.selectCalendarLabelList(calendarId, offset, pageSize);
+
+        resultMap.put("calendarList", calendarList);
+        return resultMap;
     }
 
     public HashMap<String, Object> removeCalendarContentAttachments(SecurityUser securityUser, Long attachmentsId){
@@ -679,4 +690,6 @@ public class CalendarService {
                 //.calendarLabel(null)
                 .build();
     }
+
+
 }
