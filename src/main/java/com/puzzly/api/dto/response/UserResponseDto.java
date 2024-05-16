@@ -62,7 +62,7 @@ public class UserResponseDto {
     private Boolean secondTermAgreement;
     @Schema(defaultValue = "WELCOME PUZZLY", description = "사용자 상태메시지")
     private String statusMessage;
-    @Schema(defaultValue = "", description = "사용자 프로필 사진 서버상 경로")
-    private String profileFilePath;
+    @Schema(defaultValue = "", description = "사용자 첨부파일(프로필) 정보")
+    private UserAttachmentsResponse userAttachments;
 
 }
