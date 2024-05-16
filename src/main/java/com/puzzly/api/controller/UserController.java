@@ -79,7 +79,7 @@ public class UserController {
     }
 
     @PutMapping()
-    @Operation(summary = "내 정보 변경하기 (프로필사진 업로드 기능은 추후개발 (5월 3주차)", description = "내 정보 수정, 토큰 필요 O")
+    @Operation(summary = "내 정보 변경하기", description = "내 정보 수정, 토큰 필요 O")
     public ResponseEntity<?> modifyUser(
             HttpServletRequest request,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
