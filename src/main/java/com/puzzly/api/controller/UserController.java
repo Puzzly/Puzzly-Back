@@ -20,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 
@@ -31,7 +32,7 @@ import java.util.HashMap;
 public class UserController {
     private final UserService userService;
 
-    @PostMapping()
+    @PostMapping("/join")
     @Operation(summary = "회원가입, 로그인 및 JWT 토큰 필요 X", description = "회원가입, 토큰필요 X")
     @ApiResponse(responseCode = "200", description = "성공시 result의 key:user 의 value로 사용자 정보 제공")
     @ApiResponse(responseCode = "4**", description = "SERVER_MESSAGE_* 메시지는 의도된 예외처리")
@@ -46,8 +47,10 @@ public class UserController {
                             "isDeleted (생략가능, defaultValue = false) \n\n" +
                             "createDateTime / ModifyDateTime (생략가능, 서버에서 자체적으로 생성함)"+
                             "statusMeesage (생략가능, 이 API에서는 오히려 이 값이 주어지면 무시됨) \n\n" +
-                            "profileFilePath (생략가능, 이 API에서는 오히려 이 값이 주어지면 무시됨) \n\n" +
-                            "* 상기 명시되지 않은 파라미터가 생략되면 400에러 발생"
+                            "createAttachmentsId (생략가능, 이 API에서는 오히려 이 값이 주어지면 무시됨) \n\n" +
+                            "deleteAttachmentsId (생략가능, 이 API에서는 오히려 이 값이 주어지면 무시됨) \n\n" +
+                            "* 상기 명시되지 않은 파라미터가 생략되면 400에러 발생 \n\n" +
+                            "사용자 프로필 사진 업로드는 '사용자 수정' 을 통해서 수행"
             )
             @RequestBody UserRequestDto userRequestDto
             ) throws FailException {
@@ -83,6 +86,7 @@ public class UserController {
                     description="이 API에서 아래의 값은 생략이 가능하며 변경사항이 발생하지 않은 값은 전송하지 않아도 됌.\n\n" +
                             "userId (생략가능, JWT토큰에서 값을 직접 뽑아내며, 값이 주어져도 무시됨)\n\n"+
                             "email (생략가능, 해당 값을 변경하는 기능은 제공하지 않을 예정, 보낼경우 무시됨)\n\n" +
+                            "createAttachmentsId (생략가능, 프로필사진 변경하려면 PK값 입력, 변경 안하려면 변수 선언 X) \n\n" +
                             "accountAuthority (생략가능, 계정 권한 변경은 제공하지 않을 예정. 보낼경우 무시됨. 협의 필요) \n\n" +
                             "status (생략가능, 이 API를 통해 해당 값을 바꿀 수 없음. 보낼 경우 무시됨 협의 필요) \n\n" +
                             "isDeleted (생략가능, 이 API를 통해 해당 값을 바꿀 수 없음. 보낼 경우 무시됨 협의 필요) \n\n"
@@ -95,6 +99,21 @@ public class UserController {
         HashMap<String, Object> resultMap = userService.modifyUser(securityUser.getUser().getUserId(), userRequestDto);
         response.setResult(resultMap);
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(value="/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ApiResponse(responseCode = "200", description = "성공시 result에 key:attachmentsId 의 value로 업로드 성공한 첨부파일 id 제공")
+    @Operation(summary = "사용자 프로필 사진(프로필) 업로드", description = "사용자 프로필 사진(프로필) 업로드, JWT 토큰 필요")
+    public ResponseEntity<?> uploadUserAttachments(
+            HttpServletRequest request,
+            @RequestPart(required = true) MultipartFile attachments
+    ) throws FailException{
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+
+        HashMap<String, Object> resultMap = userService.uploadUserAttachments(securityUser, attachments);
+        restResponse.setResult(resultMap);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
     @Deprecated(forRemoval = true)

@@ -72,7 +72,10 @@ public class UserRequestDto {
     private Boolean secondTermAgreement;
     @Schema(defaultValue = "WELCOME PUZZLY", description = "사용자 상태메시지")
     private String statusMessage;
-    @Schema(defaultValue = "", description = "사용자 프로필 사진 서버상 경로")
-    private String profileFilePath;
-
+    @Schema(defaultValue = "", description = "등록할 사용자 프로필 사진 PK, 변경 안하려면 이 값 제외")
+    private Long createAttachmentsId;
+    /*
+    @Schema(defaultValue = "", description = "삭제할 사용자 프로필 사진 PK")
+    private Long deleteAttachmentsId;
+    */
 }

@@ -1,25 +1,32 @@
 package com.puzzly.api.service;
 
 import com.puzzly.api.domain.AccountAuthority;
+import com.puzzly.api.domain.SecurityUser;
 import com.puzzly.api.dto.request.UserRequestDto;
+import com.puzzly.api.dto.response.UserAttachmentsResponse;
 import com.puzzly.api.dto.response.UserResponseDto;
 import com.puzzly.api.entity.User;
 import com.puzzly.api.entity.UserAccountAuthority;
+import com.puzzly.api.entity.UserAttachments;
 import com.puzzly.api.entity.UserExtension;
 import com.puzzly.api.exception.FailException;
 import com.puzzly.api.repository.jpa.UserAccountAuthorityJpaRepository;
-import com.puzzly.api.repository.jpa.userExtensionJpaRepository;
+import com.puzzly.api.repository.jpa.UserAttachmentsJpaRepository;
+import com.puzzly.api.repository.jpa.UserExtensionJpaRepository;
 import com.puzzly.api.repository.jpa.UserJpaRepository;
 import com.puzzly.api.repository.mybatis.UserMybatisRepository;
+import com.puzzly.api.util.CustomUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -35,10 +42,14 @@ public class UserService {
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     private final UserJpaRepository userJpaRepository;
-    private final userExtensionJpaRepository userExtensionJpaRepository;
+    private final UserExtensionJpaRepository userExtensionJpaRepository;
     private final UserAccountAuthorityJpaRepository userAccountAuthorityJpaRepository;
+
+    private final UserAttachmentsJpaRepository userAttachmentsJpaRepository;
     private final UserMybatisRepository userMybatisRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final CustomUtils customUtils;
+    private final String context = "user";
 
     /** 사용자 추가 */
     @Transactional
@@ -61,7 +72,6 @@ public class UserService {
         }
         // TODO FE와 별도로 상의하여 통신구간 암호화를 구현하고, 복호화 > 암호화 혹은 그대로 때려박기 등을 구현해야 한다.
         userRequestDto.setPassword(bCryptPasswordEncoder.encode(userRequestDto.getPassword()));
-
         UserExtension userExtension = UserExtension.builder()
                 .firstTermAgreement(userRequestDto.getFirstTermAgreement())
                 .secondTermAgreement(userRequestDto.getSecondTermAgreement())
@@ -95,7 +105,6 @@ public class UserService {
                     .build();
             userAccountAuthorityJpaRepository.save(adminAccountAuthority);
         }
-
         UserResponseDto userResult = buildUserResponseDtoFromUser(user, userExtension);
 
         resultMap.put("user", userResult);
@@ -114,9 +123,9 @@ public class UserService {
     }
 
     /** 사용자 수정 */
+    @Transactional
     public HashMap<String, Object> modifyUser(Long userId, UserRequestDto userRequestDto){
         HashMap<String, Object> resultMap = new HashMap<>();
-
         User user = userJpaRepository.findById(userId).orElse(null);
         UserExtension userExtension = user.getUserExtension();
 
@@ -134,6 +143,16 @@ public class UserService {
 
         userJpaRepository.save(user);
         userExtensionJpaRepository.save(userExtension);
+
+        if(userRequestDto.getCreateAttachmentsId() != null && userRequestDto.getCreateAttachmentsId() != 0){
+            userAttachmentsJpaRepository.bulkUpdateIsDeleted(user, false, true, LocalDateTime.now());
+            UserAttachments userAttachments = userAttachmentsJpaRepository.findById(userRequestDto.getCreateAttachmentsId()).orElse(null);
+            if(userAttachments == null){
+                throw new FailException("SERVER_MESSAGE_ATTACHMENTS_NOT_EXISTS",400);
+            }
+            userAttachments.setUser(user);
+            userAttachmentsJpaRepository.save(userAttachments);
+        }
 
         UserResponseDto userResult = buildUserResponseDtoFromUser(user, userExtension);
         resultMap.put("user", userResult);
@@ -160,8 +179,50 @@ public class UserService {
         return user;
     }
 
+
+    /** 사용자 첨부파일 (프로필) 업로드*/
+    public HashMap<String, Object> uploadUserAttachments(SecurityUser securityUser, MultipartFile attachments){
+        HashMap<String, Object> resultMap = new HashMap<>();
+        User user = findById(securityUser.getUser().getUserId()).orElse(null);
+        if(user == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
+        }
+        Long attachmentsId = 0L;
+        try {
+            HashMap<String, Object> fileResult = customUtils.uploadFile(context, attachments);
+            UserAttachments userAttachments = UserAttachments.builder()
+                    .extension(MapUtils.getString(fileResult, "extension"))
+                    .filePath(MapUtils.getString(fileResult, "dirPath") + MapUtils.getString(fileResult, "fileName"))
+                    .fileSize(MapUtils.getLong(fileResult, "fileSize"))
+                    .createDateTime(LocalDateTime.now())
+                    .originName(MapUtils.getString(fileResult, "originName"))
+                    .isDeleted(false)
+                    .createUser(user)
+                    .build();
+            userAttachmentsJpaRepository.save(userAttachments);
+            attachmentsId = userAttachments.getAttachmentsId();
+        }catch(Exception e){
+            e.printStackTrace();
+            throw new FailException("SERVER_MESSAGE_EXCEPTION_ON_USER_ATTACHMENTS", 500);
+        }
+
+        resultMap.put("attachmentsId", attachmentsId);
+        return resultMap;
+    }
+
     /** User , UserExtension Entity로부터 user responseDto 생성*/
-    public UserResponseDto buildUserResponseDtoFromUser(User user, UserExtension userExtension){
+    private UserResponseDto buildUserResponseDtoFromUser(User user, UserExtension userExtension){
+        UserAttachments userAttachments = userAttachmentsJpaRepository.findByUserAndIsDeleted(user, false);
+        UserAttachmentsResponse userAttachmentsResponse = null;
+        if(userAttachments != null){
+            userAttachmentsResponse = UserAttachmentsResponse.builder()
+                                        .attachmentsId(userAttachments.getAttachmentsId())
+                                        .createDateTime(userAttachments.getCreateDateTime())
+                                        .originName(userAttachments.getOriginName())
+                                        .filePath(userAttachments.getFilePath())
+                                        .fileSize(userAttachments.getFileSize())
+                                        .build();
+        }
         return UserResponseDto.builder().userId(user.getUserId()).userName(user.getUserName()).email(user.getEmail()).
                 createDateTime(user.getCreateDateTime()).status(user.getStatus()).nickName(user.getNickName()).phoneNumber(user.getPhoneNumber())
                 .birth(user.getBirth()).gender(user.getGender())
@@ -171,13 +232,13 @@ public class UserService {
                 .accountAuthority(userAccountAuthorityJpaRepository.findByUser(user).stream().map((ua) -> {
                     return ua.getAccountAuthority().getText();
                 }).collect(Collectors.toList()))
+                .userAttachments(userAttachmentsResponse == null ? null : userAttachmentsResponse)
                 .build();
     }
 
     public User findByEmail(String email){
         return userJpaRepository.findByEmail(email);
     }
-
     public Optional<User> findById(Long userId) {return userJpaRepository.findById(userId);}
 
     public List<UserResponseDto> selectUserByCalendar(Long calendarId){
