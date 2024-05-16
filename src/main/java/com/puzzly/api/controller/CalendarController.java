@@ -126,7 +126,7 @@ public class CalendarController {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse response = new RestResponse();
 
-        CalendarResponseDto resultMap = calendarService.createCalendar(securityUser, calendarRequestDto);
+        HashMap<String, Object> resultMap = calendarService.createCalendar(securityUser, calendarRequestDto);
         response.setResult(resultMap);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -275,13 +275,13 @@ public class CalendarController {
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/content/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/content/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiResponse(responseCode = "200", description = "성공시 result의 key:attachmentsIdList 의 value로 업로드 성공한 첨부파일 Id 제공")
     @Operation(summary="캘린더 첨부파일 업로드", description = "캘린더 첨부파일 업로드, JWT토큰 필요")
     public ResponseEntity<?> uploadCalendarContentAttachments(
             HttpServletRequest request,
             //@Parameter(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE))
-            @RequestPart(required = false) List<MultipartFile> attachmentsList
+            @RequestPart(required = true) List<MultipartFile> attachmentsList
     ) throws FailException, IOException {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
@@ -291,7 +291,7 @@ public class CalendarController {
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/content/file")
+    @GetMapping(value = "/content/attachments")
     @ApiResponse(responseCode = "200", description = "SUCCESS")
     @Operation(summary="캘린더 첨부파일 다운로드", description = "캘린더 첨부파일 다운로드, JWT토큰 필요, 해당 캘린더에 참여해있어야 함")
     public void downloadCalendarContentAttachments(

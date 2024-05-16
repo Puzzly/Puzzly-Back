@@ -136,7 +136,8 @@ public class CalendarService {
     }
     /** 캘린더 생성*/
     @Transactional
-    public CalendarResponseDto createCalendar(SecurityUser securityUser, CalendarRequestDto calendarRequestDto){
+    public HashMap<String, Object> createCalendar(SecurityUser securityUser, CalendarRequestDto calendarRequestDto){
+        HashMap<String, Object> resultMap = new HashMap<>();
         User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
         if(user == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
@@ -164,8 +165,8 @@ public class CalendarService {
                 .calendarType(calendar.getCalendarType())
                 .userList(userList)
                 .build();
-
-        return calendarResponseDto;
+        resultMap.put("calnendar", calendarRequestDto);
+        return resultMap;
     }
 
     /** 캘린더 리스트 조회*/

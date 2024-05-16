@@ -25,12 +25,12 @@ public class CalendarResponseDto {
     private String calendarName;
 
     @Schema(description = "캘린더 생성자 PK", defaultValue = "1")
-    private long createId;
+    private Long createId;
     @Schema(description = "캘린더 생성자 닉네임", defaultValue = "김퍼즐리")
     private String createNickName;
 
     @Schema(description = "캘린더 수정자 PK", defaultValue = "1")
-    private long modifyId;
+    private Long modifyId;
     @Schema(description = "캘린더 수정자 닉네임", defaultValue = "김퍼즐리")
     private String modifyNickName;
 
