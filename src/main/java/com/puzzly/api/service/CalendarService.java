@@ -608,7 +608,6 @@ public class CalendarService {
                 .labelName(calendarLabel.getLabelName())
                 .colorCode(calendarLabel.getColorCode())
                 .orderNum(calendarLabel.getOrderNum())
-                .userList(userList)
                 .build();
     }
 
@@ -619,6 +618,118 @@ public class CalendarService {
         List<CalendarLabelResponseDto> calendarList = calendarLabelJpaRepository.selectCalendarLabelList(calendarId, offset, pageSize);
 
         resultMap.put("calendarList", calendarList);
+        return resultMap;
+    }
+
+    /** 캘린더 라벨 수정*/
+    @Transactional
+    public HashMap<String, Object> modifyCalendarlabel(SecurityUser securityUser, CalendarLabelRequestDto calendarLabelRequestDto){
+        HashMap<String, Object> resultMap = new HashMap<>();
+
+        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
+        if(user == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
+        }
+        if(StringUtils.isEmpty(StringUtils.trim(calendarLabelRequestDto.getLabelName()))){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NAME_EMPTY", 400);
+        }
+        if(StringUtils.isEmpty(StringUtils.trim(calendarLabelRequestDto.getColorCode()))){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_COLOR_CODE_EMPTY", 400);
+        }
+        if(calendarLabelRequestDto.getOrderNum() == null){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_ORDER_NUM_EMPTY", 400);
+        }
+        if(calendarLabelJpaRepository.findByLabelName(calendarLabelRequestDto.getLabelName()) != null) {
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NAME_DUPLICATE", 400);
+        }
+
+        CalendarLabel calendarLabel = calendarLabelJpaRepository.findById(calendarLabelRequestDto.getLabelId()).orElse(null);
+
+        if(calendarLabel == null){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+        }
+
+        // 순서 변경
+        if(!Objects.equals(calendarLabel.getOrderNum(), calendarLabelRequestDto.getOrderNum())){
+            // 4 -> 2 로 변경
+            if(calendarLabel.getOrderNum() > calendarLabelRequestDto.getOrderNum()){
+                int move = calendarLabel.getOrderNum() - calendarLabelRequestDto.getOrderNum();
+                for(int i=1; i<=move; i++){
+                    CalendarLabel calendarLabelOrderNum = calendarLabelJpaRepository.findByOrderNum(calendarLabel.getOrderNum()-i).orElse(null);
+                    if(calendarLabelOrderNum == null){
+                        throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+                    }
+                    calendarLabelOrderNum.setOrderNum(calendarLabelOrderNum.getOrderNum()+1);
+                }
+            }else{
+                // 4 -> 6 로 변경
+                int move = calendarLabelRequestDto.getOrderNum() - calendarLabel.getOrderNum();
+                for(int i=1; i<=move; i++){
+                    CalendarLabel calendarLabelOrderNum = calendarLabelJpaRepository.findByOrderNum(calendarLabel.getOrderNum()+i).orElse(null);
+                    if(calendarLabelOrderNum == null){
+                        throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+                    }
+                    calendarLabelOrderNum.setOrderNum(calendarLabelOrderNum.getOrderNum()-1);
+                }
+            }
+        }
+
+        // 수정
+        calendarLabel.setModifyUser(user);
+        calendarLabel.setModifyDateTime(LocalDateTime.now());
+        if(calendarLabelRequestDto.getLabelName() != null) calendarLabel.setLabelName(calendarLabelRequestDto.getLabelName());
+        if(calendarLabelRequestDto.getColorCode() != null) calendarLabel.setColorCode(calendarLabelRequestDto.getColorCode());
+        if(calendarLabelRequestDto.getOrderNum() != null) calendarLabel.setOrderNum(calendarLabelRequestDto.getOrderNum());
+
+        CalendarLabelResponseDto labelResponseDto = CalendarLabelResponseDto.builder()
+                .labelId(calendarLabel.getLabelId())
+                .labelName(calendarLabel.getLabelName())
+                .colorCode(calendarLabel.getColorCode())
+                .orderNum(calendarLabel.getOrderNum())
+                .createId(calendarLabel.getCreateUser().getUserId())
+                .createNickName(calendarLabel.getCreateUser().getNickName())
+                .modifyId(calendarLabel.getModifyUser().getUserId())
+                .modifyNickName(calendarLabel.getModifyUser().getNickName())
+                .build();
+
+        resultMap.put("label", labelResponseDto);
+        return resultMap;
+    }
+
+    /** 캘린더 라벨 삭제*/
+    @Transactional
+    public HashMap<String, Object> removeCalendarLabel(SecurityUser securityUser, Long labelId) throws FailException{
+        HashMap<String, Object> resultMap = new HashMap<>();
+
+        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
+        if(user == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
+        }
+
+        CalendarLabel calendarLabel = calendarLabelJpaRepository.findById(labelId).orElse(null);
+
+        if(calendarLabel == null){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+        }
+
+        // max order
+        Integer maxOrder = calendarLabelJpaRepository.getMaxOrder(calendarLabel.getCalendar().getCalendarId());
+        if(maxOrder == null) maxOrder = 0;
+
+        // 순서 변경
+        for(int i=calendarLabel.getOrderNum()+1; i<=maxOrder; i++){
+            CalendarLabel calendarLabelOrderNum = calendarLabelJpaRepository.findByOrderNum(i).orElse(null);
+            if(calendarLabelOrderNum == null){
+                throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+            }
+            calendarLabelOrderNum.setOrderNum(calendarLabelOrderNum.getOrderNum()-1);
+        }
+
+        // 캘린더 라벨 삭제
+        calendarLabel.setDeleteUser(user);
+        calendarLabel.setDeleteDateTime(LocalDateTime.now());
+
+        resultMap.put("labelId", labelId);
         return resultMap;
     }
 

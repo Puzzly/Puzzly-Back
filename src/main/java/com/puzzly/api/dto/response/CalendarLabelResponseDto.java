@@ -3,9 +3,6 @@ package com.puzzly.api.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Builder
 @Getter
 @Setter
@@ -33,7 +30,4 @@ public class CalendarLabelResponseDto {
     private long modifyId;
     @Schema(description = "라벨 수정자 닉네임", defaultValue = "김퍼즐리")
     private String modifyNickName;
-
-    @Schema(description = "캘린더에 소속된 사용자 리스트")
-    private List<UserResponseDto> userList = new ArrayList<>();
 }

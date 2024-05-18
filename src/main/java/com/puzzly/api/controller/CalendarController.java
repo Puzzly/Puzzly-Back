@@ -340,6 +340,8 @@ public class CalendarController {
 
     @PostMapping("label")
     @ApiResponse(responseCode = "200", description = "성공시 result의 key:content 의 value로 캘린더 라벨 제공", content = @Content(schema = @Schema(implementation = CalendarLabelResponseDto.class)))
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
     @Operation(summary="캘린더 라벨 등록, JWT 토큰 필요", description = "캘린더 라벨 등록, JWT토큰 필요")
     public ResponseEntity<?> createCalendarLabel(
             HttpServletRequest request,
@@ -364,6 +366,8 @@ public class CalendarController {
 
     @GetMapping("label")
     @ApiResponse(responseCode = "200", description = "성공시 result의 key:content 의 value로 캘린더 라벨 리스트 제공", content = @Content(schema = @Schema(implementation = CalendarLabelResponseDto.class)))
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
     @Operation(summary="내가 참여한 라벨 목록 조회, 토큰필요 O, JWT 토큰 필요", description = "내가 참여한 모든 라벨 조회, JWT토큰 필요")
     public ResponseEntity<?> getCalendarLabelList(
             HttpServletRequest request,
@@ -378,6 +382,49 @@ public class CalendarController {
         RestResponse restResponse = new RestResponse();
 
         HashMap<String, Object> resultMap = calendarService.getCalendarLabelList(securityUser, calendarId, offset, pageSize);
+        restResponse.setResult(resultMap);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
+    @PutMapping(value="/label")
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:content의 value로 캘린더 라벨 제공", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarContentResponseDto.class)))
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
+    @Operation(summary="캘린더 라벨 수정, JWT 토큰 필요", description = "캘린더 라벨 수정하기, JWT 토큰 필요")
+    public ResponseEntity<?> modifyCalendarLabel(
+            HttpServletRequest request,
+            @Parameter(
+                    description="이 API에서 아래의 값은 생략이 가능함\n\n" +
+                            "* 변경이 발생하지 않은 Parameter값은 서버로 보내지 않고 생략 가능"+
+                            "상기 명시되지 않은 값을 생략할 경우 400에러 발생\n\n" +
+                            "이 API에서 주의사항은 아래와 같음\n\n" +
+                            "* orderNum (label orderNum -+ 이동한 순서)\n\n",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
+            )
+            @RequestBody CalendarLabelRequestDto calendarLabel
+    ) throws FailException{
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+        HashMap<String, Object> resultMap = calendarService.modifyCalendarlabel(securityUser, calendarLabel);
+
+        restResponse.setResult(resultMap);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
+    @DeleteMapping(value="/label")
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:labelId value로 삭제된 켈린더 라벨 Id 제공")
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
+    @Operation(summary="캘린더 라벨 삭제, JWT 토큰 필요", description = "캘린더 라벨 삭제, JWT 토큰 필요")
+    public ResponseEntity<?> removeCalendarLabel(
+            HttpServletRequest request,
+            @Parameter(description="캘린더 라벨 Id")
+            @RequestParam(name= "labelId") Long labelId
+    ) throws FailException{
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+        HashMap<String, Object> resultMap = calendarService.removeCalendarLabel(securityUser, labelId);
+
         restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }

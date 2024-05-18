@@ -14,7 +14,7 @@ import lombok.Setter;
 
 @Schema(description = "라벨에 관련된 요청사항을 전달할 떄 사용하는 DTO")
 public class CalendarLabelRequestDto {
-    @Schema(description = "label PK", hidden = true)
+    @Schema(description = "label PK")
     private Long labelId;
 
     @Schema(description = "라벨 이름")
