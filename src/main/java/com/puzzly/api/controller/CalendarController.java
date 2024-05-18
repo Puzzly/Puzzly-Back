@@ -349,10 +349,11 @@ public class CalendarController {
                     description="이 API에서 아래의 값은 생략이 가능함\n\n" +
                             "* labelId (생략가능, 서버에서 자동으로 값을 생성함)\n\n" +
                             "* orderNum (생략, 서버에서 자동으로 값을 생성함)\n\n" +
-                            "* colorCode (생략 가능, default color: #000000, FE 값 전달 후 변경 예정)\n\n"+
+                            "* colorCode (생략 가능, default color: #000000)\n\n"+
                             "상기 명시되지 않은 값을 생략할 경우 400에러 발생\n\n" +
                             "이 API에서 주의사항은 아래와 같음\n\n" +
-                            "* labelName (생략되었거나 빈 값, 증복된 값인 경우 400에러 발생)"
+                            "* labelName (생략되었거나 빈 값, 증복된 값인 경우 400에러 발생)\n\n" +
+                            "* colorCode (헥사코드 포맷 벗어난 경우 에러.)\n\n"
             )
             @RequestBody CalendarLabelRequestDto calendarContentsLabel
     ) throws FailException, Exception{
@@ -393,13 +394,12 @@ public class CalendarController {
     @Operation(summary="캘린더 라벨 수정, JWT 토큰 필요", description = "캘린더 라벨 수정하기, JWT 토큰 필요")
     public ResponseEntity<?> modifyCalendarLabel(
             HttpServletRequest request,
-            @Parameter(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description="이 API에서 아래의 값은 생략이 가능함\n\n" +
-                            "* 변경이 발생하지 않은 Parameter값은 서버로 보내지 않고 생략 가능"+
-                            "상기 명시되지 않은 값을 생략할 경우 400에러 발생\n\n" +
+                            "* 변경이 발생하지 않은 Parameter값은 서버로 보내지 않고 생략 가능\n\n"+
                             "이 API에서 주의사항은 아래와 같음\n\n" +
-                            "* orderNum (label orderNum -+ 이동한 순서)\n\n",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
+                            "* orderNum (label orderNum -+ 이동한 순서. 0 이하, max order num 범위 벗어난 경우 에러.)\n\n" +
+                            "* colorCode (헥사코드 포맷 벗어난 경우 에러.)\n\n"
             )
             @RequestBody CalendarLabelRequestDto calendarLabel
     ) throws FailException{

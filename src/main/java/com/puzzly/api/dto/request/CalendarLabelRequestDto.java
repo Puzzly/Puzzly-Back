@@ -17,11 +17,11 @@ public class CalendarLabelRequestDto {
     @Schema(description = "label PK")
     private Long labelId;
 
-    @Schema(description = "라벨 이름")
+    @Schema(description = "라벨 이름", defaultValue = "퍼즐리 라벨")
     private String labelName;
     @Schema(description = "라벨 색상", defaultValue = "#000000")
     private String colorCode;
-    @Schema(description = "라벨 순서")
+    @Schema(description = "라벨 순서", defaultValue = "1")
     private Integer orderNum;
 
     @Schema(description = "calendar PK", defaultValue = "1")

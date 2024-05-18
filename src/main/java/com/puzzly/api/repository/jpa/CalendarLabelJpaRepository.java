@@ -10,6 +10,6 @@ import java.util.Optional;
 @Repository
 public interface CalendarLabelJpaRepository extends JpaRepository<CalendarLabel, Long>, CalendarLabelJpaRepositoryCustom {
 
-    CalendarLabel findByLabelName(String labelName);
+    Optional<CalendarLabel> findByLabelName(String labelName);
     Optional<CalendarLabel> findByOrderNum(Integer orderNum);
 }

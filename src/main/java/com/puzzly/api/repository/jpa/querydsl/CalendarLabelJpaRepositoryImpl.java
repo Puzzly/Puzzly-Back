@@ -37,15 +37,17 @@ public class CalendarLabelJpaRepositoryImpl {
                         calendarLabel.orderNum,
                         createUser.userId.as("createId"),
                         createUser.nickName.as("createNickName"),
+                        calendarLabel.createDateTime,
                         modifyUser.userId.as("modifyId"),
-                        modifyUser.nickName.as("modifyNickName")
+                        modifyUser.nickName.as("modifyNickName"),
+                        calendarLabel.modifyDateTime
                 ))
                 .from(calendarLabel)
                     .leftJoin(createUser).on(calendarLabel.createUser.userId.eq(createUser.userId))
                     .leftJoin(modifyUser).on(calendarLabel.modifyUser.userId.eq(modifyUser.userId))
                 .where(calendarLabel.calendar.calendarId.eq(calendarId),
                         calendarLabel.deleteUser.isNull())
-                .orderBy(calendarLabel.orderNum.desc())
+                .orderBy(calendarLabel.orderNum.asc())
                 .offset(offset)
                 .limit(pageSize)
                 .fetch();

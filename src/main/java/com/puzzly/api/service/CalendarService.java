@@ -575,8 +575,11 @@ public class CalendarService {
         if(StringUtils.isEmpty(StringUtils.trim(calendarLabelRequestDto.getColorCode()))){
             throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_COLOR_CODE_EMPTY", 400);
         }
-        if(calendarLabelJpaRepository.findByLabelName(calendarLabelRequestDto.getLabelName()) != null) {
+        if(calendarLabelJpaRepository.findByLabelName(calendarLabelRequestDto.getLabelName()).isPresent()) {
             throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NAME_DUPLICATE", 400);
+        }
+        if (!calendarLabelRequestDto.getColorCode().matches("^#[0-9A-Fa-f]{6}$")) {
+            throw new FailException("SERVER_MESSAGE_CALENDAR_COLOR_CODE_FORMAT_DENY", 400);
         }
 
         Calendar calendar = calendarJpaRepository.findById(calendarLabelRequestDto.getCalendarId()).orElse(null);
@@ -600,22 +603,20 @@ public class CalendarService {
         // 캘린더 라벨 생성
         calendarLabelJpaRepository.save(calendarLabel);
 
-        ArrayList<UserResponseDto> userList = new ArrayList<>();
-
-        userList.add(UserResponseDto.builder().userId(user.getUserId()).userName(user.getUserName()).nickName(user.getNickName()).build());
-
         return CalendarLabelResponseDto.builder().labelId(calendarLabel.getLabelId())
                 .labelName(calendarLabel.getLabelName())
                 .colorCode(calendarLabel.getColorCode())
                 .orderNum(calendarLabel.getOrderNum())
+                .createId(user.getUserId())
+                .createNickName(user.getNickName())
+                .createDateTime(calendarLabel.getCreateDateTime())
                 .build();
     }
 
     /** 캘린더 라벨 리스트 조회*/
     public HashMap<String, Object> getCalendarLabelList(SecurityUser securityUser, Long calendarId, int offset, int pageSize){
         HashMap<String, Object> resultMap = new HashMap<>();
-        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
-        List<CalendarLabelResponseDto> calendarList = calendarLabelJpaRepository.selectCalendarLabelList(calendarId, offset, pageSize);
+        List<CalendarLabelResponseDto> calendarList = calendarLabelJpaRepository.selectCalendarLabelList(calendarId, offset*pageSize, pageSize);
 
         resultMap.put("calendarList", calendarList);
         return resultMap;
@@ -630,23 +631,24 @@ public class CalendarService {
         if(user == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
         }
-        if(StringUtils.isEmpty(StringUtils.trim(calendarLabelRequestDto.getLabelName()))){
-            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NAME_EMPTY", 400);
-        }
-        if(StringUtils.isEmpty(StringUtils.trim(calendarLabelRequestDto.getColorCode()))){
-            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_COLOR_CODE_EMPTY", 400);
-        }
-        if(calendarLabelRequestDto.getOrderNum() == null){
-            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_ORDER_NUM_EMPTY", 400);
-        }
-        if(calendarLabelJpaRepository.findByLabelName(calendarLabelRequestDto.getLabelName()) != null) {
+        CalendarLabel calendarLabelName = calendarLabelJpaRepository.findByLabelName(calendarLabelRequestDto.getLabelName()).orElse(null);
+        if(Objects.requireNonNull(calendarLabelName).getLabelId() != calendarLabelRequestDto.getLabelId()) {
             throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NAME_DUPLICATE", 400);
         }
-
+        if (!calendarLabelRequestDto.getColorCode().matches("^#[0-9A-Fa-f]{6}$")) {
+            throw new FailException("SERVER_MESSAGE_CALENDAR_COLOR_CODE_FORMAT_DENY", 400);
+        }
         CalendarLabel calendarLabel = calendarLabelJpaRepository.findById(calendarLabelRequestDto.getLabelId()).orElse(null);
-
         if(calendarLabel == null){
             throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+        }
+        if(calendarLabelRequestDto.getOrderNum() != null){
+            Integer maxOrder = calendarLabelJpaRepository.getMaxOrder(calendarLabelRequestDto.getCalendarId());
+            if(maxOrder == null) maxOrder = 0;
+
+            if(calendarLabelRequestDto.getOrderNum() <= 0 || calendarLabelRequestDto.getOrderNum()>maxOrder){
+                throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_ORDER_NUM_OUT_OF_LANGE", 400);
+            }
         }
 
         // 순서 변경
@@ -688,8 +690,10 @@ public class CalendarService {
                 .orderNum(calendarLabel.getOrderNum())
                 .createId(calendarLabel.getCreateUser().getUserId())
                 .createNickName(calendarLabel.getCreateUser().getNickName())
+                .createDateTime(calendarLabel.getCreateDateTime())
                 .modifyId(calendarLabel.getModifyUser().getUserId())
                 .modifyNickName(calendarLabel.getModifyUser().getNickName())
+                .modifyDateTime((calendarLabel.getModifyDateTime()))
                 .build();
 
         resultMap.put("label", labelResponseDto);
