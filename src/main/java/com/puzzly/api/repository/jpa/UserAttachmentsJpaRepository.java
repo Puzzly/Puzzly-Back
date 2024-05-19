@@ -8,11 +8,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Repository
 public interface UserAttachmentsJpaRepository extends JpaRepository<UserAttachments, Long> {
 
-    public UserAttachments findByUserAndIsDeleted(User user, Boolean isDeleted);
+    public Optional<UserAttachments> findByUserAndIsDeleted(User user, Boolean isDeleted);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE UserAttachments SET isDeleted =:after, deleteDateTime =:deleteDateTime, deleteUser=:user where isDeleted=:before and user =:user")

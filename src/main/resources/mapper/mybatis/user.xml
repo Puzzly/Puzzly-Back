@@ -32,6 +32,19 @@
             tcur.calendar_id = #{calendarId}
     </select>
 
+    <select id="selectUserByCalendarContentRelation" resultType="com.puzzly.api.dto.response.UserResponseDto">
+        SELECT tu.user_id, tu.user_name, tu.nick_name, tu.email, tu.phone_number, tu.gender
+        FROM
+            users tu
+                INNER JOIN
+            calendar_content_user_relation tccur
+            ON
+                tccur.user_id = tu.user_id
+        where
+            tccur.content_id = #{contentId}
+        AND
+            tccur.isDeleted = #{isDeleted}
+    </select>
 
     <select id="selectUserAuthority" resultType="string">
         select account_authority

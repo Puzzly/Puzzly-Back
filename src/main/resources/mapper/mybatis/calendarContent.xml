@@ -64,4 +64,17 @@
         AND
             tcc.is_deleted = #{isDeleted}
     </select>
+
+    <select id ="selectCalendarContentRecurringInfo" resultType = "com.puzzly.api.dto.response.CalendarContentRecurringInfoResponseDto">
+        SELECT
+            tccri.info_id, tccri.calendar_contentt_id, tccri.recurring_type, tccri.period,
+            tccri.recurring_date, tccri.recurring_day, tccri.condition_count, tccri.condition_end_date
+        FROM
+            calendar_content_recurring_info tccri
+        WHERE
+            tccri.calendar_content_id = #{content_id}
+        AND
+            is_deleted = #{isDeleted}
+    </select>
+
 </mapper>

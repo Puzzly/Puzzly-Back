@@ -1,11 +1,11 @@
 package com.puzzly.api.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.puzzly.api.dto.request.CalendarContentRecurringInfoRequestDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 
 @Builder
@@ -53,11 +53,13 @@ public class CalendarContentResponseDto {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endDateTime;
 
-    @Schema(description = "일정 본문", defaultValue = "puzzly 전체회의")
-    private String content;
     @Schema(description = "알림 여부, 생략하면 자동으로 서버에서  false로 등록", defaultValue = "false")
     private Boolean notify;
-    //TODO Notify 타임 여러개일 수 있음. 별도 테이블 등록 필요
+
+    @Schema(description = "반복정보")
+    private CalendarContentRecurringInfoResponseDto recurringInfo;
+    @Schema(description = "참여자 정보")
+    private List<UserResponseDto> userList;
     /*
     @Schema(pattern = "2024-04-21 12:00:00", type="string", description = "알림 발송 시간, notify가 true일 경우에만 주어진 값이 수용됨.")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

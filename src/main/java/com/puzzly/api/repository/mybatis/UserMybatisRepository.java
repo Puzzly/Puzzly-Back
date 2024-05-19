@@ -15,6 +15,8 @@ public interface UserMybatisRepository {
 
     public List<UserResponseDto> selectUserByCalendar(@Param("calendarId") Long calendarId);
 
+    public List<UserResponseDto> selectUserByCalendarContentRelation(@Param("contentId") Long contentId, @Param("isDeleted") Boolean isDeleted);
 
     public List<String> selectUserAuthority(@Param("userId") Long userId);
+
 }

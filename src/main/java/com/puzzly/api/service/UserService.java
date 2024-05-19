@@ -212,7 +212,7 @@ public class UserService {
 
     /** User , UserExtension Entity로부터 user responseDto 생성*/
     private UserResponseDto buildUserResponseDtoFromUser(User user, UserExtension userExtension){
-        UserAttachments userAttachments = userAttachmentsJpaRepository.findByUserAndIsDeleted(user, false);
+        UserAttachments userAttachments = userAttachmentsJpaRepository.findByUserAndIsDeleted(user, false).orElse(null);
         UserAttachmentsResponse userAttachmentsResponse = null;
         if(userAttachments != null){
             userAttachmentsResponse = UserAttachmentsResponse.builder()
@@ -241,10 +241,18 @@ public class UserService {
     }
     public Optional<User> findById(Long userId) {return userJpaRepository.findById(userId);}
 
+    public User findByUserId(Long userId) {return userJpaRepository.findByUserId(userId);}
     public List<UserResponseDto> selectUserByCalendar(Long calendarId){
         return userMybatisRepository.selectUserByCalendar(calendarId);
     }
 
+    public List<UserResponseDto> selectUserByCalendarContentRelation(long calendarId, Boolean isDeleted) {
+        return userMybatisRepository.selectUserByCalendarContentRelation(calendarId, isDeleted);
+    }
+
+    public Optional<UserAttachments> selectUserAttachmentsByUser(User user, Boolean isDeleted){
+        return userAttachmentsJpaRepository.findByUserAndIsDeleted(user, isDeleted);
+    }
     public List<UserAccountAuthority> findAccountAuhorityByUser(User user){
         return userAccountAuthorityJpaRepository.findByUser(user);
     }
