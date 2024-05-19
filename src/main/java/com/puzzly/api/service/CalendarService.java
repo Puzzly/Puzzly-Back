@@ -5,17 +5,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.puzzly.api.domain.SecurityUser;
 import com.puzzly.api.dto.request.CalendarContentRequestDto;
+import com.puzzly.api.dto.request.CalendarLabelRequestDto;
 import com.puzzly.api.dto.request.CalendarRequestDto;
-import com.puzzly.api.dto.response.CalendarContentAttachmentsResponseDto;
-import com.puzzly.api.dto.response.CalendarContentResponseDto;
-import com.puzzly.api.dto.response.CalendarResponseDto;
-import com.puzzly.api.dto.response.UserResponseDto;
+import com.puzzly.api.dto.response.*;
+import com.puzzly.api.entity.Calendar;
 import com.puzzly.api.entity.*;
 import com.puzzly.api.exception.FailException;
-import com.puzzly.api.repository.jpa.CalendarContentAttachmentsJpaRepository;
-import com.puzzly.api.repository.jpa.CalendarContentJpaRepository;
-import com.puzzly.api.repository.jpa.CalendarJpaRepository;
-import com.puzzly.api.repository.jpa.CalendarUserRelationJpaRepository;
+import com.puzzly.api.repository.jpa.*;
 import com.puzzly.api.repository.mybatis.CalendarContentMybatisRepository;
 import com.puzzly.api.repository.mybatis.CalendarMybatisRepository;
 import com.puzzly.api.util.CustomUtils;
@@ -32,13 +28,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,6 +47,8 @@ public class CalendarService {
     private final CalendarContentMybatisRepository calendarContentMybatisRepository;
 
     private final CalendarContentAttachmentsJpaRepository calendarContentAttachmentsJpaRepository;
+
+    private final CalendarLabelJpaRepository calendarLabelJpaRepository;
 
     private final CustomUtils customUtils;
     private final ObjectMapper objectMapper;
@@ -569,6 +563,181 @@ public class CalendarService {
         customUtils.downloadFile(fileFullPath, originName, extension, request, response);
     }
 
+    /** 캘린더 라벨 생성*/
+    @Transactional
+    public CalendarLabelResponseDto createCalendarLabel(SecurityUser securityUser, CalendarLabelRequestDto calendarLabelRequestDto){
+        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
+        if(user == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
+        }
+        if(StringUtils.isEmpty(StringUtils.trim(calendarLabelRequestDto.getLabelName()))){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NAME_EMPTY", 400);
+        }
+        if(StringUtils.isEmpty(StringUtils.trim(calendarLabelRequestDto.getColorCode()))){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_COLOR_CODE_EMPTY", 400);
+        }
+        if(calendarLabelJpaRepository.findByLabelName(calendarLabelRequestDto.getLabelName()).isPresent()) {
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NAME_DUPLICATE", 400);
+        }
+        if (!calendarLabelRequestDto.getColorCode().matches("^#[0-9A-Fa-f]{6}$")) {
+            throw new FailException("SERVER_MESSAGE_CALENDAR_COLOR_CODE_FORMAT_DENY", 400);
+        }
+
+        Calendar calendar = calendarJpaRepository.findById(calendarLabelRequestDto.getCalendarId()).orElse(null);
+
+        if(calendar == null){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_NOT_EXISTS", 400);
+        }
+
+        // max 순서
+        Integer maxOrder = calendarLabelJpaRepository.getMaxOrder(Objects.requireNonNull(calendar).getCalendarId());
+        if(maxOrder == null) maxOrder = 0;
+
+        CalendarLabel calendarLabel = CalendarLabel.builder().labelName(calendarLabelRequestDto.getLabelName())
+                .colorCode(calendarLabelRequestDto.getColorCode())
+                .orderNum(maxOrder+1)
+                .createUser(user)
+                .calendar(calendar)
+                .createDateTime(LocalDateTime.now())
+                .build();
+
+        // 캘린더 라벨 생성
+        calendarLabelJpaRepository.save(calendarLabel);
+
+        return CalendarLabelResponseDto.builder().labelId(calendarLabel.getLabelId())
+                .labelName(calendarLabel.getLabelName())
+                .colorCode(calendarLabel.getColorCode())
+                .orderNum(calendarLabel.getOrderNum())
+                .createId(user.getUserId())
+                .createNickName(user.getNickName())
+                .createDateTime(calendarLabel.getCreateDateTime())
+                .build();
+    }
+
+    /** 캘린더 라벨 리스트 조회*/
+    public HashMap<String, Object> getCalendarLabelList(SecurityUser securityUser, Long calendarId, int offset, int pageSize){
+        HashMap<String, Object> resultMap = new HashMap<>();
+        List<CalendarLabelResponseDto> calendarList = calendarLabelJpaRepository.selectCalendarLabelList(calendarId, offset*pageSize, pageSize);
+
+        resultMap.put("calendarList", calendarList);
+        return resultMap;
+    }
+
+    /** 캘린더 라벨 수정*/
+    @Transactional
+    public HashMap<String, Object> modifyCalendarlabel(SecurityUser securityUser, CalendarLabelRequestDto calendarLabelRequestDto){
+        HashMap<String, Object> resultMap = new HashMap<>();
+
+        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
+        if(user == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
+        }
+        CalendarLabel calendarLabelName = calendarLabelJpaRepository.findByLabelName(calendarLabelRequestDto.getLabelName()).orElse(null);
+        if(Objects.requireNonNull(calendarLabelName).getLabelId() != calendarLabelRequestDto.getLabelId()) {
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NAME_DUPLICATE", 400);
+        }
+        if (!calendarLabelRequestDto.getColorCode().matches("^#[0-9A-Fa-f]{6}$")) {
+            throw new FailException("SERVER_MESSAGE_CALENDAR_COLOR_CODE_FORMAT_DENY", 400);
+        }
+        CalendarLabel calendarLabel = calendarLabelJpaRepository.findById(calendarLabelRequestDto.getLabelId()).orElse(null);
+        if(calendarLabel == null){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+        }
+        if(calendarLabelRequestDto.getOrderNum() != null){
+            Integer maxOrder = calendarLabelJpaRepository.getMaxOrder(calendarLabelRequestDto.getCalendarId());
+            if(maxOrder == null) maxOrder = 0;
+
+            if(calendarLabelRequestDto.getOrderNum() <= 0 || calendarLabelRequestDto.getOrderNum()>maxOrder){
+                throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_ORDER_NUM_OUT_OF_LANGE", 400);
+            }
+        }
+
+        // 순서 변경
+        if(!Objects.equals(calendarLabel.getOrderNum(), calendarLabelRequestDto.getOrderNum())){
+            // 4 -> 2 로 변경
+            if(calendarLabel.getOrderNum() > calendarLabelRequestDto.getOrderNum()){
+                int move = calendarLabel.getOrderNum() - calendarLabelRequestDto.getOrderNum();
+                for(int i=1; i<=move; i++){
+                    CalendarLabel calendarLabelOrderNum = calendarLabelJpaRepository.findByOrderNum(calendarLabel.getOrderNum()-i).orElse(null);
+                    if(calendarLabelOrderNum == null){
+                        throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+                    }
+                    calendarLabelOrderNum.setOrderNum(calendarLabelOrderNum.getOrderNum()+1);
+                }
+            }else{
+                // 4 -> 6 로 변경
+                int move = calendarLabelRequestDto.getOrderNum() - calendarLabel.getOrderNum();
+                for(int i=1; i<=move; i++){
+                    CalendarLabel calendarLabelOrderNum = calendarLabelJpaRepository.findByOrderNum(calendarLabel.getOrderNum()+i).orElse(null);
+                    if(calendarLabelOrderNum == null){
+                        throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+                    }
+                    calendarLabelOrderNum.setOrderNum(calendarLabelOrderNum.getOrderNum()-1);
+                }
+            }
+        }
+
+        // 수정
+        calendarLabel.setModifyUser(user);
+        calendarLabel.setModifyDateTime(LocalDateTime.now());
+        if(calendarLabelRequestDto.getLabelName() != null) calendarLabel.setLabelName(calendarLabelRequestDto.getLabelName());
+        if(calendarLabelRequestDto.getColorCode() != null) calendarLabel.setColorCode(calendarLabelRequestDto.getColorCode());
+        if(calendarLabelRequestDto.getOrderNum() != null) calendarLabel.setOrderNum(calendarLabelRequestDto.getOrderNum());
+
+        CalendarLabelResponseDto labelResponseDto = CalendarLabelResponseDto.builder()
+                .labelId(calendarLabel.getLabelId())
+                .labelName(calendarLabel.getLabelName())
+                .colorCode(calendarLabel.getColorCode())
+                .orderNum(calendarLabel.getOrderNum())
+                .createId(calendarLabel.getCreateUser().getUserId())
+                .createNickName(calendarLabel.getCreateUser().getNickName())
+                .createDateTime(calendarLabel.getCreateDateTime())
+                .modifyId(calendarLabel.getModifyUser().getUserId())
+                .modifyNickName(calendarLabel.getModifyUser().getNickName())
+                .modifyDateTime((calendarLabel.getModifyDateTime()))
+                .build();
+
+        resultMap.put("label", labelResponseDto);
+        return resultMap;
+    }
+
+    /** 캘린더 라벨 삭제*/
+    @Transactional
+    public HashMap<String, Object> removeCalendarLabel(SecurityUser securityUser, Long labelId) throws FailException{
+        HashMap<String, Object> resultMap = new HashMap<>();
+
+        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
+        if(user == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
+        }
+
+        CalendarLabel calendarLabel = calendarLabelJpaRepository.findById(labelId).orElse(null);
+
+        if(calendarLabel == null){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+        }
+
+        // max order
+        Integer maxOrder = calendarLabelJpaRepository.getMaxOrder(calendarLabel.getCalendar().getCalendarId());
+        if(maxOrder == null) maxOrder = 0;
+
+        // 순서 변경
+        for(int i=calendarLabel.getOrderNum()+1; i<=maxOrder; i++){
+            CalendarLabel calendarLabelOrderNum = calendarLabelJpaRepository.findByOrderNum(i).orElse(null);
+            if(calendarLabelOrderNum == null){
+                throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+            }
+            calendarLabelOrderNum.setOrderNum(calendarLabelOrderNum.getOrderNum()-1);
+        }
+
+        // 캘린더 라벨 삭제
+        calendarLabel.setDeleteUser(user);
+        calendarLabel.setDeleteDateTime(LocalDateTime.now());
+
+        resultMap.put("labelId", labelId);
+        return resultMap;
+    }
+
     public HashMap<String, Object> removeCalendarContentAttachments(SecurityUser securityUser, Long attachmentsId){
         HashMap<String, Object> resultMap = new HashMap<>();
         User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
@@ -637,4 +806,6 @@ public class CalendarService {
                 //.calendarLabel(null)
                 .build();
     }
+
+
 }
