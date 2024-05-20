@@ -3,7 +3,7 @@ package com.puzzly.api.service;
 import com.puzzly.api.domain.AccountAuthority;
 import com.puzzly.api.domain.SecurityUser;
 import com.puzzly.api.dto.request.UserRequestDto;
-import com.puzzly.api.dto.response.UserAttachmentsResponse;
+import com.puzzly.api.dto.response.UserAttachmentsResponseDto;
 import com.puzzly.api.dto.response.UserResponseDto;
 import com.puzzly.api.entity.User;
 import com.puzzly.api.entity.UserAccountAuthority;
@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -67,7 +68,8 @@ public class UserService {
         if(ObjectUtils.isEmpty(userRequestDto.getFirstTermAgreement() || ObjectUtils.isEmpty(userRequestDto.getSecondTermAgreement()))){
             throw new FailException("SERVER_MESSAGE_TERM_AGREEMENT_NOT_EXISTS", 400);
         }
-        if(userMybatisRepository.selectUserByEmail(userRequestDto.getEmail()) != null){
+        //if(userMybatisRepository.selectUserByEmail(userRequestDto.getEmail()) != null){
+        if(userJpaRepository.selectUserByEmail(userRequestDto.getEmail(), false) != null){
             throw new FailException("SERVER_MESSAGE_EMAIL_ALREADY_EXISTS", 400);
         }
         // TODO FE와 별도로 상의하여 통신구간 암호화를 구현하고, 복호화 > 암호화 혹은 그대로 때려박기 등을 구현해야 한다.
@@ -115,9 +117,10 @@ public class UserService {
     public HashMap<String, Object> getUser(Long userId){
         HashMap<String, Object> resultMap = new HashMap<>();
 
-        UserResponseDto user = userMybatisRepository.selectUser(userId);
-        user.setAccountAuthority(userMybatisRepository.selectUserAuthority(userId));
-
+        //UserResponseDto user = userMybatisRepository.selectUser(userId);
+        UserResponseDto user = userJpaRepository.selectUserByUserId(userId, false);
+        //user.setAccountAuthority(userMybatisRepository.selectUserAuthority(userId));
+        user.setAccountAuthority(getAccountAuthority(userId));
         resultMap.put("user", user);
         return resultMap;
     }
@@ -213,9 +216,9 @@ public class UserService {
     /** User , UserExtension Entity로부터 user responseDto 생성*/
     private UserResponseDto buildUserResponseDtoFromUser(User user, UserExtension userExtension){
         UserAttachments userAttachments = userAttachmentsJpaRepository.findByUserAndIsDeleted(user, false).orElse(null);
-        UserAttachmentsResponse userAttachmentsResponse = null;
+        UserAttachmentsResponseDto userAttachmentsResponse = null;
         if(userAttachments != null){
-            userAttachmentsResponse = UserAttachmentsResponse.builder()
+            userAttachmentsResponse = UserAttachmentsResponseDto.builder()
                                         .attachmentsId(userAttachments.getAttachmentsId())
                                         .createDateTime(userAttachments.getCreateDateTime())
                                         .originName(userAttachments.getOriginName())
@@ -242,12 +245,20 @@ public class UserService {
     public Optional<User> findById(Long userId) {return userJpaRepository.findById(userId);}
 
     public User findByUserId(Long userId) {return userJpaRepository.findByUserId(userId);}
-    public List<UserResponseDto> selectUserByCalendar(Long calendarId){
-        return userMybatisRepository.selectUserByCalendar(calendarId);
+    public List<UserResponseDto> selectUserByCalendar(Long calendarId, Boolean isDeleted){
+        //return userMybatisRepository.selectUserByCalendar(calendarId);
+        return userJpaRepository.selectUserByCalendar(calendarId, isDeleted);
     }
 
-    public List<UserResponseDto> selectUserByCalendarContentRelation(long calendarId, Boolean isDeleted) {
-        return userMybatisRepository.selectUserByCalendarContentRelation(calendarId, isDeleted);
+    public List<UserResponseDto> selectUserByCalendarContentRelation(Long contentId, Boolean isDeleted) {
+        // TODO 이 위치에서 사용자 프로필 사진 정보 필요한지 협의필요
+        //return userMybatisRepository.selectUserByCalendarContentRelation(calendarId, isDeleted);
+        //return userJpaRepository.selectUserByCalendarContentRelation(contentId, isDeleted);
+        List<UserResponseDto> userList = userJpaRepository.selectUserByCalendarContentRelation(contentId, isDeleted);
+        userList.stream().forEach((user) -> {
+            user.setUserAttachments(userAttachmentsJpaRepository.selectUserAttachmentsByUserId(user.getUserId(), false));
+        });
+        return userList;
     }
 
     public Optional<UserAttachments> selectUserAttachmentsByUser(User user, Boolean isDeleted){
@@ -255,5 +266,14 @@ public class UserService {
     }
     public List<UserAccountAuthority> findAccountAuhorityByUser(User user){
         return userAccountAuthorityJpaRepository.findByUser(user);
+    }
+
+    public List<String> getAccountAuthority(Long userId){
+        List<String> accountAuthorityList = new ArrayList<>();
+        userAccountAuthorityJpaRepository.selectUserAuthority(userId).stream().forEach(
+                (authority) -> {
+                    accountAuthorityList.add(authority.getText());
+                });
+        return accountAuthorityList;
     }
 }

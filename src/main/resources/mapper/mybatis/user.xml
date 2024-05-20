@@ -16,10 +16,12 @@
         where tu.user_id = #{userId}
     </select>
 
+    <!-- MIGRATED
     <select id="selectUserByEmail" resultType="com.puzzly.api.entity.User">
         select * from users where email = #{email}
     </select>
-
+    -->
+    <!--MIGRATED
     <select id="selectUserByCalendar" resultType="com.puzzly.api.dto.response.UserResponseDto">
         SELECT tu.user_id, tu.user_name, tu.nick_name, tu.email, tu.phone_number, tu.gender
         FROM
@@ -31,7 +33,7 @@
         where
             tcur.calendar_id = #{calendarId}
     </select>
-
+    -->
     <select id="selectUserByCalendarContentRelation" resultType="com.puzzly.api.dto.response.UserResponseDto">
         SELECT tu.user_id, tu.user_name, tu.nick_name, tu.email, tu.phone_number, tu.gender
         FROM
