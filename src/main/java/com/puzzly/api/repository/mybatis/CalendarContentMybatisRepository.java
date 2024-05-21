@@ -13,12 +13,21 @@ import java.util.HashMap;
 import java.util.List;
 
 @Mapper
+@Deprecated(forRemoval = true)
 public interface CalendarContentMybatisRepository {
 
     //
+    /* MIGRATED
     public List<CalendarContentResponseDto> selectCalendarContentByDateTimeAndCalendar(@Param("calendarId") Long calendarId, @Param("startDateTime") LocalDateTime startDateTime, @Param("limitStartDateTime") LocalDateTime limitStartDateTime, @Param("isDeleted") boolean isDeleted);
+     */
+    /* MIGRATED
     public List<CalendarContentAttachmentsResponseDto> selectCalendarContentAttachmentsByContentId(@Param("contentId") Long contentId, @Param("isDeleted") Boolean isDeleted);
+     */
 
+    /* MIGRATED
     public CalendarContentRecurringInfoResponseDto selectCalendarContentRecurringInfo(@Param("contentId") Long contentId, @Param("isDeleted") Boolean isDeleted);
+    */
+    /* MIGRATED
     public CalendarContentResponseDto selectCalendarContentByContentId(@Param("contentId") Long contentId, @Param("isDeleted") Boolean isDeleted);
+     */
 }

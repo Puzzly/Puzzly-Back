@@ -169,9 +169,10 @@ public class CalendarService {
     public HashMap<String, Object> getCalendarList(SecurityUser securityUser, int offset, int pageSize, boolean isDeleted){
         HashMap<String, Object> resultMap = new HashMap<>();
         User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
-        List<CalendarResponseDto> calendarList = calendarMybatisRepository.selectCalendarList(user.getUserId(), offset, pageSize, isDeleted);
+        //List<CalendarResponseDto> calendarList = calendarMybatisRepository.selectCalendarList(user.getUserId(), offset, pageSize, isDeleted);
+        List<CalendarResponseDto> calendarList = calendarJpaRepository.selectCalendarList(securityUser.getUser().getUserId(), offset*pageSize, pageSize, isDeleted);
         calendarList.stream().forEach((calendarResponseDto -> {
-            calendarResponseDto.setUserList(userService.selectUserByCalendar(calendarResponseDto.getCalendarId()));
+            calendarResponseDto.setUserList(userService.selectUserByCalendar(calendarResponseDto.getCalendarId(), false));
             // mybatis로 select할경우 entity 관계로 찾는게 아니라 테이블에서 바로찾아야 함.
         }));
 
@@ -296,7 +297,7 @@ public class CalendarService {
                 if(calendarContentAttachments != null) {
                     calendarContentAttachments.setCalendarContent(calendarContent);
                     calendarContentAttachmentsJpaRepository.save(calendarContentAttachments);
-                    attachmentsList.add(CalendarContentAttachmentsResponseDto.builder().calendarContentId(calendarContentAttachments.getCalendarContent().getContentId())
+                    attachmentsList.add(CalendarContentAttachmentsResponseDto.builder().contentId(calendarContentAttachments.getCalendarContent().getContentId())
                             .attachmentsId(calendarContentAttachments.getAttachmentsId())
                             .filePath(calendarContentAttachments.getFilePath())
                             .fileSize(calendarContentAttachments.getFileSize())
@@ -357,7 +358,7 @@ public class CalendarService {
                 calendarContentUserRelationJpaRepository.save(contentUserRelation);
                 UserAttachments userAttachments = userService.selectUserAttachmentsByUser(selectedUser, false).orElse(null);
                 userList.add(UserResponseDto.builder().userId(selectedUser.getUserId()).nickName(selectedUser.getNickName()).userName(selectedUser.getUserName()).userAttachments(
-                        UserAttachmentsResponse.builder().attachmentsId(userAttachments != null ? userAttachments.getAttachmentsId() : null).build()
+                        UserAttachmentsResponseDto.builder().attachmentsId(userAttachments != null ? userAttachments.getAttachmentsId() : null).build()
                 ).build());
             });
             contentResponseDto.setUserList(userList);
@@ -386,13 +387,13 @@ public class CalendarService {
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
 
-        List<CalendarContentResponseDto> calendarContentList = calendarContentMybatisRepository.selectCalendarContentByDateTimeAndCalendar(calendarId, startTargetDateTime, limitTargetDateTime, isDeleted);
+        List<CalendarContentResponseDto> calendarContentList = calendarContentJpaRepository.selectCalendarContentByDateTimeAndCalendar(user.getUserId(), calendarId, startTargetDateTime, limitTargetDateTime, isDeleted);
         calendarContentList.forEach((calendarContent) -> {
-            calendarContent.setAttachmentsList(calendarContentMybatisRepository.selectCalendarContentAttachmentsByContentId(calendarContent.getContentId(), false));
+            calendarContent.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(calendarContent.getContentId(), false));
             // 참가자 정보
             calendarContent.setUserList(userService.selectUserByCalendarContentRelation(calendarContent.getContentId(), false));
             // 반복정보
-            calendarContent.setRecurringInfo(calendarContentMybatisRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
+            calendarContent.setRecurringInfo(calendarContentRecurringInfoJpaRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
         });
 
         resultMap.put("contentList", calendarContentList);
@@ -417,12 +418,12 @@ public class CalendarService {
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
 
-        CalendarContentResponseDto calendarContentResponseDto = calendarContentMybatisRepository.selectCalendarContentByContentId(contentId, false);
-        calendarContentResponseDto.setAttachmentsList(calendarContentMybatisRepository.selectCalendarContentAttachmentsByContentId(contentId, false));
+        CalendarContentResponseDto calendarContentResponseDto = calendarContentJpaRepository.selectCalendarContentByContentId(contentId, false);
+        calendarContentResponseDto.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(contentId, false));
         // 참가자 정보
         calendarContentResponseDto.setUserList(userService.selectUserByCalendarContentRelation(calendarContent.getContentId(), false));
         // 반복정보
-        calendarContentResponseDto.setRecurringInfo(calendarContentMybatisRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
+        calendarContentResponseDto.setRecurringInfo(calendarContentRecurringInfoJpaRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
         resultMap.put("content", calendarContentResponseDto);
         return resultMap;
     }
@@ -531,7 +532,7 @@ public class CalendarService {
         List<CalendarContentAttachmentsResponseDto> attachmentsList =
                 calendarContentAttachmentsJpaRepository.findByCalendarContentAndIsDeleted(calendarContent, false).stream().map(
                         attachments -> {
-                            return CalendarContentAttachmentsResponseDto.builder().calendarContentId(attachments.getCalendarContent().getContentId())
+                            return CalendarContentAttachmentsResponseDto.builder().contentId(attachments.getCalendarContent().getContentId())
                                     .attachmentsId(attachments.getAttachmentsId())
                                     .filePath(attachments.getFilePath())
                                     .fileSize(attachments.getFileSize())
