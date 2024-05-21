@@ -10,12 +10,17 @@
                tcc.start_date_time, tcc.end_date_time, tcc.content, tcc.notify,
                 <!--tcc.notify_time,-->
                tcc.memo, tcc.location,
-               tcc.create_date_time, tcc.modify_date_time, tcc.delete_date_time, tcc.is_deleted
+               tcc.create_date_time, tcc.modify_date_time, tcc.delete_date_time, tcc.is_deleted,
+               tcl.label_id, tcl.label_name, tcl.color_code
         FROM calendar_content tcc
         INNER JOIN
             calendar tc
         ON
             tcc.calendar_id = tc.calendar_id
+        INNER JOIN
+            calendar_label tcl
+        ON
+            tcc.label_id = tcl.label_id
         WHERE
             tcc.calendar_id = #{calendarId}
         AND
@@ -52,7 +57,7 @@
             (SELECT nick_name from users tu where tu.user_id = tcc.delete_id) AS delete_nick_name,
             tcc.start_date_time, tcc.end_date_time, tcc.content, tcc.notify,
             <!--tcc.notify_time,--> tcc.memo, tcc.location,
-            tcc.create_date_time, tcc.modify_date_time, tcc.delete_date_time,
+            tcc.create_date_time, tcc.modify_date_time, tcc.delete_date_time
         FROM
             calendar_content tcc
         INNER JOIN
