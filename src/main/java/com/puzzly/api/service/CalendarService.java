@@ -265,6 +265,11 @@ public class CalendarService {
         if(calendarUserRelation == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
+        CalendarLabel calendarLabel = calendarLabelJpaRepository.findById(contentRequestDto.getLabelId()).orElse(null);
+        if(contentRequestDto.getLabelId() != null && contentRequestDto.getLabelId() != 0 && calendarLabel == null){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+        }
+
         // 켈린더 컨텐트 등록
         CalendarContent calendarContent = CalendarContent.builder()
                 .calendar(calendar)
@@ -279,6 +284,7 @@ public class CalendarService {
                 .notify(contentRequestDto.getNotify() == null ? false : contentRequestDto.getNotify())
                 //.notifyTime(contentRequestDto.getNotify() ? contentRequestDto.getNotifyTime() == null ? null : contentRequestDto.getNotifyTime(): null)
                 .memo(contentRequestDto.getMemo())
+                .label(calendarLabel)
                 //.calendarLabel()
                 .build();
         calendarContentJpaRepository.save(calendarContent);
@@ -443,6 +449,10 @@ public class CalendarService {
         if(calendarUserRel == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
+        CalendarLabel calendarLabel = calendarLabelJpaRepository.findById(calendarContentRequestDto.getLabelId()).orElse(null);
+        if(calendarContentRequestDto.getLabelId() != null && calendarContentRequestDto.getLabelId() != 0 && calendarLabel == null){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+        }
 
         calendarContent.setModifyUser(user);
         calendarContent.setModifyDateTime(LocalDateTime.now());
@@ -460,6 +470,7 @@ public class CalendarService {
         } else if (calendarContentRequestDto.getRecurringInfo() != null){
             calendarContent.setIsRecurrable(true);
         }
+        if(calendarLabel != null || calendarContentRequestDto.getLabelId() == 0) calendarContent.setLabel(calendarLabel);
         calendarContentJpaRepository.save(calendarContent);
 
         ArrayList<Long> deletedFiles = new ArrayList<>();
@@ -553,6 +564,9 @@ public class CalendarService {
                 .title(calendarContent.getTitle())
                 .contentId(calendarContent.getContentId())
                 .notify(calendarContent.getNotify())
+                .labelId(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelId() : null)
+                .labelName(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelName() : null)
+                .colorCode(calendarContent.getLabel() != null ? calendarContent.getLabel().getColorCode() : null)
                 //.notifyTime(calendarContent.getNotifyTime())
                 .memo(calendarContent.getMemo())
                 .attachmentsList(attachmentsList)
@@ -894,6 +908,9 @@ public class CalendarService {
                 .title(calendarContent.getTitle())
                 .contentId(calendarContent.getContentId())
                 .notify(calendarContent.getNotify())
+                .labelId(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelId() : null)
+                .labelName(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelName() : null)
+                .colorCode(calendarContent.getLabel() != null ? calendarContent.getLabel().getColorCode() : null)
                 //.notifyTime(calendarContent.getNotifyTime())
                 .memo(calendarContent.getMemo())
                 //.calendarLabel(null)
