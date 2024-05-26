@@ -4,12 +4,14 @@ import com.puzzly.api.entity.CalendarContent;
 import com.puzzly.api.entity.CalendarContentUserRelation;
 import com.puzzly.api.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CalendarContentUserRelationJpaRepository extends JpaRepository<CalendarContentUserRelation,Long> {
 
+    @Modifying
     @Query(nativeQuery = true,
     value = "UPDATE calendar_content_user_relation ccur "+
             "SET is_deleted =:isDeleted " +

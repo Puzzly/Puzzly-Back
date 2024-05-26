@@ -5,6 +5,7 @@ import com.puzzly.api.dto.response.CalendarContentRecurringInfoResponseDto;
 import com.puzzly.api.dto.response.CalendarContentResponseDto;
 import com.puzzly.api.entity.QCalendar;
 import com.puzzly.api.entity.QCalendarContent;
+import com.puzzly.api.entity.QCalendarContentAttachments;
 import com.puzzly.api.entity.QUser;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -25,32 +26,46 @@ public class CalendarContentJpaRepositoryImpl {
 
     // TODO join 없이 무슨쿼리 나갈까? -> scala subquery는 자체적으로 innerjoin으로 파싱되서 나간다.
     public List<CalendarContentResponseDto> selectCalendarContentByDateTimeAndCalendar(Long userId, Long calendarId, LocalDateTime startDateTime, LocalDateTime limitStartDateTime, boolean isDeleted){
-        QUser qCreateUser = new QUser("createUser");
-        QUser qModifyUser = new QUser("modifyUser");
+        QUser createUser = new QUser("createUser");
+        QUser modifyUser = new QUser("modifyUser");
         QCalendar calendar = QCalendar.calendar;
         QCalendarContent content = new QCalendarContent("content");
         return jpaQueryFactory
                 .select(Projections.fields(CalendarContentResponseDto.class,
-                        content.contentId, content.calendar.calendarId, calendar.calendarName, content.createUser.userId.as("create_id"), content.createUser.nickName.as("createNickName"),
-                        content.modifyUser.userId.as("modifyId"), content.modifyUser.nickName.as("modifyNickName"),
+                        content.contentId, content.calendar.calendarId, calendar.calendarName,
+                        createUser.userId.as("create_id"), createUser.nickName.as("createNickName"),
+                        modifyUser.userId.as("modifyId"), modifyUser.nickName.as("modifyNickName"),
                         content.startDateTime, content.endDateTime,
                         content.memo, content.notify, content.location, content.createDateTime, content.modifyDateTime))
                 .from(content)
                 .leftJoin(calendar).on(content.calendar.calendarId.eq(calendar.calendarId))
-                .leftJoin(qCreateUser).on(content.createUser.userId.eq(qCreateUser.userId))
-                .leftJoin(qModifyUser).on(content.modifyUser.userId.eq(qModifyUser.userId))
-                .where(eqCalendar(calendarId))
+                .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
+                .leftJoin(modifyUser).on(content.modifyUser.userId.eq(modifyUser.userId))
+                .where(content.isDeleted.eq(isDeleted), eqCalendar(calendarId))
                 .fetch();
     }
-    public List<CalendarContentAttachmentsResponseDto> selectCalendarContentAttachmentsByContentId(Long contentId, Boolean isDeleted){
-        return null;
-    }
 
-    public CalendarContentRecurringInfoResponseDto selectCalendarContentRecurringInfo(Long contentId, Boolean isDeleted){
-        return null;
-    }
     public CalendarContentResponseDto selectCalendarContentByContentId(Long contentId, Boolean isDeleted){
-        return null;
+        QCalendarContent content = QCalendarContent.calendarContent;
+        QUser createUser = new QUser("createUser");
+        QUser modifyUser = new QUser("modifyUser");
+
+        return jpaQueryFactory
+                .select(Projections.fields(CalendarContentResponseDto.class,
+                        content.calendar.calendarId, content.calendar.calendarName,
+                        content.contentId,
+                        content.title,
+                        createUser.userId.as("createUser"),
+                        createUser.nickName.as("createNickName"),
+                        modifyUser.userId.as("modifyUser"),
+                        modifyUser.nickName.as("modifyNickName"),
+                        content.startDateTime, content.endDateTime, content.memo,
+                        content.notify, content.location, content.createDateTime, content.modifyDateTime))
+                .from(content)
+                .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
+                .leftJoin(modifyUser).on(content.modifyUser.userId.eq(modifyUser.userId))
+                .where(content.contentId.eq(contentId), content.isDeleted.eq(isDeleted))
+                .fetchOne();
     }
 
     private BooleanExpression eqCalendar(Long calendarId){

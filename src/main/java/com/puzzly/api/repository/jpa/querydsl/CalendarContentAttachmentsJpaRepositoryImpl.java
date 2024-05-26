@@ -19,8 +19,9 @@ public class CalendarContentAttachmentsJpaRepositoryImpl {
         return jpaQueryFactory
                 .select(Projections.fields(CalendarContentAttachmentsResponseDto.class,
                     qcca.attachmentsId, qcca.calendarContent.contentId, qcca.extension, qcca.originName,
-                    qcca.filePath, qcca.fileSize, qcca.createUser.userId.as("createId"),
-                    qcca.createUser.nickName.as("createNickName"),
+                    qcca.filePath, qcca.fileSize,
+                    user.userId.as("createId"),
+                    user.nickName.as("createNickName"),
                     qcca.createDateTime))
                 .from(qcca)
                 .leftJoin(user).on(qcca.createUser.userId.eq(user.userId))

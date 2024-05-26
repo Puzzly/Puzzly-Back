@@ -12,8 +12,6 @@ import com.puzzly.api.entity.Calendar;
 import com.puzzly.api.entity.*;
 import com.puzzly.api.exception.FailException;
 import com.puzzly.api.repository.jpa.*;
-import com.puzzly.api.repository.mybatis.CalendarContentMybatisRepository;
-import com.puzzly.api.repository.mybatis.CalendarMybatisRepository;
 import com.puzzly.api.util.CustomUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -39,12 +37,10 @@ import java.util.stream.Collectors;
 public class CalendarService {
     private static final Logger logger = LoggerFactory.getLogger(CalendarService.class);
     private final CalendarJpaRepository calendarJpaRepository;
-    private final CalendarMybatisRepository calendarMybatisRepository;
 
     private final CalendarUserRelationJpaRepository calendarUserRelationJpaRepository;
 
     private final CalendarContentJpaRepository calendarContentJpaRepository;
-    private final CalendarContentMybatisRepository calendarContentMybatisRepository;
 
     private final CalendarContentAttachmentsJpaRepository calendarContentAttachmentsJpaRepository;
 
@@ -161,7 +157,7 @@ public class CalendarService {
                 .calendarType(calendar.getCalendarType())
                 .userList(userList)
                 .build();
-        resultMap.put("calnendar", calendarRequestDto);
+        resultMap.put("calnendar", calendarResponseDto);
         return resultMap;
     }
 
@@ -232,6 +228,7 @@ public class CalendarService {
             throw new FailException("SERVER_MESSAGE_USER_NOT_OWN_CALENDAR", 400);
         }
         try{
+            // TODO 이렇게 삭제하지 말고, 캘린더에만 soft delete걸고 스케쥴에서 전체 처리하는 방향 고민. 대신 이경우, SELECT에서 반드시 조회가 안됨이 보장되어야함
             // 첨부파일 삭제
             calendarContentAttachmentsJpaRepository.bulkUpdateIsDeletedCalendarContentAttachments(calendar.getCalendarId());
             // 캘린더 컨텐츠 삭제

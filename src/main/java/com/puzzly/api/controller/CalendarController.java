@@ -309,37 +309,6 @@ public class CalendarController {
         calendarService.downloadCalendarContentAttachments(securityUser, attachmentsId, request, response);
     }
 
-    //FE 에서 자체적으로 파일을 삭제할 수단을 제공하지 않음. 일정 수정을 통해서 수행
-    /*
-    @DeleteMapping(value = "/content/file")
-    @ApiResponse(responseCode = "200", description = "성공 시 result의 key:attachmentsId 로 삭제에 성공한 첨부파일 Id 제공")
-    @Operation(summary="캘린더 첨부파일 삭제", description = "캘린더 첨부파일 삭제, JWT토큰 필요, 해당 캘린더에 참여해있어야 함")
-    public ResponseEntity<?> removeCalendarContentAttachments(
-            HttpServletRequest request,
-            @Parameter(description="삭제할 첨부파일 Id")
-            @RequestParam(name="attachmentsId") Long attachmentsId
-    ) throws FailException, IOException {
-        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        RestResponse restResponse = new RestResponse();
-
-        HashMap<String, Object> resultMap = calendarService.removeCalendarContentAttachments(securityUser, attachmentsId);
-        restResponse.setResult(resultMap);
-        return new ResponseEntity<>(restResponse, HttpStatus.OK);
-    }
-
-     */
-
-    /*
-    @PostMapping("/label")
-    @Operation(summary = "캘린더 라벨 등록, JWT 토큰 필요", description = "캘린더 라벨 등록, JWT토큰 필요")
-    public ResponseEntity<?> createCalendarLabel(
-            HttpServletRequest request
-    ) throws FailException{
-        return null;
-    }
-
-     */
-
     @PostMapping("label")
     @ApiResponse(responseCode = "200", description = "성공시 result의 key:content 의 value로 캘린더 라벨 제공", content = @Content(schema = @Schema(implementation = CalendarLabelResponseDto.class)))
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")

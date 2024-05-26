@@ -10,9 +10,7 @@ import java.util.List;
 
 public interface CalendarContentJpaRepositoryCustom {
     public List<CalendarContentResponseDto> selectCalendarContentByDateTimeAndCalendar(Long userId, Long calendarId, LocalDateTime startDateTime, LocalDateTime limitStartDateTime, boolean isDeleted);
-    public List<CalendarContentAttachmentsResponseDto> selectCalendarContentAttachmentsByContentId(Long contentId, Boolean isDeleted);
 
-    public CalendarContentRecurringInfoResponseDto selectCalendarContentRecurringInfo(Long contentId, Boolean isDeleted);
     public CalendarContentResponseDto selectCalendarContentByContentId(Long contentId, Boolean isDeleted);
 
 }

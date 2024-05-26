@@ -44,7 +44,7 @@ public class CalendarJpaRepositoryImpl {
                         JPAExpressions.select(
                                 cur.calendar.calendarId
                         ).from(cur).where(cur.user.userId.eq(userId))
-                ))
+                ), calendar.isDeleted.eq(isDeleted))
                 .offset(offset)
                 .limit(pageSize)
                 .fetch();

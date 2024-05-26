@@ -23,8 +23,8 @@ public class CalendarContentResponseDto {
     private String calendarName;
 
     //TODO Label RequqestDTO,RESPONSE DTO
-    @Schema(description = "일정이 가질 Label ID, 생략할 수 있음, 단일 컨텐츠는 단일 라벨 아이디만 가질 수 있음", defaultValue = "0")
-    private Long labelId;
+    @Schema(description = "일정이 가지는 라벨정보", defaultValue = "0")
+    private CalendarLabelResponseDto label ;
 
     @Schema(description = "일정 제목")
     private String title;
