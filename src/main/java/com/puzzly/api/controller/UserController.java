@@ -32,25 +32,33 @@ import java.util.HashMap;
 public class UserController {
     private final UserService userService;
 
+    @GetMapping("/email")
+    @Operation(summary = "email 중복확인 / JWT토큰 필요X", description = "이메일 중복확인 / 토큰필요X")
+    @ApiResponse(responseCode = "200", description = " result의 key exists false (중복없음) ")
+    @ApiResponse(responseCode = "400", description = " 중복 있음 ")
+    public ResponseEntity<?> existsEmail(
+            HttpServletRequest request,
+            @Parameter(description = "email")
+            @RequestParam(name="email", required = true) String email
+    ) throws FailException {
+        RestResponse response = new RestResponse();
+        HashMap<String, Object> resultMap = userService.selectExistsEmail(email);
+
+        response.setResult(resultMap);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @PostMapping("/join")
-    @Operation(summary = "회원가입, 로그인 및 JWT 토큰 필요 X", description = "회원가입, 토큰필요 X")
+    @Operation(summary = "회원가입 / JWT 토큰 필요 X", description = "회원가입, 토큰필요 X")
     @ApiResponse(responseCode = "200", description = "성공시 result의 key:user 의 value로 사용자 정보 제공")
     @ApiResponse(responseCode = "4**", description = "SERVER_MESSAGE_* 메시지는 의도된 예외처리")
     public ResponseEntity<?> createUser(
             HttpServletRequest request,
-
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description="이 API에서 아래의 값은 생략이 가능하며, 서버에서 default value를 생성함\n\n" +
-                            "userId (생략가능, JWT토큰에서 값을 직접 뽑아내며, 값이 주어져도 무시됨)\n\n"+
-                            "accountAuthority (생략가능, defaultValue = ROLE_USER, 가능한 다른 값 : ROLE_ADMIN \n\n" +
-                            "status (생략가능, defaultValue = CREATE) \n\n" +
-                            "isDeleted (생략가능, defaultValue = false) \n\n" +
-                            "createDateTime / ModifyDateTime (생략가능, 서버에서 자체적으로 생성함)"+
-                            "statusMeesage (생략가능, 이 API에서는 오히려 이 값이 주어지면 무시됨) \n\n" +
-                            "createAttachmentsId (생략가능, 이 API에서는 오히려 이 값이 주어지면 무시됨) \n\n" +
-                            "deleteAttachmentsId (생략가능, 이 API에서는 오히려 이 값이 주어지면 무시됨) \n\n" +
-                            "* 상기 명시되지 않은 파라미터가 생략되면 400에러 발생 \n\n" +
-                            "사용자 프로필 사진 업로드는 '사용자 수정' 을 통해서 수행"
+                            "userId (사용자 PK, ROLE_USER API에서는 생략)\n\n"+
+                            "accountAuthority (생략가능, 생략할 경우 자동으로 ROLE_USER, 가능한 다른 값 : ROLE_ADMIN \n\n" +
+                            "* 상기 명시되지 않은 파라미터가 생략되면 400에러 발생 \n\n"
             )
             @RequestBody UserRequestDto userRequestDto
             ) throws FailException {
@@ -114,22 +122,6 @@ public class UserController {
         HashMap<String, Object> resultMap = userService.uploadUserAttachments(securityUser, attachments);
         restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
-    }
-
-    @Deprecated(forRemoval = true)
-    @GetMapping("/jpa")
-    @Operation(summary = "@Deprecated 내 정보 조회", description = "@Deprecated. 내 정보 조회 ")
-    @ApiResponse(responseCode = "200", description = "SUCCESS")
-    @ApiResponse(responseCode = "4**", description = "SERVER_MESSAGE_* 메시지는 의도된 예외처리")
-    public ResponseEntity<?> getUser(
-            HttpServletRequest request
-    ){
-        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        UserResponseDto user = userService.selectUser(securityUser.getUser().getUserId());
-
-        RestResponse response = new RestResponse();
-        response.setResult(user);
-        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

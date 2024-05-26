@@ -80,6 +80,7 @@ public class SecurityConfig {
                                 .requestMatchers("/resources/**").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/api/user/join").permitAll()
                                 .requestMatchers("/api/user/login", "/api/user/jwttest").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/user/email").permitAll()
                                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                                 .requestMatchers("/git/**").permitAll()
                                 .requestMatchers("/api/auth/refresh").permitAll()

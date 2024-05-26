@@ -32,10 +32,11 @@ public class CalendarContentRequestDto {
     private String location;
     @Schema(description = "일정 종류", defaultValue = "APPROPRIATION")
     private String type;
-    @Schema(description = "일정 본문", defaultValue = "puzzly BE, FE, 기획, 디자인 팀 전체회의")
-    private String content;
     @Schema(description = "알림 여부, 생략하면 자동으로 서버에서  false로 등록", defaultValue = "false")
     private Boolean notify;
+
+    @Schema(description="반복 중단 여부, 반복 설정을 멈추려고 할 때 true로 전달")
+    private Boolean isStopRecurrable;
     /*
     @Schema(pattern = "2024-04-21 12:00:00", type="string", description = "알림 발송 시간, notify가 true일 경우에만 주어진 값이 수용됨.")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -50,4 +51,13 @@ public class CalendarContentRequestDto {
     private ArrayList<Long> createAttachmentsList;
     @Schema(description = "삭제할 파일 PK List", defaultValue = "")
     private ArrayList<Long> deleteAttachmentsList;
+
+    @Schema(description = "캘린더 반복 정보")
+    private CalendarContentRecurringInfoRequestDto recurringInfo;
+
+    @Schema(description = "캘린더 참여자 추가 PK")
+    private ArrayList<Long> createUserIdList;
+
+    @Schema(description = "캘린더 참여자 제외 pk")
+    private ArrayList<Long> deleteUserIdList;
 }

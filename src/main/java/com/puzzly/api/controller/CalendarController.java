@@ -180,7 +180,8 @@ public class CalendarController {
                     description="이 API에서 아래의 값은 생략이 가능함\n\n" +
                             "* ContentId (생략 가능, 값 생성/변경은 서버에서 수행함. 값이 주어지면 무시됨)\n\n"+
                             "상기 명시되지 않은 값을 생략할 경우 400에러 발생\n\n" +
-                            "이 API에서 주의사항은 아래와 같음\n\n",
+                            "이 API에서 주의사항은 아래와 같음\n\n" +
+                            "",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
             )
             @RequestBody CalendarContentRequestDto contentRequestDto
@@ -246,7 +247,8 @@ public class CalendarController {
                     description="이 API에서 아래의 값은 생략이 가능함\n\n" +
                             "* 변경이 발생하지 않은 Parameter값은 서버로 보내지 않고 생략 가능"+
                             "상기 명시되지 않은 값을 생략할 경우 400에러 발생\n\n" +
-                            "이 API에서 주의사항은 아래와 같음\n\n",
+                            "이 API에서 주의사항은 아래와 같음\n\n"+
+                            "* 반복 정보가 변경 될 경우, 이 API에서는 변경된 내용만 보내는 것이 아니라 전체 내용을 다시 보내야함 (삭제후 생성하는 방식 사용)",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
             )
             @RequestBody CalendarContentRequestDto contentRequestDto
@@ -306,37 +308,6 @@ public class CalendarController {
 
         calendarService.downloadCalendarContentAttachments(securityUser, attachmentsId, request, response);
     }
-
-    //FE 에서 자체적으로 파일을 삭제할 수단을 제공하지 않음. 일정 수정을 통해서 수행
-    /*
-    @DeleteMapping(value = "/content/file")
-    @ApiResponse(responseCode = "200", description = "성공 시 result의 key:attachmentsId 로 삭제에 성공한 첨부파일 Id 제공")
-    @Operation(summary="캘린더 첨부파일 삭제", description = "캘린더 첨부파일 삭제, JWT토큰 필요, 해당 캘린더에 참여해있어야 함")
-    public ResponseEntity<?> removeCalendarContentAttachments(
-            HttpServletRequest request,
-            @Parameter(description="삭제할 첨부파일 Id")
-            @RequestParam(name="attachmentsId") Long attachmentsId
-    ) throws FailException, IOException {
-        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        RestResponse restResponse = new RestResponse();
-
-        HashMap<String, Object> resultMap = calendarService.removeCalendarContentAttachments(securityUser, attachmentsId);
-        restResponse.setResult(resultMap);
-        return new ResponseEntity<>(restResponse, HttpStatus.OK);
-    }
-
-     */
-
-    /*
-    @PostMapping("/label")
-    @Operation(summary = "캘린더 라벨 등록, JWT 토큰 필요", description = "캘린더 라벨 등록, JWT토큰 필요")
-    public ResponseEntity<?> createCalendarLabel(
-            HttpServletRequest request
-    ) throws FailException{
-        return null;
-    }
-
-     */
 
     @PostMapping("label")
     @ApiResponse(responseCode = "200", description = "성공시 result의 key:content 의 value로 캘린더 라벨 제공", content = @Content(schema = @Schema(implementation = CalendarLabelResponseDto.class)))

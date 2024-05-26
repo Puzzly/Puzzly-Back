@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Comment;
 
+import java.time.LocalDateTime;
+
 @Entity
 @NoArgsConstructor
 @Getter
@@ -29,4 +31,9 @@ public class CalendarUserRelation {
     @Column private int authority;
     @Comment("권한 삭제여부")
     @Column private Boolean isDeleted;
+
+    @Comment("캘린더 합류 시각")
+    @Column private LocalDateTime createDateTime;
+    @Comment("일정 탈퇴시각")
+    @Column private LocalDateTime deleteDateTime;
 }

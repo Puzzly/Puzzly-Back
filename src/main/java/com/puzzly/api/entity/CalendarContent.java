@@ -15,7 +15,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @ToString
-@Comment("일더")
+@Comment("일정")
 @Table(name="calendar_content")
 public class CalendarContent {
 
@@ -37,15 +37,15 @@ public class CalendarContent {
     @Column private String location;
     @Comment("일정 종류")
     @Column private String type;
-    @Comment("일정 내용")
-    @Lob private String content;
     @Comment("알림 여부")
     @Column private Boolean notify;
     // 알림은 여러개일 수 있으므로 별도 테이블로 관리 해야함.
     //@Column private LocalDateTime notifyTime; <- onetomany
     @Comment("메모")
-    @Column private String memo;
+    @Lob private String memo;
     /** Schedule로 삭제 될 대상인지를 체크하는 필드, softDelete*/
+    @Comment("반복 여부")
+    @Column private Boolean isRecurrable;
     @Comment("삭제여부")
     @Column private Boolean isDeleted;
     @Comment("소속 라벨")

@@ -34,10 +34,10 @@ public class Calendar {
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "createId", referencedColumnName = "userId")
     private User createUser;
     @Comment("캘린더 수정자")
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "modifyId", referencedColumnName = "userId")
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "modifyId", referencedColumnName = "userId", nullable = true)
     private User modifyUser;
     @Comment("캘린더 삭제자")
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "deleteId", referencedColumnName = "userId")
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "deleteId", referencedColumnName = "userId", nullable = true)
     private User deleteUser;
     @Comment("캘린더 생성시각")
     @Column private LocalDateTime createDateTime;

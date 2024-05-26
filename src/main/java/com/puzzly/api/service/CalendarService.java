@@ -12,8 +12,6 @@ import com.puzzly.api.entity.Calendar;
 import com.puzzly.api.entity.*;
 import com.puzzly.api.exception.FailException;
 import com.puzzly.api.repository.jpa.*;
-import com.puzzly.api.repository.mybatis.CalendarContentMybatisRepository;
-import com.puzzly.api.repository.mybatis.CalendarMybatisRepository;
 import com.puzzly.api.util.CustomUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -39,12 +37,10 @@ import java.util.stream.Collectors;
 public class CalendarService {
     private static final Logger logger = LoggerFactory.getLogger(CalendarService.class);
     private final CalendarJpaRepository calendarJpaRepository;
-    private final CalendarMybatisRepository calendarMybatisRepository;
 
     private final CalendarUserRelationJpaRepository calendarUserRelationJpaRepository;
 
     private final CalendarContentJpaRepository calendarContentJpaRepository;
-    private final CalendarContentMybatisRepository calendarContentMybatisRepository;
 
     private final CalendarContentAttachmentsJpaRepository calendarContentAttachmentsJpaRepository;
 
@@ -54,6 +50,8 @@ public class CalendarService {
     private final ObjectMapper objectMapper;
     private final UserService userService;
 
+    private final CalendarContentUserRelationJpaRepository calendarContentUserRelationJpaRepository;
+    private final CalendarContentRecurringInfoJpaRepository calendarContentRecurringInfoJpaRepository;
     private final String context = "calendar";
 
     /** 초대코드 생성*/
@@ -159,7 +157,7 @@ public class CalendarService {
                 .calendarType(calendar.getCalendarType())
                 .userList(userList)
                 .build();
-        resultMap.put("calnendar", calendarRequestDto);
+        resultMap.put("calnendar", calendarResponseDto);
         return resultMap;
     }
 
@@ -167,9 +165,10 @@ public class CalendarService {
     public HashMap<String, Object> getCalendarList(SecurityUser securityUser, int offset, int pageSize, boolean isDeleted){
         HashMap<String, Object> resultMap = new HashMap<>();
         User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
-        List<CalendarResponseDto> calendarList = calendarMybatisRepository.selectCalendarList(user.getUserId(), offset, pageSize, isDeleted);
+        //List<CalendarResponseDto> calendarList = calendarMybatisRepository.selectCalendarList(user.getUserId(), offset, pageSize, isDeleted);
+        List<CalendarResponseDto> calendarList = calendarJpaRepository.selectCalendarList(securityUser.getUser().getUserId(), offset*pageSize, pageSize, isDeleted);
         calendarList.stream().forEach((calendarResponseDto -> {
-            calendarResponseDto.setUserList(userService.selectUserByCalendar(calendarResponseDto.getCalendarId()));
+            calendarResponseDto.setUserList(userService.selectUserByCalendar(calendarResponseDto.getCalendarId(), false));
             // mybatis로 select할경우 entity 관계로 찾는게 아니라 테이블에서 바로찾아야 함.
         }));
 
@@ -229,6 +228,7 @@ public class CalendarService {
             throw new FailException("SERVER_MESSAGE_USER_NOT_OWN_CALENDAR", 400);
         }
         try{
+            // TODO 이렇게 삭제하지 말고, 캘린더에만 soft delete걸고 스케쥴에서 전체 처리하는 방향 고민. 대신 이경우, SELECT에서 반드시 조회가 안됨이 보장되어야함
             // 첨부파일 삭제
             calendarContentAttachmentsJpaRepository.bulkUpdateIsDeletedCalendarContentAttachments(calendar.getCalendarId());
             // 캘린더 컨텐츠 삭제
@@ -280,7 +280,7 @@ public class CalendarService {
                 .createDateTime(LocalDateTime.now())
                 .location(contentRequestDto.getLocation())
                 .isDeleted(false)
-                .content(contentRequestDto.getContent())
+                .isRecurrable(contentRequestDto.getRecurringInfo() != null ? true : false)
                 .notify(contentRequestDto.getNotify() == null ? false : contentRequestDto.getNotify())
                 //.notifyTime(contentRequestDto.getNotify() ? contentRequestDto.getNotifyTime() == null ? null : contentRequestDto.getNotifyTime(): null)
                 .memo(contentRequestDto.getMemo())
@@ -288,7 +288,6 @@ public class CalendarService {
                 //.calendarLabel()
                 .build();
         calendarContentJpaRepository.save(calendarContent);
-
         // 캘린더 컨텐트 응답 생성
         CalendarContentResponseDto contentResponseDto = buildCalendarContentResponseDto(calendarContent, user);
 
@@ -301,8 +300,7 @@ public class CalendarService {
                 if(calendarContentAttachments != null) {
                     calendarContentAttachments.setCalendarContent(calendarContent);
                     calendarContentAttachmentsJpaRepository.save(calendarContentAttachments);
-
-                    attachmentsList.add(CalendarContentAttachmentsResponseDto.builder().calendarContentId(calendarContentAttachments.getCalendarContent().getContentId())
+                    attachmentsList.add(CalendarContentAttachmentsResponseDto.builder().contentId(calendarContentAttachments.getCalendarContent().getContentId())
                             .attachmentsId(calendarContentAttachments.getAttachmentsId())
                             .filePath(calendarContentAttachments.getFilePath())
                             .fileSize(calendarContentAttachments.getFileSize())
@@ -318,6 +316,59 @@ public class CalendarService {
             contentResponseDto.setAttachmentsList(attachmentsList);
 
         }
+        // 반복 정보 입력
+        if(calendarContent.getIsRecurrable()){
+
+            CalendarContentRecurringInfo recurringInfo = CalendarContentRecurringInfo.builder()
+                    .calendarContent(calendarContent)
+                    .recurringType(contentRequestDto.getRecurringInfo().getRecurringType())
+                    .period(contentRequestDto.getRecurringInfo().getPeriod())
+                    .recurringDate(contentRequestDto.getRecurringInfo().getRecurringDate())
+                    .recurringDay(contentRequestDto.getRecurringInfo().getRecurringDay())
+                    .conditionCount(contentRequestDto.getRecurringInfo().getConditionCount())
+                    .currentCount((contentRequestDto.getRecurringInfo().getConditionCount()) != null ? 0L : null)
+                    .conditionEndDate((contentRequestDto.getRecurringInfo().getConditionEndDate()))
+                    .isDeleted(false)
+                    .build();
+            calendarContentRecurringInfoJpaRepository.save(recurringInfo);
+            contentResponseDto.setRecurringInfo(CalendarContentRecurringInfoResponseDto.builder()
+                    .calendarContentId(calendarContent.getContentId())
+                    .conditionCount(recurringInfo.getConditionCount())
+                    .period(recurringInfo.getPeriod())
+                    .recurringType(recurringInfo.getRecurringType())
+                    .recurringDate(recurringInfo.getRecurringDate())
+                    .recurringDay(recurringInfo.getRecurringDay())
+                    .conditionEndDate(recurringInfo.getConditionEndDate()).build());
+        }
+
+        if(contentRequestDto.getCreateUserIdList() != null || ObjectUtils.isNotEmpty(contentRequestDto.getCreateUserIdList()) || !contentRequestDto.getCreateUserIdList().contains(user.getUserId())) {
+            contentRequestDto.setCreateUserIdList(new ArrayList<Long>(){{
+                    add(user.getUserId());
+            }});
+        }
+        // 캘린더 참여자 입력
+        if(contentRequestDto.getCreateUserIdList() != null || ObjectUtils.isNotEmpty(contentRequestDto.getCreateUserIdList())){
+            List<UserResponseDto> userList = new ArrayList<>();
+                contentRequestDto.getCreateUserIdList().stream().forEach((userId) -> {
+                if(userService.findByUserId(userId) == null){
+                    throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
+                }
+                User selectedUser = userService.findByUserId(userId);
+                CalendarContentUserRelation contentUserRelation = CalendarContentUserRelation.builder()
+                                .calendarContent(calendarContent).user(selectedUser)
+                                .isDeleted(false)
+                                .build();
+                calendarContentUserRelationJpaRepository.save(contentUserRelation);
+                UserAttachments userAttachments = userService.selectUserAttachmentsByUser(selectedUser, false).orElse(null);
+                userList.add(UserResponseDto.builder().userId(selectedUser.getUserId()).nickName(selectedUser.getNickName()).userName(selectedUser.getUserName()).userAttachments(
+                        UserAttachmentsResponseDto.builder().attachmentsId(userAttachments != null ? userAttachments.getAttachmentsId() : null).build()
+                ).build());
+            });
+            contentResponseDto.setUserList(userList);
+        }
+
+
+
         resultMap.put("content", contentResponseDto);
         return resultMap;
     }
@@ -339,10 +390,13 @@ public class CalendarService {
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
 
-        List<CalendarContentResponseDto> calendarContentList = calendarContentMybatisRepository.selectCalendarContentByDateTimeAndCalendar(calendarId, startTargetDateTime, limitTargetDateTime, isDeleted);
+        List<CalendarContentResponseDto> calendarContentList = calendarContentJpaRepository.selectCalendarContentByDateTimeAndCalendar(user.getUserId(), calendarId, startTargetDateTime, limitTargetDateTime, isDeleted);
         calendarContentList.forEach((calendarContent) -> {
-            // TODO createTime Map에서 localDateTime이 timestamp로 매핑되는 현상 고쳐야함
-            calendarContent.setAttachmentsList(calendarContentMybatisRepository.selectCalendarContentAttachmentsByContentId(calendarContent.getContentId(), false));
+            calendarContent.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(calendarContent.getContentId(), false));
+            // 참가자 정보
+            calendarContent.setUserList(userService.selectUserByCalendarContentRelation(calendarContent.getContentId(), false));
+            // 반복정보
+            calendarContent.setRecurringInfo(calendarContentRecurringInfoJpaRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
         });
 
         resultMap.put("contentList", calendarContentList);
@@ -367,9 +421,12 @@ public class CalendarService {
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
 
-        CalendarContentResponseDto calendarContentResponseDto = calendarContentMybatisRepository.selectCalendarContentByContentId(contentId, false);
-        calendarContentResponseDto.setAttachmentsList(calendarContentMybatisRepository.selectCalendarContentAttachmentsByContentId(contentId, false));
-
+        CalendarContentResponseDto calendarContentResponseDto = calendarContentJpaRepository.selectCalendarContentByContentId(contentId, false);
+        calendarContentResponseDto.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(contentId, false));
+        // 참가자 정보
+        calendarContentResponseDto.setUserList(userService.selectUserByCalendarContentRelation(calendarContent.getContentId(), false));
+        // 반복정보
+        calendarContentResponseDto.setRecurringInfo(calendarContentRecurringInfoJpaRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
         resultMap.put("content", calendarContentResponseDto);
         return resultMap;
     }
@@ -402,19 +459,16 @@ public class CalendarService {
         if(calendarContentRequestDto.getStartDateTime() != null) calendarContent.setStartDateTime(calendarContentRequestDto.getStartDateTime());
         if(calendarContentRequestDto.getEndDateTime() != null) calendarContent.setEndDateTime(calendarContentRequestDto.getEndDateTime());
         if(calendarContentRequestDto.getTitle() != null) calendarContent.setTitle(calendarContentRequestDto.getTitle());
-        if(calendarContentRequestDto.getContent() != null) calendarContent.setContent(calendarContentRequestDto.getContent());
         if(calendarContentRequestDto.getMemo() != null) calendarContent.setMemo(calendarContentRequestDto.getMemo());
         if(calendarContentRequestDto.getLocation() != null)calendarContent.setLocation(calendarContentRequestDto.getLocation());
         if(calendarContentRequestDto.getNotify() != null) {
             calendarContent.setNotify(calendarContentRequestDto.getNotify());
-            /*
-            if(calendarContentRequestDto.getNotifyTime() != null){
-                calendarContent.setNotifyTime(calendarContentRequestDto.getNotifyTime());
-            } else {
-                throw new FailException("SERVER_MESSAGE_NOTIFY_TRUE_BUT_NOTIFY_TIME_NULL", 400);
-            }
-
-             */
+        }
+        if(calendarContentRequestDto.getIsStopRecurrable()) {
+            calendarContent.setIsRecurrable(false);
+            calendarContentRecurringInfoJpaRepository.deleteByCalendarContent(calendarContent);
+        } else if (calendarContentRequestDto.getRecurringInfo() != null){
+            calendarContent.setIsRecurrable(true);
         }
         if(calendarLabel != null || calendarContentRequestDto.getLabelId() == 0) calendarContent.setLabel(calendarLabel);
         calendarContentJpaRepository.save(calendarContent);
@@ -446,10 +500,47 @@ public class CalendarService {
                 }
             });
         }
+        // 참여자 정보 변경
+        if(calendarContentRequestDto.getCreateUserIdList() != null){
+            calendarContentRequestDto.getCreateUserIdList().forEach((userId) -> {
+                calendarContentUserRelationJpaRepository.save(CalendarContentUserRelation.builder()
+                        .calendarContent(calendarContent)
+                        .user(userService.findByUserId(userId))
+                        .isDeleted(false)
+                        .build());
+            });
+        }
+        if(calendarContentRequestDto.getDeleteUserIdList() != null){
+            calendarContentRequestDto.getDeleteUserIdList().forEach((userId) -> {
+               calendarContentUserRelationJpaRepository.updateIsDeletedCalendarContentUserRelation(calendarContent, userId, true);
+            });
+        }
+        // 반복 정보 변경
+        if(calendarContent.getIsRecurrable() && calendarContentRequestDto.getRecurringInfo() != null){
+            calendarContentRecurringInfoJpaRepository.deleteByCalendarContent(calendarContent);
+            if(calendarContent.getIsRecurrable()){
+                CalendarContentRecurringInfo recurringInfo = CalendarContentRecurringInfo.builder()
+                        .calendarContent(calendarContent)
+                        .recurringType(calendarContentRequestDto.getRecurringInfo().getRecurringType())
+                        .period(calendarContentRequestDto.getRecurringInfo().getPeriod())
+                        .recurringDate(calendarContentRequestDto.getRecurringInfo().getRecurringDate())
+                        .recurringDay(calendarContentRequestDto.getRecurringInfo().getRecurringDay())
+                        .conditionCount(calendarContentRequestDto.getRecurringInfo().getConditionCount())
+                        .currentCount((calendarContentRequestDto.getRecurringInfo().getConditionCount()) != null ? 0L : null)
+                        .conditionEndDate((calendarContentRequestDto.getRecurringInfo().getConditionEndDate()))
+                        .isDeleted(false)
+                        .build();
+
+                calendarContentRecurringInfoJpaRepository.save(recurringInfo);
+            }
+
+        }
+
+
         List<CalendarContentAttachmentsResponseDto> attachmentsList =
                 calendarContentAttachmentsJpaRepository.findByCalendarContentAndIsDeleted(calendarContent, false).stream().map(
                         attachments -> {
-                            return CalendarContentAttachmentsResponseDto.builder().calendarContentId(attachments.getCalendarContent().getContentId())
+                            return CalendarContentAttachmentsResponseDto.builder().contentId(attachments.getCalendarContent().getContentId())
                                     .attachmentsId(attachments.getAttachmentsId())
                                     .filePath(attachments.getFilePath())
                                     .fileSize(attachments.getFileSize())
@@ -471,7 +562,6 @@ public class CalendarService {
                 .createNickName(user.getNickName())
                 .location(calendarContent.getLocation())
                 .title(calendarContent.getTitle())
-                .content(calendarContent.getContent())
                 .contentId(calendarContent.getContentId())
                 .notify(calendarContent.getNotify())
                 .labelId(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelId() : null)
@@ -511,6 +601,11 @@ public class CalendarService {
         // 캘린더 컨텐츠 삭제
         calendarContent.setIsDeleted(true);
         calendarContentJpaRepository.save(calendarContent);
+
+        // 반복정보 삭제
+        calendarContentRecurringInfoJpaRepository.deleteByCalendarContent(calendarContent);
+        // 참여자정보 삭제
+        calendarContentUserRelationJpaRepository.deleteByCalendarContent(calendarContent);
 
         resultMap.put("contentId", contentId);
         return resultMap;
@@ -811,7 +906,6 @@ public class CalendarService {
                 .createNickName(user.getNickName())
                 .location(calendarContent.getLocation())
                 .title(calendarContent.getTitle())
-                .content(calendarContent.getContent())
                 .contentId(calendarContent.getContentId())
                 .notify(calendarContent.getNotify())
                 .labelId(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelId() : null)
