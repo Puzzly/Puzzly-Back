@@ -21,12 +21,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.net.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -49,10 +57,19 @@ public class CalendarService {
     private final CustomUtils customUtils;
     private final ObjectMapper objectMapper;
     private final UserService userService;
+    private final HttpClientService httpClientService;
 
     private final CalendarContentUserRelationJpaRepository calendarContentUserRelationJpaRepository;
     private final CalendarContentRecurringInfoJpaRepository calendarContentRecurringInfoJpaRepository;
     private final String context = "calendar";
+
+    @Value("${puzzly.datago.encoding}")
+    private String DATAGO_ENCODE_KEY;
+    @Value("${puzzly.datago.decoding}")
+    private String DATAGO_DECODE_KEY;
+
+    private final String DATAGO_URI_PATH = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService";
+    private final String DATAGO_PATH_HOLIDAY = "/getRestDeInfo";
 
     /** 초대코드 생성*/
     public HashMap<String, String> createInviteCode(SecurityUser securityUser, Long calendarId) throws FailException, Exception{
@@ -844,6 +861,22 @@ public class CalendarService {
 
         resultMap.put("labelId", labelId);
         return resultMap;
+    }
+
+    public boolean pullOpenCalendar(String year, String month) throws FailException, URISyntaxException {
+        /** Right Way to use http5Core (Migration GUIDE) */
+        //HttpGet httpGet = new HttpGet(new URIBuilder())
+        List<NameValuePair> params = new ArrayList<>();
+
+        //params.add(new BasicNameValuePair("serviceKey", URLDecoder.decode(DATAGO_ENCODE_KEY, "UTF-8")));
+        params.add(new BasicNameValuePair("serviceKey", DATAGO_DECODE_KEY));
+        params.add(new BasicNameValuePair("solYear", year));
+        params.add(new BasicNameValuePair("solMonth", month));
+        params.add(new BasicNameValuePair("_type", "json"));
+
+        Map<String, Object> response = httpClientService.httpGet(DATAGO_URI_PATH + DATAGO_PATH_HOLIDAY, params);
+        log.error(response.toString());
+        return true;
     }
 
     public HashMap<String, Object> removeCalendarContentAttachments(SecurityUser securityUser, Long attachmentsId){

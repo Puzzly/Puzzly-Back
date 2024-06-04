@@ -399,4 +399,15 @@ public class CalendarController {
         restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
+
+    @GetMapping
+    @Operation(summary = "test for open calendar")
+    public ResponseEntity<?> getOpenCal(
+            @RequestParam(name = "month") String month,
+            @RequestParam(name = "year") String year
+    ) throws Exception {
+        calendarService.pullOpenCalendar(year, month);
+
+        return new ResponseEntity<>(null,HttpStatus.OK);
+    }
 }
