@@ -35,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -61,6 +62,9 @@ public class CalendarService {
 
     private final CalendarContentUserRelationJpaRepository calendarContentUserRelationJpaRepository;
     private final CalendarContentRecurringInfoJpaRepository calendarContentRecurringInfoJpaRepository;
+
+    private final CommonCalendarContentJpaRepository commonCalendarContentJpaRepository;
+    private final CommonCalendarSyncJpaRepository commonCalendarSyncJpaRepository;
     private final String context = "calendar";
 
     @Value("${puzzly.datago.encoding}")
@@ -863,7 +867,26 @@ public class CalendarService {
         return resultMap;
     }
 
-    public boolean pullOpenCalendar(String year, String month) throws FailException, URISyntaxException {
+    @Transactional
+    public void pullOpenCalendarSchedule(LocalDate currentDate, int pullingDuration) {
+
+        for(int i=0; i<pullingDuration; i++){
+            LocalDate targetDate = currentDate.plusMonths(i);
+            int year = targetDate.getYear();
+            int month = targetDate.getMonth().getValue();
+            try {
+                pullOpenCalendar(Integer.toString(year), month < 10 ? "0"+Integer.toString(month) : Integer.toString(month));
+            }catch(URISyntaxException urie) {
+                urie.printStackTrace();
+                continue;
+            } catch(Exception e ){
+                e.printStackTrace();
+            }
+        }
+
+    }
+    /** 공공 API 호출 */
+    public String pullOpenCalendar(String year, String month) throws FailException, URISyntaxException, JsonProcessingException {
         /** Right Way to use http5Core (Migration GUIDE) */
         //HttpGet httpGet = new HttpGet(new URIBuilder())
         List<NameValuePair> params = new ArrayList<>();
@@ -873,10 +896,46 @@ public class CalendarService {
         params.add(new BasicNameValuePair("solYear", year));
         params.add(new BasicNameValuePair("solMonth", month));
         params.add(new BasicNameValuePair("_type", "json"));
+        params.add(new BasicNameValuePair("numOfRows", "200"));
 
-        Map<String, Object> response = httpClientService.httpGet(DATAGO_URI_PATH + DATAGO_PATH_HOLIDAY, params);
-        log.error(response.toString());
-        return true;
+        Map resultMap = httpClientService.httpGet(DATAGO_URI_PATH + DATAGO_PATH_HOLIDAY, params);
+        Map body = MapUtils.getMap(MapUtils.getMap(resultMap, "response"), "body");
+        int totalCount = MapUtils.getInteger(body, "totalCount");
+        int pageSize = MapUtils.getInteger(body, "numOfRows");
+        int page = MapUtils.getInteger(body, "pageNo");
+
+        if(totalCount > 1) {
+            ArrayList<Map<String, Object>> items = (ArrayList<Map<String, Object>>) MapUtils.getObject(MapUtils.getMap(body, "items"), "item");
+            for (Map<String, Object> item : items) {
+                CommonCalendarContent content = CommonCalendarContent.builder()
+                        .title(MapUtils.getString(item, "dateName"))
+                        .startDateTime(customUtils.localDateFromNoneDashedDateString(MapUtils.getString(item, "locdate")).atStartOfDay())
+                        .endDateTime(customUtils.localDateFromNoneDashedDateString(MapUtils.getString(item, "locdate")).atStartOfDay().plusDays(1).minusMinutes(1))
+                        .isHoliday(MapUtils.getString(item, "isHoliday").equals("Y") ? true : false)
+                        .build();
+                commonCalendarContentJpaRepository.save(content);
+
+            }
+        } else if(totalCount == 1) {
+            Map item = MapUtils.getMap(MapUtils.getMap(body, "items"), "item");
+            CommonCalendarContent content = CommonCalendarContent.builder()
+                    .title(MapUtils.getString(item, "dateName"))
+                    .startDateTime(customUtils.localDateFromNoneDashedDateString(MapUtils.getString(item, "locdate")).atStartOfDay())
+                    .endDateTime(customUtils.localDateFromNoneDashedDateString(MapUtils.getString(item, "locdate")).atStartOfDay().plusDays(1).minusMinutes(1))
+                    .isHoliday(MapUtils.getString(item, "isHoliday").equals("Y") ? true : false)
+                    .build();
+            commonCalendarContentJpaRepository.save(content);
+
+        }
+        CommonCalendarSync sync = CommonCalendarSync.builder()
+                .syncDateTime(LocalDateTime.now())
+                .syncMonth(Integer.valueOf(month))
+                .syncYear(Integer.valueOf(year))
+                .build();
+        commonCalendarSyncJpaRepository.save(sync);
+
+        return "SUCCESS";
+
     }
 
     public HashMap<String, Object> removeCalendarContentAttachments(SecurityUser securityUser, Long attachmentsId){

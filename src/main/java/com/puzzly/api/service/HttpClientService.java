@@ -7,6 +7,7 @@ import com.puzzly.api.exception.FailException;
 import jakarta.persistence.Basic;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
@@ -24,6 +25,8 @@ import org.springframework.stereotype.Service;
 
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,27 +39,26 @@ public class HttpClientService {
     private final ObjectMapper mapper;
 
     public Map<String, Object> httpGet(String url, List<NameValuePair> params) throws URISyntaxException {
+        Map<String, Object> body = null;
         /** VERIFY REUSING BEAN */
         log.info(Integer.toString(httpClient.hashCode()));
 
         HttpGet httpGet = new HttpGet(new URIBuilder(url).addParameters(params).build());
         httpGet.addHeader("Content-Type", "application/json; charset=UTF-8");
-        JsonNode responseNode = null;
-
         try(CloseableHttpResponse response = httpClient.execute(httpGet)){
-            log.error(response.getCode() + " > ? {");
-            //log.error(EntityUtils.toString(response.getEntity()));
-            responseNode = mapper.readTree(EntityUtils.toString(response.getEntity()));
-            log.error(responseNode.toPrettyString());
+            String responseBody = EntityUtils.toString(response.getEntity());
+            body = mapper.readValue(responseBody, Map.class);
+
+            // TODO when status code != 200
         } catch(Exception e){
             e.printStackTrace();
             throw new FailException(e.getMessage(), 400);
         }
-
-        return mapper.convertValue(responseNode, new TypeReference<Map<String, Object>>(){});
+        return body;
     }
 
     public Map<String, Object> httpPost(String url, List<BasicNameValuePair> params) throws FailException{
+        Map<String, Object> body = null;
         /** VERIFY REUSING BEAN */
         log.info(Integer.toString(httpClient.hashCode()));
 
@@ -67,8 +69,9 @@ public class HttpClientService {
         httpPost.setHeader("Content-Type", "application/json; charset=UTF-8");
         log.error("httpClient HASH : " + httpClient.hashCode());
         try(CloseableHttpResponse response = httpClient.execute(httpPost)){
-            int status = response.getCode();
-            responseNode = mapper.readTree(EntityUtils.toString(response.getEntity()));
+            String responseBody = EntityUtils.toString(response.getEntity());
+            body = mapper.readValue(responseBody, Map.class);
+
             log.error(responseNode.toPrettyString());
         } catch(Exception e){
             e.printStackTrace();
@@ -83,6 +86,6 @@ public class HttpClientService {
                 .build();
 
          */
-        return mapper.convertValue(responseNode, new TypeReference<Map<String, Object>>(){});
+        return body;
     }
 }

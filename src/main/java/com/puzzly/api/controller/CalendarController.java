@@ -406,8 +406,11 @@ public class CalendarController {
             @RequestParam(name = "month") String month,
             @RequestParam(name = "year") String year
     ) throws Exception {
-        calendarService.pullOpenCalendar(year, month);
+        RestResponse restResponse = new RestResponse();
 
-        return new ResponseEntity<>(null,HttpStatus.OK);
+        HashMap<String, Object> resultMap = new HashMap<>();
+        resultMap.put("result", calendarService.pullOpenCalendar(year, month));
+
+        return new ResponseEntity<>(restResponse,HttpStatus.OK);
     }
 }
