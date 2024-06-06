@@ -21,12 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.core5.http.NameValuePair;
-import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
-import org.apache.hc.core5.net.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,9 +30,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -395,32 +391,63 @@ public class CalendarService {
     }
 
     /** 캘린더 컨텐트(일정) 리스트 조회 */
-    public HashMap<String, Object> getCalendarContentList(SecurityUser securityUser, Long calendarId, LocalDateTime startTargetDateTime, LocalDateTime limitTargetDateTime, boolean isDeleted){
+    public HashMap<String, Object> getCalendarContentList(SecurityUser securityUser, Long calendarId, LocalDateTime startTargetDateTime, LocalDateTime limitTargetDateTime, boolean isDeleted) throws FailException{
         HashMap<String, Object> resultMap = new HashMap<>();
+        if(calendarId != null) {
+            Calendar calendar = calendarJpaRepository.findById(calendarId).orElse(null);
+            if (calendar == null) {
+                throw new FailException("SERVER_MESSAGE_CALENDAR_NOT_EXISTS", 400);
+            }
+            CalendarUserRelation calendarUserRel = calendarUserRelationJpaRepository.findCalendarUserRelation(calendar, securityUser.getUser(), false);
+            if (calendarUserRel == null) {
+                throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
+            }
 
-        Calendar calendar = calendarJpaRepository.findById(calendarId).orElse(null);
-        if(calendar == null){
-            throw new FailException("SERVER_MESSAGE_CALENDAR_NOT_EXISTS", 400);
-        }
-        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
-        if(user == null){
-            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
-        }
-        CalendarUserRelation calendarUserRel = calendarUserRelationJpaRepository.findCalendarUserRelation(calendar, user, false);
-        if(calendarUserRel == null){
-            throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
+            List<CalendarContentResponseDto> calendarContentList = calendarContentJpaRepository.selectCalendarContentByDateTimeAndCalendar(securityUser.getUser().getUserId(), calendarId, startTargetDateTime, limitTargetDateTime, isDeleted);
+            calendarContentList.forEach((calendarContent) -> {
+                calendarContent.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(calendarContent.getContentId(), false));
+                // 참가자 정보
+                calendarContent.setUserList(userService.selectUserByCalendarContentRelation(calendarContent.getContentId(), false));
+                // 반복정보
+                calendarContent.setRecurringInfo(calendarContentRecurringInfoJpaRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
+            });
+
+            resultMap.put("contentList", calendarContentList);
+        } else {
+            List<CalendarContentResponseDto> calendarContentList = calendarContentJpaRepository.selectCalendarContentByDateTime(securityUser.getUser().getUserId(), startTargetDateTime, limitTargetDateTime, isDeleted);
+            calendarContentList.forEach((calendarContent) -> {
+                calendarContent.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(calendarContent.getContentId(), false));
+                // 참가자 정보
+                calendarContent.setUserList(userService.selectUserByCalendarContentRelation(calendarContent.getContentId(), false));
+                // 반복정보
+                calendarContent.setRecurringInfo(calendarContentRecurringInfoJpaRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
+            });
+            resultMap.put("contentList", calendarContentList);
         }
 
-        List<CalendarContentResponseDto> calendarContentList = calendarContentJpaRepository.selectCalendarContentByDateTimeAndCalendar(user.getUserId(), calendarId, startTargetDateTime, limitTargetDateTime, isDeleted);
-        calendarContentList.forEach((calendarContent) -> {
-            calendarContent.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(calendarContent.getContentId(), false));
-            // 참가자 정보
-            calendarContent.setUserList(userService.selectUserByCalendarContentRelation(calendarContent.getContentId(), false));
-            // 반복정보
-            calendarContent.setRecurringInfo(calendarContentRecurringInfoJpaRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
-        });
+        // 만약 조회기간이 4주 이내라면
+        long monthDiff = startTargetDateTime.until(limitTargetDateTime, ChronoUnit.MONTHS);
+        // 이번 달 내에서라면 0, 다음달까지 넘어가면 1
+        if(monthDiff<=1){
+            // 공통 캘린더 제공
 
-        resultMap.put("contentList", calendarContentList);
+            int idx = 0;
+            // 기존 싱크 기록 조회
+            do {
+                LocalDateTime investingDateTime = startTargetDateTime.plusMonths(idx);
+                int year = investingDateTime.getYear();
+                int month =  investingDateTime.getMonth().getValue();
+                CommonCalendarSync sync = commonCalendarSyncJpaRepository.findBySyncYearAndSyncMonth(year, month);
+                // 싱크 기록 없다면 당장 싱크
+                if(sync == null){
+                    pullOpenCalendar(Integer.toString(year), month < 10 ? "0"+ Integer.toString(month) : Integer.toString(month));
+                }
+            } while(idx++ < monthDiff);
+            // 싱크기록내에서 조회
+                List<CommonCalendarContentResponseDto> commonCalendarContentList = commonCalendarContentJpaRepository.selectCommonContentByDateTime(startTargetDateTime, limitTargetDateTime, isDeleted);
+            // 추가
+            resultMap.put("commonList", commonCalendarContentList);
+        }
 
         return resultMap;
     }
@@ -869,15 +896,15 @@ public class CalendarService {
 
     @Transactional
     public void pullOpenCalendarSchedule(LocalDate currentDate, int pullingDuration) {
-
+    // 스케쥴 캘린더 싱크
         for(int i=0; i<pullingDuration; i++){
             LocalDate targetDate = currentDate.plusMonths(i);
             int year = targetDate.getYear();
             int month = targetDate.getMonth().getValue();
             try {
                 pullOpenCalendar(Integer.toString(year), month < 10 ? "0"+Integer.toString(month) : Integer.toString(month));
-            }catch(URISyntaxException urie) {
-                urie.printStackTrace();
+            }catch(FailException fe) {
+                fe.printStackTrace();
                 continue;
             } catch(Exception e ){
                 e.printStackTrace();
@@ -886,7 +913,7 @@ public class CalendarService {
 
     }
     /** 공공 API 호출 */
-    public String pullOpenCalendar(String year, String month) throws FailException, URISyntaxException, JsonProcessingException {
+    public String pullOpenCalendar(String year, String month) throws FailException{
         /** Right Way to use http5Core (Migration GUIDE) */
         //HttpGet httpGet = new HttpGet(new URIBuilder())
         List<NameValuePair> params = new ArrayList<>();
@@ -897,16 +924,27 @@ public class CalendarService {
         params.add(new BasicNameValuePair("solMonth", month));
         params.add(new BasicNameValuePair("_type", "json"));
         params.add(new BasicNameValuePair("numOfRows", "200"));
+        try {
+            Map resultMap = httpClientService.httpGet(DATAGO_URI_PATH + DATAGO_PATH_HOLIDAY, params);
+            Map body = MapUtils.getMap(MapUtils.getMap(resultMap, "response"), "body");
+            int totalCount = MapUtils.getInteger(body, "totalCount");
+            int pageSize = MapUtils.getInteger(body, "numOfRows");
+            int page = MapUtils.getInteger(body, "pageNo");
 
-        Map resultMap = httpClientService.httpGet(DATAGO_URI_PATH + DATAGO_PATH_HOLIDAY, params);
-        Map body = MapUtils.getMap(MapUtils.getMap(resultMap, "response"), "body");
-        int totalCount = MapUtils.getInteger(body, "totalCount");
-        int pageSize = MapUtils.getInteger(body, "numOfRows");
-        int page = MapUtils.getInteger(body, "pageNo");
+            if (totalCount > 1) {
+                ArrayList<Map<String, Object>> items = (ArrayList<Map<String, Object>>) MapUtils.getObject(MapUtils.getMap(body, "items"), "item");
+                for (Map<String, Object> item : items) {
+                    CommonCalendarContent content = CommonCalendarContent.builder()
+                            .title(MapUtils.getString(item, "dateName"))
+                            .startDateTime(customUtils.localDateFromNoneDashedDateString(MapUtils.getString(item, "locdate")).atStartOfDay())
+                            .endDateTime(customUtils.localDateFromNoneDashedDateString(MapUtils.getString(item, "locdate")).atStartOfDay().plusDays(1).minusMinutes(1))
+                            .isHoliday(MapUtils.getString(item, "isHoliday").equals("Y") ? true : false)
+                            .build();
+                    commonCalendarContentJpaRepository.save(content);
 
-        if(totalCount > 1) {
-            ArrayList<Map<String, Object>> items = (ArrayList<Map<String, Object>>) MapUtils.getObject(MapUtils.getMap(body, "items"), "item");
-            for (Map<String, Object> item : items) {
+                }
+            } else if (totalCount == 1) {
+                Map item = MapUtils.getMap(MapUtils.getMap(body, "items"), "item");
                 CommonCalendarContent content = CommonCalendarContent.builder()
                         .title(MapUtils.getString(item, "dateName"))
                         .startDateTime(customUtils.localDateFromNoneDashedDateString(MapUtils.getString(item, "locdate")).atStartOfDay())
@@ -916,24 +954,21 @@ public class CalendarService {
                 commonCalendarContentJpaRepository.save(content);
 
             }
-        } else if(totalCount == 1) {
-            Map item = MapUtils.getMap(MapUtils.getMap(body, "items"), "item");
-            CommonCalendarContent content = CommonCalendarContent.builder()
-                    .title(MapUtils.getString(item, "dateName"))
-                    .startDateTime(customUtils.localDateFromNoneDashedDateString(MapUtils.getString(item, "locdate")).atStartOfDay())
-                    .endDateTime(customUtils.localDateFromNoneDashedDateString(MapUtils.getString(item, "locdate")).atStartOfDay().plusDays(1).minusMinutes(1))
-                    .isHoliday(MapUtils.getString(item, "isHoliday").equals("Y") ? true : false)
+            // 기존 Sync 기록 있다면 제거
+            CommonCalendarSync oldSync = commonCalendarSyncJpaRepository.findBySyncYearAndSyncMonth(Integer.valueOf(year), Integer.valueOf(month));
+            if (oldSync != null) {
+                commonCalendarSyncJpaRepository.delete(oldSync);
+            }
+            CommonCalendarSync sync = CommonCalendarSync.builder()
+                    .syncDateTime(LocalDateTime.now())
+                    .syncMonth(Integer.valueOf(month))
+                    .syncYear(Integer.valueOf(year))
                     .build();
-            commonCalendarContentJpaRepository.save(content);
-
+            commonCalendarSyncJpaRepository.save(sync);
+        }catch(Exception e){
+            e.printStackTrace();
+            throw new FailException(e.getMessage(), 500);
         }
-        CommonCalendarSync sync = CommonCalendarSync.builder()
-                .syncDateTime(LocalDateTime.now())
-                .syncMonth(Integer.valueOf(month))
-                .syncYear(Integer.valueOf(year))
-                .build();
-        commonCalendarSyncJpaRepository.save(sync);
-
         return "SUCCESS";
 
     }
