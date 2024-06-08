@@ -3,12 +3,10 @@ package com.puzzly.api.repository.jpa.querydsl;
 import com.puzzly.api.dto.response.CalendarContentAttachmentsResponseDto;
 import com.puzzly.api.dto.response.CalendarContentRecurringInfoResponseDto;
 import com.puzzly.api.dto.response.CalendarContentResponseDto;
-import com.puzzly.api.entity.QCalendar;
-import com.puzzly.api.entity.QCalendarContent;
-import com.puzzly.api.entity.QCalendarContentAttachments;
-import com.puzzly.api.entity.QUser;
+import com.puzzly.api.entity.*;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
@@ -42,6 +40,30 @@ public class CalendarContentJpaRepositoryImpl {
                 .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
                 .leftJoin(modifyUser).on(content.modifyUser.userId.eq(modifyUser.userId))
                 .where(content.isDeleted.eq(isDeleted), eqCalendar(calendarId))
+                .fetch();
+    }
+    public List<CalendarContentResponseDto> selectCalendarContentByDateTime(Long userId, LocalDateTime startDateTime, LocalDateTime limitStartDateTime, boolean isDeleted){
+        QUser createUser = new QUser("createUser");
+        QUser modifyUser = new QUser("modifyUser");
+        QCalendar calendar = QCalendar.calendar;
+        QCalendarContent content = new QCalendarContent("content");
+        QCalendarUserRelation cur = new QCalendarUserRelation("cur");
+        return jpaQueryFactory
+                .select(Projections.fields(CalendarContentResponseDto.class,
+                        content.contentId, content.calendar.calendarId, calendar.calendarName,
+                        createUser.userId.as("create_id"), createUser.nickName.as("createNickName"),
+                        modifyUser.userId.as("modifyId"), modifyUser.nickName.as("modifyNickName"),
+                        content.startDateTime, content.endDateTime,
+                        content.memo, content.notify, content.location, content.createDateTime, content.modifyDateTime))
+                .from(content)
+                .leftJoin(calendar).on(content.calendar.calendarId.eq(calendar.calendarId))
+                .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
+                .leftJoin(modifyUser).on(content.modifyUser.userId.eq(modifyUser.userId))
+                .where(content.isDeleted.eq(isDeleted), calendar.calendarId.in(
+                        JPAExpressions.select(
+                                cur.calendar.calendarId
+                        ).from(cur).where(cur.user.userId.eq(userId))
+                ))
                 .fetch();
     }
 

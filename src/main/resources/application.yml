@@ -36,6 +36,9 @@ springdoc:
 
 puzzly:
   version: 1.0.2
+  datago:
+    encoding : RqwaW0sHDJbgpqC2Zx9jg6Cu86GWYygXe%2Bo9Yt0bkstONSvIQmBrcX9eRv6ANTi1nUZOqXxHhsrqe6gKoAMtKw%3D%3D
+    decoding : RqwaW0sHDJbgpqC2Zx9jg6Cu86GWYygXe+o9Yt0bkstONSvIQmBrcX9eRv6ANTi1nUZOqXxHhsrqe6gKoAMtKw==
 #--- local
 ---
 spring:

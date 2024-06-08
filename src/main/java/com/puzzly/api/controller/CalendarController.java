@@ -7,6 +7,7 @@ import com.puzzly.api.dto.request.CalendarRequestDto;
 import com.puzzly.api.dto.response.CalendarContentResponseDto;
 import com.puzzly.api.dto.response.CalendarLabelResponseDto;
 import com.puzzly.api.dto.response.CalendarResponseDto;
+import com.puzzly.api.dto.response.CommonCalendarContentResponseDto;
 import com.puzzly.api.dto.wrapper.RestResponse;
 import com.puzzly.api.exception.FailException;
 import com.puzzly.api.service.CalendarService;
@@ -196,13 +197,14 @@ public class CalendarController {
 
     @GetMapping("/content/list")
     @ApiResponse(responseCode = "200", description = "성공시 result의 key:contentList value로 캘린더 컨텐트(일정) 제공", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarContentResponseDto.class)))
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:commonList value로 공통일정 (휴일정보) 제공", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CommonCalendarContentResponseDto.class)))
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
     @Operation(summary="캘린더 컨텐트(일정) 리스트 가져오기, JWT 토큰 필요", description = "캘린더 컨텐트(일정) 리스트 가져오기, JWT 토큰 필요")
     public ResponseEntity<?> getCalendarContent(
             HttpServletRequest request,
-            @Parameter(description="조회하려는 캘린더의 PK")
-            @RequestParam(name="calendarId") Long calendarId,
+            @Parameter(description="조회하려는 캘린더의 PK, 주어지지 않으면 가입한 전체 캘린더에서 조회")
+            @RequestParam(name="calendarId", required = false) Long calendarId,
             @Parameter(description="조회하려는 일정의 범위 시작 시각 필수값", required = true)
             @RequestParam(name="startTargetDate", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd hh:mm:ss") String startTargetDateTimeString,
             @Parameter(description="조회하려는 일정의 범위 끝 시각 필수값", required = true)
@@ -398,5 +400,19 @@ public class CalendarController {
 
         restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
+    @GetMapping
+    @Operation(summary = "test for open calendar")
+    public ResponseEntity<?> getOpenCal(
+            @RequestParam(name = "month") String month,
+            @RequestParam(name = "year") String year
+    ) throws Exception {
+        RestResponse restResponse = new RestResponse();
+
+        HashMap<String, Object> resultMap = new HashMap<>();
+        resultMap.put("result", calendarService.pullOpenCalendar(year, month));
+
+        return new ResponseEntity<>(restResponse,HttpStatus.OK);
     }
 }
