@@ -29,6 +29,7 @@ dependencies {
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
 
     implementation 'org.apache.commons:commons-lang3:'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -51,8 +52,11 @@ dependencies {
 
     annotationProcessor 'org.projectlombok:lombok'
     //annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
-    implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.4'
+    implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.3'
     implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.70'
+
+    implementation 'org.apache.httpcomponents.core5:httpcore5:5.2'
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.3.1'
 
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
