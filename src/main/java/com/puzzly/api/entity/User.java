@@ -6,8 +6,6 @@ import org.hibernate.annotations.Comment;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter
@@ -56,5 +54,4 @@ public class User {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "extensionId")
     private UserExtension userExtension;
-
 }
