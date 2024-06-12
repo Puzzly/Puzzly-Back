@@ -20,11 +20,11 @@ spring:
 jwt:
   secretKey: 89e3d9b82f6908ddae0f2f20ce7bbcd7307b14e6938fa54e2990e8ee498632e7680474fd37098932f1d4605b7b3768bca12bf8b5454ed26f8316ee1de8a6948b
 
-mybatis:
-  mapper-locations: classpath:/mapper/**/*.xml
-  configuration:
-    use-generated-keys: true
-    map-underscore-to-camel-case: true
+#mybatis:
+#  mapper-locations: classpath:/mapper/**/*.xml
+#  configuration:
+#    use-generated-keys: true
+#    map-underscore-to-camel-case: true
 
 springdoc:
   swagger-ui:
@@ -39,6 +39,7 @@ puzzly:
   datago:
     encoding : RqwaW0sHDJbgpqC2Zx9jg6Cu86GWYygXe%2Bo9Yt0bkstONSvIQmBrcX9eRv6ANTi1nUZOqXxHhsrqe6gKoAMtKw%3D%3D
     decoding : RqwaW0sHDJbgpqC2Zx9jg6Cu86GWYygXe+o9Yt0bkstONSvIQmBrcX9eRv6ANTi1nUZOqXxHhsrqe6gKoAMtKw==
+
 #--- local
 ---
 spring:
@@ -81,7 +82,45 @@ logging:
         type:
           descriptor:
             sql: trace
+#--- localPostgres
+---
+spring:
+  config:
+    activate:
+      on-profile: localPostgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+      # auto find dialect at hibernate6
+      #dialect: org.hibernate.dialect.PostgreSQLDialect
+    #show-sql: false
+    generate-ddl: true
+    defer-datasource-initialization: true
+    #properties:
+    #  hibernate:
+    #    format_sql: true
+  datasource:
+    #driver-class-name: org.postgresql.Driver
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
+    username: puzzly
+    password: Puzz!yDB@06!2
 
+puzzly:
+  filePath: /Users/junhoon.lee/sideP/PuzzlyFile
+  swagger-ui:
+    server-url: http://localhost:8080
+logging:
+  level:
+    root: info
+    #org:
+      #hibernate:
+        #orm:
+        #  jdbc:
+        #    bind: trace
+        #type:
+        #  descriptor:
+        #    sql: trace
 #--- dev
 ---
 spring:
@@ -100,6 +139,9 @@ spring:
     show-sql: true
     generate-ddl: true
     defer-datasource-initialization: true
+    properties:
+      hibernate:
+        format_sql: true
   datasource:
     driver-class-name: org.h2.Driver
     url: jdbc:h2:mem:testdb;MODE=mysql;
@@ -108,8 +150,16 @@ spring:
 puzzly:
   filePath: /opt/PuzzlyFile
   swagger-ui:
-    server-url: https://puzzly-back.fly.dev
+    server-url: http://146.56.118.235:9412
 logging:
   level:
     root: info
+    org:
+      hibernate:
+        orm:
+          jdbc:
+            bind: trace
+        type:
+          descriptor:
+            sql: trace
 #---
