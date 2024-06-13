@@ -162,4 +162,26 @@ logging:
         type:
           descriptor:
             sql: trace
-#---
+#--- devPostgres
+---
+spring:
+  config:
+    activate:
+      on-profile: devPostgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    generate-ddl: true
+    defer-datasource-initialization: true
+  datasource:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
+    username: puzzly
+    password: Puzz!yDB@06!2
+puzzly:
+  filePath: /opt/PuzzlyFile
+  swagger-ui:
+    server-url: http://146.56.118.235:9412
+logging:
+  level:
+    root: info
