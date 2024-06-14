@@ -63,6 +63,8 @@ dependencies {
     implementation 'org.postgresql:postgresql:42.7.3'
     implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16' /* Log4JDBC */
 
+    implementation 'org.hibernate.orm:hibernate-core:6.5.2.Final'
+
     annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
     annotationProcessor 'com.querydsl:querydsl-core:5.0.0'
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"

@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 9412
   error:
     whitelabel:
       enabled: false
@@ -70,7 +70,7 @@ spring:
 puzzly:
   filePath: /Users/junhoon.lee/sideP/PuzzlyFile
   swagger-ui:
-    server-url: http://localhost:8080
+    server-url: http://localhost:9412
 logging:
   level:
     root: info
@@ -89,6 +89,7 @@ spring:
     activate:
       on-profile: localPostgres
   jpa:
+    database: postgresql
     hibernate:
       ddl-auto: update
       # auto find dialect at hibernate6
@@ -99,8 +100,10 @@ spring:
     #properties:
     #  hibernate:
     #    format_sql: true
+
   datasource:
     #driver-class-name: org.postgresql.Driver
+    #url: jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
     url: jdbc:log4jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
     username: puzzly
@@ -109,7 +112,7 @@ spring:
 puzzly:
   filePath: /Users/junhoon.lee/sideP/PuzzlyFile
   swagger-ui:
-    server-url: http://localhost:8080
+    server-url: http://localhost:9412
 logging:
   level:
     root: info
