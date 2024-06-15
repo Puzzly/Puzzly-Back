@@ -288,6 +288,14 @@ public class CalendarService {
             throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
         }
 
+        LocalDateTime notifyDate = null;
+
+        // 다음 알림 울릴 시간
+        if(contentRequestDto.getIsNotify()){
+            LocalDateTime startDate = contentRequestDto.getStartDateTime();
+            notifyDate = subtractTime(startDate, contentRequestDto.getNotifyIntervalUnit(), contentRequestDto.getNotifyInterval());
+        }
+
         // 켈린더 컨텐트 등록
         CalendarContent calendarContent = CalendarContent.builder()
                 .calendar(calendar)
@@ -301,8 +309,9 @@ public class CalendarService {
                 .isRecurrable(contentRequestDto.getRecurringInfo() != null ? true : false)
                 .isNotify(contentRequestDto.getIsNotify())
                 .notifyIntervalUnit(contentRequestDto.getIsNotify() ? contentRequestDto.getNotifyIntervalUnit() : AlarmType.NONE)
-                .notifyInterval(contentRequestDto.getNotifyInterval())
-                .notifyType(contentRequestDto.getNotifyType())
+                .notifyInterval(contentRequestDto.getIsNotify() ? contentRequestDto.getNotifyInterval() : 0)
+                .notifyType(contentRequestDto.getIsNotify() ? contentRequestDto.getNotifyType() : 0)
+                .notifyDate(notifyDate)
                 //.notifyTime(contentRequestDto.getNotify() ? contentRequestDto.getNotifyTime() == null ? null : contentRequestDto.getNotifyTime(): null)
                 .memo(contentRequestDto.getMemo())
                 .label(calendarLabel)
@@ -1046,6 +1055,19 @@ public class CalendarService {
                 .memo(calendarContent.getMemo())
                 //.calendarLabel(null)
                 .build();
+    }
+
+    public LocalDateTime subtractTime(LocalDateTime dateTime, AlarmType type, int time) {
+        switch (type) {
+            case MINUTE:
+                return dateTime.minusMinutes(time);
+            case HOUR:
+                return dateTime.minusHours(time);
+            case DAY:
+                return dateTime.minusDays(time);
+            default:
+                throw new IllegalArgumentException("Unsupported TimeUnit: " + type);
+        }
     }
 
 
