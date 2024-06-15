@@ -10,6 +10,7 @@ import com.puzzly.api.dto.request.CalendarRequestDto;
 import com.puzzly.api.dto.response.*;
 import com.puzzly.api.entity.Calendar;
 import com.puzzly.api.entity.*;
+import com.puzzly.api.enums.AlarmType;
 import com.puzzly.api.exception.FailException;
 import com.puzzly.api.repository.jpa.*;
 import com.puzzly.api.util.CustomUtils;
@@ -298,7 +299,10 @@ public class CalendarService {
                 .location(contentRequestDto.getLocation())
                 .isDeleted(false)
                 .isRecurrable(contentRequestDto.getRecurringInfo() != null ? true : false)
-                .notify(contentRequestDto.getNotify() == null ? false : contentRequestDto.getNotify())
+                .isNotify(contentRequestDto.getIsNotify())
+                .notifyIntervalUnit(contentRequestDto.getIsNotify() ? contentRequestDto.getNotifyIntervalUnit() : AlarmType.NONE)
+                .notifyInterval(contentRequestDto.getNotifyInterval())
+                .notifyType(contentRequestDto.getNotifyType())
                 //.notifyTime(contentRequestDto.getNotify() ? contentRequestDto.getNotifyTime() == null ? null : contentRequestDto.getNotifyTime(): null)
                 .memo(contentRequestDto.getMemo())
                 .label(calendarLabel)
@@ -509,8 +513,8 @@ public class CalendarService {
         if(calendarContentRequestDto.getTitle() != null) calendarContent.setTitle(calendarContentRequestDto.getTitle());
         if(calendarContentRequestDto.getMemo() != null) calendarContent.setMemo(calendarContentRequestDto.getMemo());
         if(calendarContentRequestDto.getLocation() != null)calendarContent.setLocation(calendarContentRequestDto.getLocation());
-        if(calendarContentRequestDto.getNotify() != null) {
-            calendarContent.setNotify(calendarContentRequestDto.getNotify());
+        if(calendarContentRequestDto.getIsNotify() != null) {
+            calendarContent.setIsNotify(calendarContentRequestDto.getIsNotify());
         }
         if(calendarContentRequestDto.getIsStopRecurrable()) {
             calendarContent.setIsRecurrable(false);
@@ -611,7 +615,7 @@ public class CalendarService {
                 .location(calendarContent.getLocation())
                 .title(calendarContent.getTitle())
                 .contentId(calendarContent.getContentId())
-                .notify(calendarContent.getNotify())
+                .notify(calendarContent.getIsNotify())
                 .labelId(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelId() : null)
                 .labelName(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelName() : null)
                 .colorCode(calendarContent.getLabel() != null ? calendarContent.getLabel().getColorCode() : null)
@@ -1034,7 +1038,7 @@ public class CalendarService {
                 .location(calendarContent.getLocation())
                 .title(calendarContent.getTitle())
                 .contentId(calendarContent.getContentId())
-                .notify(calendarContent.getNotify())
+                .notify(calendarContent.getIsNotify())
                 .labelId(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelId() : null)
                 .labelName(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelName() : null)
                 .colorCode(calendarContent.getLabel() != null ? calendarContent.getLabel().getColorCode() : null)

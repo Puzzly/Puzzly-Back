@@ -182,6 +182,7 @@ public class CalendarController {
                             "* ContentId (생략 가능, 값 생성/변경은 서버에서 수행함. 값이 주어지면 무시됨)\n\n"+
                             "상기 명시되지 않은 값을 생략할 경우 400에러 발생\n\n" +
                             "이 API에서 주의사항은 아래와 같음\n\n" +
+                            "alarmType: 알림 설정 (같은 시간: SAME_TIME, 10분전: TEN_MINUTES_BEFORE, 1시간전: ONE_HOUR_BEFORE, 1일전: ONE_DAY_BEFORE, 직접설정: CUSTOM)\n\n" +
                             "",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
             )

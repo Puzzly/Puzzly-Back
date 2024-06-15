@@ -1,6 +1,7 @@
 package com.puzzly.api.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.puzzly.api.enums.AlarmType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -33,7 +34,13 @@ public class CalendarContentRequestDto {
     @Schema(description = "일정 종류", defaultValue = "APPROPRIATION")
     private String type;
     @Schema(description = "알림 여부, 생략하면 자동으로 서버에서  false로 등록", defaultValue = "false")
-    private Boolean notify;
+    private Boolean isNotify;
+    @Schema(description = "알림 설정(MINUTE: 분, HOUR: 시간, DAY: 일)", defaultValue = "MINUTE")
+    private AlarmType notifyIntervalUnit;
+    @Schema(description = "원본 알림 시각")
+    private Integer notifyInterval;
+    @Schema(description = "알림 타입: 6(native), 4(kakao), 1(email)")
+    private Integer notifyType;
 
     @Schema(description="반복 중단 여부, 반복 설정을 멈추려고 할 때 true로 전달")
     private Boolean isStopRecurrable;
