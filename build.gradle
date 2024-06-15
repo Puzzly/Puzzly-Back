@@ -65,6 +65,8 @@ dependencies {
 
     implementation 'org.hibernate.orm:hibernate-core:6.5.2.Final'
 
+    implementation 'com.google.firebase:firebase-admin:9.3.0'
+
     annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
     annotationProcessor 'com.querydsl:querydsl-core:5.0.0'
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"
