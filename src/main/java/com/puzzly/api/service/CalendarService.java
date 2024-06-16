@@ -529,8 +529,8 @@ public class CalendarService {
         if(calendarContentRequestDto.getTitle() != null) calendarContent.setTitle(calendarContentRequestDto.getTitle());
         if(calendarContentRequestDto.getMemo() != null) calendarContent.setMemo(calendarContentRequestDto.getMemo());
         if(calendarContentRequestDto.getLocation() != null)calendarContent.setLocation(calendarContentRequestDto.getLocation());
-        if(calendarContentRequestDto.getNotify() != null) {
-            calendarContent.setNotify(calendarContentRequestDto.getNotify());
+        if(calendarContentRequestDto.getIsNotify() != null) {
+            calendarContent.setIsNotify(calendarContentRequestDto.getIsNotify());
         }
         if(calendarContentRequestDto.getIsStopRecurrable()) {
             calendarContent.setIsRecurrable(false);
