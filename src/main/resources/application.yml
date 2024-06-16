@@ -18,7 +18,7 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 jwt:
-  secretKey: 89e3d9b82f6908ddae0f2f20ce7bbcd7307b14e6938fa54e2990e8ee498632e7680474fd37098932f1d4605b7b3768bca12bf8b5454ed26f8316ee1de8a6948b
+  secretKey: ENC(J4nTAB9P2QpznC/TYjIctAjBOMaDaSxFyWL/b3L+vNtCQ2tXKq1wd5cBu1h9UJZq6VtMv4s7N+aObqgmP6PeR2+8ljYYKg6eZaUoPNbe9pjbwpopCzmVLHpV6AvSgANK7sZt7eREkgEA/0wxuSAZ+GupvFxrPO0cAb3aBFifpA/imRq6DqHi59KgJGuFNvTe)
 
 #mybatis:
 #  mapper-locations: classpath:/mapper/**/*.xml
@@ -37,9 +37,8 @@ springdoc:
 puzzly:
   version: 1.0.2
   datago:
-    encoding : RqwaW0sHDJbgpqC2Zx9jg6Cu86GWYygXe%2Bo9Yt0bkstONSvIQmBrcX9eRv6ANTi1nUZOqXxHhsrqe6gKoAMtKw%3D%3D
-    decoding : RqwaW0sHDJbgpqC2Zx9jg6Cu86GWYygXe+o9Yt0bkstONSvIQmBrcX9eRv6ANTi1nUZOqXxHhsrqe6gKoAMtKw==
-
+    encoding : ENC(ni74odg1ke739PfUwDJf7+VsGZqUaesG1HrZZMRJ9vKciK60h2029zhv+R24dadomuWThMV6WtxdQgK2q4bsuVIx6qTDIuU+urodoyb61j4asJf5Y8WmjOyEaBMrm8Gme0lzu9etg5k=)
+    decoding : ENC(PR6Rl5L8TRU/lBjMjIBtmPzweBp8IC2l43AwVrgdNT1NrmiM2baukprLwCCBata40msx5mMDjbJmW2JGxVbq9mHOgHQs+HlcX5prm1q+l1vvJYQJOAN7Z5z8RlAFokjf1PzZDPlGXZE=)
 #--- local
 ---
 spring:
@@ -106,8 +105,8 @@ spring:
     #url: jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
     url: jdbc:log4jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
-    username: puzzly
-    password: Puzz!yDB@06!2
+    username: ENC(s3gQu4f4HQgMFVohS47fBg==)
+    password: ENC(ydVIucZGbHwLAk9nC5hbQadI5kwhAZeJ)
 
 puzzly:
   filePath: /Users/junhoon.lee/sideP/PuzzlyFile
@@ -172,6 +171,7 @@ spring:
     activate:
       on-profile: devPostgres
   jpa:
+    database: postgresql
     hibernate:
       ddl-auto: update
     generate-ddl: true
@@ -179,8 +179,8 @@ spring:
   datasource:
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
     url: jdbc:log4jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
-    username: puzzly
-    password: Puzz!yDB@06!2
+    username: ENC(s3gQu4f4HQgMFVohS47fBg==)
+    password: ENC(ydVIucZGbHwLAk9nC5hbQadI5kwhAZeJ)
 puzzly:
   filePath: /opt/PuzzlyFile
   swagger-ui:
