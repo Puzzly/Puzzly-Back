@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 9412
   error:
     whitelabel:
       enabled: false
@@ -39,7 +39,6 @@ puzzly:
   datago:
     encoding : RqwaW0sHDJbgpqC2Zx9jg6Cu86GWYygXe%2Bo9Yt0bkstONSvIQmBrcX9eRv6ANTi1nUZOqXxHhsrqe6gKoAMtKw%3D%3D
     decoding : RqwaW0sHDJbgpqC2Zx9jg6Cu86GWYygXe+o9Yt0bkstONSvIQmBrcX9eRv6ANTi1nUZOqXxHhsrqe6gKoAMtKw==
-
 #--- local
 ---
 spring:
@@ -70,7 +69,7 @@ spring:
 puzzly:
   filePath: /Users/junhoon.lee/sideP/PuzzlyFile
   swagger-ui:
-    server-url: http://localhost:8080
+    server-url: http://localhost:9412
 logging:
   level:
     root: info
@@ -89,6 +88,7 @@ spring:
     activate:
       on-profile: localPostgres
   jpa:
+    database: postgresql
     hibernate:
       ddl-auto: update
       # auto find dialect at hibernate6
@@ -99,8 +99,10 @@ spring:
     #properties:
     #  hibernate:
     #    format_sql: true
+
   datasource:
     #driver-class-name: org.postgresql.Driver
+    #url: jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
     url: jdbc:log4jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
     username: puzzly
@@ -109,7 +111,7 @@ spring:
 puzzly:
   filePath: /Users/junhoon.lee/sideP/PuzzlyFile
   swagger-ui:
-    server-url: http://localhost:8080
+    server-url: http://localhost:9412
 logging:
   level:
     root: info
@@ -162,4 +164,26 @@ logging:
         type:
           descriptor:
             sql: trace
-#---
+#--- devPostgres
+---
+spring:
+  config:
+    activate:
+      on-profile: devPostgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    generate-ddl: true
+    defer-datasource-initialization: true
+  datasource:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
+    username: puzzly
+    password: Puzz!yDB@06!2
+puzzly:
+  filePath: /opt/PuzzlyFile
+  swagger-ui:
+    server-url: http://146.56.118.235:9412
+logging:
+  level:
+    root: info
