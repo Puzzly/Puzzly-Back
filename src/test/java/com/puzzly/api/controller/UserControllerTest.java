@@ -83,4 +83,17 @@ class UserControllerTest {
 
     }
 
+    @Test
+    @DisplayName("로그인 테스트")
+    void loginUser() throws Exception {
+
+        String jsonString = "{\"email\": \"admin@puzzly.com\", \"password\": \"admin\"}";
+
+        //when
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/user/login")
+                        .content(jsonString)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk());
+
+    }
 }
