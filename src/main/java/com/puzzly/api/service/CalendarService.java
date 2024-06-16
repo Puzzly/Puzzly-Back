@@ -10,6 +10,7 @@ import com.puzzly.api.dto.request.CalendarRequestDto;
 import com.puzzly.api.dto.response.*;
 import com.puzzly.api.entity.Calendar;
 import com.puzzly.api.entity.*;
+import com.puzzly.api.enums.AlarmType;
 import com.puzzly.api.exception.FailException;
 import com.puzzly.api.repository.jpa.*;
 import com.puzzly.api.util.CustomUtils;
@@ -287,6 +288,14 @@ public class CalendarService {
             throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
         }
 
+        LocalDateTime notifyDate = null;
+
+        // 다음 알림 울릴 시간
+        if(contentRequestDto.getIsNotify()){
+            LocalDateTime startDate = contentRequestDto.getStartDateTime();
+            notifyDate = subtractTime(startDate, contentRequestDto.getNotifyIntervalUnit(), contentRequestDto.getNotifyInterval());
+        }
+
         // 켈린더 컨텐트 등록
         CalendarContent calendarContent = CalendarContent.builder()
                 .calendar(calendar)
@@ -298,7 +307,11 @@ public class CalendarService {
                 .location(contentRequestDto.getLocation())
                 .isDeleted(false)
                 .isRecurrable(contentRequestDto.getRecurringInfo() != null ? true : false)
-                .notify(contentRequestDto.getNotify() == null ? false : contentRequestDto.getNotify())
+                .isNotify(contentRequestDto.getIsNotify())
+                .notifyIntervalUnit(contentRequestDto.getIsNotify() ? contentRequestDto.getNotifyIntervalUnit() : AlarmType.NONE)
+                .notifyInterval(contentRequestDto.getIsNotify() ? contentRequestDto.getNotifyInterval() : 0)
+                .notifyType(contentRequestDto.getIsNotify() ? contentRequestDto.getNotifyType() : 0)
+                .notifyDate(notifyDate)
                 //.notifyTime(contentRequestDto.getNotify() ? contentRequestDto.getNotifyTime() == null ? null : contentRequestDto.getNotifyTime(): null)
                 .memo(contentRequestDto.getMemo())
                 .label(calendarLabel)
@@ -509,8 +522,8 @@ public class CalendarService {
         if(calendarContentRequestDto.getTitle() != null) calendarContent.setTitle(calendarContentRequestDto.getTitle());
         if(calendarContentRequestDto.getMemo() != null) calendarContent.setMemo(calendarContentRequestDto.getMemo());
         if(calendarContentRequestDto.getLocation() != null)calendarContent.setLocation(calendarContentRequestDto.getLocation());
-        if(calendarContentRequestDto.getNotify() != null) {
-            calendarContent.setNotify(calendarContentRequestDto.getNotify());
+        if(calendarContentRequestDto.getIsNotify() != null) {
+            calendarContent.setIsNotify(calendarContentRequestDto.getIsNotify());
         }
         if(calendarContentRequestDto.getIsStopRecurrable()) {
             calendarContent.setIsRecurrable(false);
@@ -611,7 +624,7 @@ public class CalendarService {
                 .location(calendarContent.getLocation())
                 .title(calendarContent.getTitle())
                 .contentId(calendarContent.getContentId())
-                .notify(calendarContent.getNotify())
+                .notify(calendarContent.getIsNotify())
                 .labelId(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelId() : null)
                 .labelName(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelName() : null)
                 .colorCode(calendarContent.getLabel() != null ? calendarContent.getLabel().getColorCode() : null)
@@ -1034,7 +1047,7 @@ public class CalendarService {
                 .location(calendarContent.getLocation())
                 .title(calendarContent.getTitle())
                 .contentId(calendarContent.getContentId())
-                .notify(calendarContent.getNotify())
+                .notify(calendarContent.getIsNotify())
                 .labelId(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelId() : null)
                 .labelName(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelName() : null)
                 .colorCode(calendarContent.getLabel() != null ? calendarContent.getLabel().getColorCode() : null)
@@ -1042,6 +1055,19 @@ public class CalendarService {
                 .memo(calendarContent.getMemo())
                 //.calendarLabel(null)
                 .build();
+    }
+
+    public LocalDateTime subtractTime(LocalDateTime dateTime, AlarmType type, int time) {
+        switch (type) {
+            case MINUTE:
+                return dateTime.minusMinutes(time);
+            case HOUR:
+                return dateTime.minusHours(time);
+            case DAY:
+                return dateTime.minusDays(time);
+            default:
+                throw new IllegalArgumentException("Unsupported TimeUnit: " + type);
+        }
     }
 
 

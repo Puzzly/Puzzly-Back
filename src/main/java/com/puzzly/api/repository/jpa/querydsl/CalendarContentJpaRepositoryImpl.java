@@ -1,16 +1,16 @@
 package com.puzzly.api.repository.jpa.querydsl;
 
-import com.puzzly.api.dto.response.CalendarContentAttachmentsResponseDto;
-import com.puzzly.api.dto.response.CalendarContentRecurringInfoResponseDto;
 import com.puzzly.api.dto.response.CalendarContentResponseDto;
-import com.puzzly.api.entity.*;
+import com.puzzly.api.entity.QCalendar;
+import com.puzzly.api.entity.QCalendarContent;
+import com.puzzly.api.entity.QCalendarUserRelation;
+import com.puzzly.api.entity.QUser;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,7 +34,7 @@ public class CalendarContentJpaRepositoryImpl {
                         createUser.userId.as("create_id"), createUser.nickName.as("createNickName"),
                         modifyUser.userId.as("modifyId"), modifyUser.nickName.as("modifyNickName"),
                         content.startDateTime, content.endDateTime,
-                        content.memo, content.notify, content.location, content.createDateTime, content.modifyDateTime))
+                        content.memo, content.isNotify, content.location, content.createDateTime, content.modifyDateTime))
                 .from(content)
                 .leftJoin(calendar).on(content.calendar.calendarId.eq(calendar.calendarId))
                 .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
@@ -54,7 +54,7 @@ public class CalendarContentJpaRepositoryImpl {
                         createUser.userId.as("create_id"), createUser.nickName.as("createNickName"),
                         modifyUser.userId.as("modifyId"), modifyUser.nickName.as("modifyNickName"),
                         content.startDateTime, content.endDateTime,
-                        content.memo, content.notify, content.location, content.createDateTime, content.modifyDateTime))
+                        content.memo, content.isNotify, content.location, content.createDateTime, content.modifyDateTime))
                 .from(content)
                 .leftJoin(calendar).on(content.calendar.calendarId.eq(calendar.calendarId))
                 .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
@@ -82,7 +82,7 @@ public class CalendarContentJpaRepositoryImpl {
                         modifyUser.userId.as("modifyUser"),
                         modifyUser.nickName.as("modifyNickName"),
                         content.startDateTime, content.endDateTime, content.memo,
-                        content.notify, content.location, content.createDateTime, content.modifyDateTime))
+                        content.isNotify, content.location, content.createDateTime, content.modifyDateTime))
                 .from(content)
                 .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
                 .leftJoin(modifyUser).on(content.modifyUser.userId.eq(modifyUser.userId))
