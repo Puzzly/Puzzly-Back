@@ -35,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -206,8 +207,8 @@ public class CalendarController {
     @Operation(summary="캘린더 컨텐트(일정) 리스트 가져오기, JWT 토큰 필요", description = "캘린더 컨텐트(일정) 리스트 가져오기, JWT 토큰 필요")
     public ResponseEntity<?> getCalendarContent(
             HttpServletRequest request,
-            @Parameter(description="조회하려는 캘린더의 PK, 주어지지 않으면 가입한 전체 캘린더에서 조회")
-            @RequestParam(name="calendarId", required = false) Long calendarId,
+            @Parameter(description="조회하려는 캘린더의 PK list, 주어지지 않으면 요청 거절")
+            @RequestParam(name="calendarId", required = true) ArrayList<Long> calendarId,
             @Parameter(description="조회하려는 일정의 범위 시작 시각 필수값", required = true)
             @RequestParam(name="startTargetDate", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd hh:mm:ss") String startTargetDateTimeString,
             @Parameter(description="조회하려는 일정의 범위 끝 시각 필수값", required = true)

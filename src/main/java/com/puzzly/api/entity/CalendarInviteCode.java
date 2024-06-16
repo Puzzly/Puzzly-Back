@@ -15,7 +15,7 @@ import lombok.*;
 public class CalendarInviteCode {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long inviteCodeId;
-    @Lob
+    @Column(columnDefinition = "text")
     private String inviteCode;
     
 }

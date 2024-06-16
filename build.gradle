@@ -34,7 +34,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-    implementation 'com.h2database:h2'
+    //implementation 'com.h2database:h2'
 
     //runtimeOnly 'com.mysql:mysql-connector-j'
 
@@ -64,6 +64,8 @@ dependencies {
     implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16' /* Log4JDBC */
 
     implementation 'org.hibernate.orm:hibernate-core:6.5.2.Final'
+    //properties 암호화
+    implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:1.18'
 
     implementation 'com.google.firebase:firebase-admin:9.3.0'
 

@@ -64,10 +64,10 @@ public class CalendarService {
     private final CommonCalendarSyncJpaRepository commonCalendarSyncJpaRepository;
     private final String context = "calendar";
 
-    @Value("${puzzly.datago.encoding}")
-    private String DATAGO_ENCODE_KEY;
     @Value("${puzzly.datago.decoding}")
     private String DATAGO_DECODE_KEY;
+    @Value("${puzzly.datago.encoding}")
+    private String DATAGO_ENCODE_KEY;
 
     private final String DATAGO_URI_PATH = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService";
     private final String DATAGO_PATH_HOLIDAY = "/getRestDeInfo";
@@ -268,7 +268,6 @@ public class CalendarService {
     }
 
     /** 캘린더 컨텐트 (일정) 생성 */
-    @Transactional
     public HashMap<String, Object> createCalendarContent(SecurityUser securityUser, CalendarContentRequestDto contentRequestDto){
         HashMap<String, Object> resultMap = new HashMap<>();
         Calendar calendar = calendarJpaRepository.findById(contentRequestDto.getCalendarId()).orElse(null);
@@ -404,29 +403,36 @@ public class CalendarService {
     }
 
     /** 캘린더 컨텐트(일정) 리스트 조회 */
-    public HashMap<String, Object> getCalendarContentList(SecurityUser securityUser, Long calendarId, LocalDateTime startTargetDateTime, LocalDateTime limitTargetDateTime, boolean isDeleted) throws FailException{
+    public HashMap<String, Object> getCalendarContentList(SecurityUser securityUser, ArrayList<Long> calendarIds, LocalDateTime startTargetDateTime, LocalDateTime limitTargetDateTime, boolean isDeleted) throws FailException{
         HashMap<String, Object> resultMap = new HashMap<>();
-        if(calendarId != null) {
-            Calendar calendar = calendarJpaRepository.findById(calendarId).orElse(null);
-            if (calendar == null) {
-                throw new FailException("SERVER_MESSAGE_CALENDAR_NOT_EXISTS", 400);
-            }
-            CalendarUserRelation calendarUserRel = calendarUserRelationJpaRepository.findCalendarUserRelation(calendar, securityUser.getUser(), false);
-            if (calendarUserRel == null) {
-                throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
+
+        if(calendarIds != null && calendarIds.size() >=0) {
+            List<CalendarContentResponseDto> responseCalendarContentList = new ArrayList<>();
+            for (Long calendarId : calendarIds) {
+                Calendar calendar = calendarJpaRepository.findById(calendarId).orElse(null);
+                if (calendar == null) {
+                    throw new FailException("SERVER_MESSAGE_CALENDAR_NOT_EXISTS", 400);
+                }
+                CalendarUserRelation calendarUserRel = calendarUserRelationJpaRepository.findCalendarUserRelation(calendar, securityUser.getUser(), false);
+                if (calendarUserRel == null) {
+                    throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
+                }
+
+                List<CalendarContentResponseDto> calendarContentList = calendarContentJpaRepository.selectCalendarContentByDateTimeAndCalendar(securityUser.getUser().getUserId(), calendarId, startTargetDateTime, limitTargetDateTime, isDeleted);
+                calendarContentList.forEach((calendarContent) -> {
+                    calendarContent.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(calendarContent.getContentId(), false));
+                    // 참가자 정보
+                    calendarContent.setUserList(userService.selectUserByCalendarContentRelation(calendarContent.getContentId(), false));
+                    // 반복정보
+                    calendarContent.setRecurringInfo(calendarContentRecurringInfoJpaRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
+                    responseCalendarContentList.add(calendarContent);
+                });
             }
 
-            List<CalendarContentResponseDto> calendarContentList = calendarContentJpaRepository.selectCalendarContentByDateTimeAndCalendar(securityUser.getUser().getUserId(), calendarId, startTargetDateTime, limitTargetDateTime, isDeleted);
-            calendarContentList.forEach((calendarContent) -> {
-                calendarContent.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(calendarContent.getContentId(), false));
-                // 참가자 정보
-                calendarContent.setUserList(userService.selectUserByCalendarContentRelation(calendarContent.getContentId(), false));
-                // 반복정보
-                calendarContent.setRecurringInfo(calendarContentRecurringInfoJpaRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
-            });
-
-            resultMap.put("contentList", calendarContentList);
-        } else {
+            resultMap.put("contentList", responseCalendarContentList);
+        }
+        /* 조회방식 변경 (param 없으면 전체다조회 -> param이 반드시 주어져야 함)
+        else {
             List<CalendarContentResponseDto> calendarContentList = calendarContentJpaRepository.selectCalendarContentByDateTime(securityUser.getUser().getUserId(), startTargetDateTime, limitTargetDateTime, isDeleted);
             calendarContentList.forEach((calendarContent) -> {
                 calendarContent.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(calendarContent.getContentId(), false));
@@ -437,11 +443,12 @@ public class CalendarService {
             });
             resultMap.put("contentList", calendarContentList);
         }
-
+        */
         // 만약 조회기간이 4주 이내라면
         long monthDiff = startTargetDateTime.until(limitTargetDateTime, ChronoUnit.MONTHS);
         // 이번 달 내에서라면 0, 다음달까지 넘어가면 1
-        if(monthDiff<=1){
+        // 전체기간 내에서 제공하는 방향으로 변경
+        //if(monthDiff<=1){
             // 공통 캘린더 제공
 
             int idx = 0;
@@ -460,8 +467,7 @@ public class CalendarService {
                 List<CommonCalendarContentResponseDto> commonCalendarContentList = commonCalendarContentJpaRepository.selectCommonContentByDateTime(startTargetDateTime, limitTargetDateTime, isDeleted);
             // 추가
             resultMap.put("commonList", commonCalendarContentList);
-        }
-
+        //}
         return resultMap;
     }
 
@@ -1057,6 +1063,9 @@ public class CalendarService {
                 .build();
     }
 
+    public Calendar getCalendarForDummy(Long calendarId){
+        return calendarJpaRepository.findById(calendarId).orElse(null);
+    }
     public LocalDateTime subtractTime(LocalDateTime dateTime, AlarmType type, int time) {
         switch (type) {
             case MINUTE:
@@ -1069,6 +1078,7 @@ public class CalendarService {
                 throw new IllegalArgumentException("Unsupported TimeUnit: " + type);
         }
     }
+
 
 
 }

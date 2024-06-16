@@ -29,7 +29,8 @@ public class CalendarContentDel {
     @Comment("일정 종류")
     @Column private String type;
     @Comment("일정 내용")
-    @Lob private String content;
+    @Column(columnDefinition = "text")
+    private String content;
     @Comment("알림 여부")
     @Column private Boolean notify;
 

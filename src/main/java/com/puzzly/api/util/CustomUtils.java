@@ -31,10 +31,7 @@ import java.util.*;
 @Slf4j
 public class CustomUtils {
 
-    // Key String : _PUZZLY_PRV_KEY_$0501
-    private static String PRIVATE_KEY = "50lsSVpazGW8a2zEWXo8KlmUX4OWLtLvQ6uM0GFwn6Q=";
-
-    private static DateTimeFormatter formatDateTime  = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
+    private static DateTimeFormatter formatDateTime  = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static DateTimeFormatter formatDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private static DateTimeFormatter noneDashedformatDate = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -42,6 +39,8 @@ public class CustomUtils {
     @Value("${puzzly.filePath}")
     private String filePath;
 
+    @Value("${puzzly.private.key}")
+    private static String PRIVATE_KEY;
 
     public static String aesCBCEncode(String plainText) throws FailException {
         SecretKeySpec secretKey = null;

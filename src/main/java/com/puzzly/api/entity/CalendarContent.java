@@ -50,7 +50,8 @@ public class CalendarContent {
     // 알림은 여러개일 수 있으므로 별도 테이블로 관리 해야함.
     //@Column private LocalDateTime notifyTime; <- onetomany
     @Comment("메모")
-    @Lob private String memo;
+    @Column(columnDefinition = "text")
+    private String memo;
     /** Schedule로 삭제 될 대상인지를 체크하는 필드, softDelete*/
     @Comment("반복 여부")
     @Column private Boolean isRecurrable;
