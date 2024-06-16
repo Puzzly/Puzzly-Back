@@ -18,13 +18,7 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 jwt:
-  secretKey: ENC(J4nTAB9P2QpznC/TYjIctAjBOMaDaSxFyWL/b3L+vNtCQ2tXKq1wd5cBu1h9UJZq6VtMv4s7N+aObqgmP6PeR2+8ljYYKg6eZaUoPNbe9pjbwpopCzmVLHpV6AvSgANK7sZt7eREkgEA/0wxuSAZ+GupvFxrPO0cAb3aBFifpA/imRq6DqHi59KgJGuFNvTe)
-
-#mybatis:
-#  mapper-locations: classpath:/mapper/**/*.xml
-#  configuration:
-#    use-generated-keys: true
-#    map-underscore-to-camel-case: true
+  secretKey: ENC(ppMHrRZzLlcV2TmsO32e7MkKNCtbnZ4E4zpW/REiqWWkfnj0ohTZMLkoZP/NdyzKkwp6bg8zYp1I8nwg8XxtjyCPu4EdbihRWxKJPDodKdY=)
 
 springdoc:
   swagger-ui:
@@ -37,10 +31,10 @@ springdoc:
 puzzly:
   version: 1.0.2
   private:
-    key: ENC(ChjgcKZIlidpJBUZJW1+GjriR2jWeruIqrjCbkjd7/a1jgzgq7Bjd2Q2Fwm7C9rl2SJiMMleFHQ=)
+    key: ENC(5CPnefCvPqOWL6FYkTwxY5CkHRqS27CrTH7qfpzEEwuVyaYZoDqOBYeViEtrfabSsPK5tVJJ71ekChRIwT88tzIE8BBxmQsMc/y8ajbgULo=)
   datago:
-    encoding : ENC(ni74odg1ke739PfUwDJf7+VsGZqUaesG1HrZZMRJ9vKciK60h2029zhv+R24dadomuWThMV6WtxdQgK2q4bsuVIx6qTDIuU+urodoyb61j4asJf5Y8WmjOyEaBMrm8Gme0lzu9etg5k=)
-    decoding : ENC(PR6Rl5L8TRU/lBjMjIBtmPzweBp8IC2l43AwVrgdNT1NrmiM2baukprLwCCBata40msx5mMDjbJmW2JGxVbq9mHOgHQs+HlcX5prm1q+l1vvJYQJOAN7Z5z8RlAFokjf1PzZDPlGXZE=)
+    encoding: ENC(Rb+tcSkUi8t9VepHVoagIaxD1nIwKFSbZeKUbotC4oBbkF/+xuww1lRtHP2chQro0pOrPuJ1BY7u/k+oK6tTE9zRK81bqe0xloE9451UY8S+m0vs+K6IEhUlTnNQ+R7lGRMc1r9mgOF1FZ7+MUK4Rg==)
+    decoding: ENC(/6unzWIpnNY+qii6hEyQNhiY03YLQMztJsHxLiVK8BlI7Rt2Hif4izhD9adEjXzJWpsKGRXK2xuvSixPKDbr+yYL00F3ZN1ynlbUlhA/TEkiq1k/MoXw5m2FOvERaclBo19YOI6qYx8=)
 #--- local
 ---
 spring:
@@ -107,8 +101,8 @@ spring:
     #url: jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
     url: jdbc:log4jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
-    username: ENC(s3gQu4f4HQgMFVohS47fBg==)
-    password: ENC(ydVIucZGbHwLAk9nC5hbQadI5kwhAZeJ)
+    username: ENC(nvF/CuzlEIuUlC69v08Q1Q==)
+    password: ENC(J9GWfqblNgjCYDx6RHrmLt1Yyx5t1SxxojI0YcDavRg=)
 
 puzzly:
   filePath: /Users/junhoon.lee/sideP/PuzzlyFile
@@ -181,8 +175,8 @@ spring:
   datasource:
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
     url: jdbc:log4jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
-    username: ENC(s3gQu4f4HQgMFVohS47fBg==)
-    password: ENC(ydVIucZGbHwLAk9nC5hbQadI5kwhAZeJ)
+    username: ENC(nvF/CuzlEIuUlC69v08Q1Q==)
+    password: ENC(J9GWfqblNgjCYDx6RHrmLt1Yyx5t1SxxojI0YcDavRg=)
 puzzly:
   filePath: /opt/PuzzlyFile
   swagger-ui:

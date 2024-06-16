@@ -3,10 +3,13 @@ package com.puzzly.api.coreComponent;
 import com.puzzly.api.domain.AccountAuthority;
 import com.puzzly.api.domain.SecurityUser;
 import com.puzzly.api.dto.request.CalendarContentRequestDto;
+import com.puzzly.api.dto.request.CalendarLabelRequestDto;
 import com.puzzly.api.dto.request.CalendarRequestDto;
 import com.puzzly.api.dto.request.UserRequestDto;
+import com.puzzly.api.dto.response.CalendarLabelResponseDto;
 import com.puzzly.api.entity.Calendar;
 import com.puzzly.api.entity.CalendarContent;
+import com.puzzly.api.entity.CalendarLabel;
 import com.puzzly.api.entity.User;
 import com.puzzly.api.exception.FailException;
 import com.puzzly.api.service.CalendarService;
@@ -72,16 +75,27 @@ public class ApplicationListenerService implements ApplicationListener<ContextRe
 
         Boolean initFlag = calendars.isEmpty();
         if(initFlag) {
+
             CalendarRequestDto calendarRequestDto = new CalendarRequestDto();
             calendarRequestDto.setCalendarName("PuzzlyCalendar");
             calendarService.createCalendar(securityUser, calendarRequestDto);
+
             Calendar calendar = calendarService.getCalendarForDummy((long)1);
+
+            CalendarLabelRequestDto calendarLabelRequestDto = new CalendarLabelRequestDto();
+            calendarLabelRequestDto.setCalendarId(calendar.getCalendarId());
+            calendarLabelRequestDto.setLabelName("더미데이터라벨!");
+            calendarLabelRequestDto.setColorCode("#000000");
+            calendarLabelRequestDto.setOrderNum(1);
+            calendarService.createCalendarLabel(securityUser, calendarLabelRequestDto);
+
             setupRequestedCalendarContentsDummyData(calendar, securityUser);
         }
 
     }
 
     public void setupRequestedCalendarContentsDummyData(Calendar calendar, SecurityUser securityUser){
+
         ArrayList<LocalDateTime> startDateTime = new ArrayList<>();
         startDateTime.add(customUtils.localDateTimeFromDateTimeString("2024-06-14 00:00:00"));
         startDateTime.add(customUtils.localDateTimeFromDateTimeString("2024-06-14 00:00:00"));
@@ -109,6 +123,10 @@ public class ApplicationListenerService implements ApplicationListener<ContextRe
         contentTitle.add("출장(춘천)");
         contentTitle.add("국내여행(파주)");
 
+        ArrayList tem = (ArrayList) MapUtils.getObject(calendarService.getCalendarLabelList(securityUser, (long)1, 0, 10), "calendarList");
+
+        CalendarLabelResponseDto label = (CalendarLabelResponseDto) tem.get(0);
+
         for(int i=0; i<startDateTime.size(); i++){
             CalendarContentRequestDto content = CalendarContentRequestDto.builder()
                     .calendarId(calendar.getCalendarId())
@@ -117,6 +135,8 @@ public class ApplicationListenerService implements ApplicationListener<ContextRe
                     .title(contentTitle.get(i))
                     .isRecurrable(false)
                     .memo(contentTitle.get(i))
+                    .isNotify(false)
+                    .labelId(label.getLabelId())
                     .createUserIdList(new ArrayList<>(){{add(securityUser.getUser().getUserId());}})
                     .build();
             calendarService.createCalendarContent(securityUser, content);

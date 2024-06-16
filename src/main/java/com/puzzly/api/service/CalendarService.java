@@ -64,10 +64,10 @@ public class CalendarService {
     private final CommonCalendarSyncJpaRepository commonCalendarSyncJpaRepository;
     private final String context = "calendar";
 
-    @Value("${puzzly.datago.encoding}")
-    private String DATAGO_ENCODE_KEY;
     @Value("${puzzly.datago.decoding}")
     private String DATAGO_DECODE_KEY;
+    @Value("${puzzly.datago.encoding}")
+    private String DATAGO_ENCODE_KEY;
 
     private final String DATAGO_URI_PATH = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService";
     private final String DATAGO_PATH_HOLIDAY = "/getRestDeInfo";
@@ -268,7 +268,6 @@ public class CalendarService {
     }
 
     /** 캘린더 컨텐트 (일정) 생성 */
-    @Transactional
     public HashMap<String, Object> createCalendarContent(SecurityUser securityUser, CalendarContentRequestDto contentRequestDto){
         HashMap<String, Object> resultMap = new HashMap<>();
         Calendar calendar = calendarJpaRepository.findById(contentRequestDto.getCalendarId()).orElse(null);

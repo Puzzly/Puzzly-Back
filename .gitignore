@@ -283,3 +283,6 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Encryptor test java file
+src/test/java/com/puzzly/test/security/*
