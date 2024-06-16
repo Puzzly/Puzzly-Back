@@ -489,12 +489,12 @@ public class CalendarService {
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
 
-        CalendarContentResponseDto calendarContentResponseDto = calendarContentMybatisRepository.selectCalendarContentByContentId(contentId, false);
-        calendarContentResponseDto.setAttachmentsList(calendarContentMybatisRepository.selectCalendarContentAttachmentsByContentId(contentId, false));
+        CalendarContentResponseDto calendarContentResponseDto = calendarContentJpaRepository.selectCalendarContentByContentId(contentId, false);
+        calendarContentResponseDto.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(contentId, false));
         // 참가자 정보
         calendarContentResponseDto.setUserList(userService.selectUserByCalendarContentRelation(calendarContent.getContentId(), false));
         // 반복정보
-        calendarContentResponseDto.setRecurringInfo(calendarContentMybatisRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
+        calendarContentResponseDto.setRecurringInfo(calendarContentRecurringInfoJpaRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
         resultMap.put("content", calendarContentResponseDto);
         return resultMap;
     }

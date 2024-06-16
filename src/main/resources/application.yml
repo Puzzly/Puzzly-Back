@@ -36,6 +36,8 @@ springdoc:
 
 puzzly:
   version: 1.0.2
+  private:
+    key: ENC(ChjgcKZIlidpJBUZJW1+GjriR2jWeruIqrjCbkjd7/a1jgzgq7Bjd2Q2Fwm7C9rl2SJiMMleFHQ=)
   datago:
     encoding : ENC(ni74odg1ke739PfUwDJf7+VsGZqUaesG1HrZZMRJ9vKciK60h2029zhv+R24dadomuWThMV6WtxdQgK2q4bsuVIx6qTDIuU+urodoyb61j4asJf5Y8WmjOyEaBMrm8Gme0lzu9etg5k=)
     decoding : ENC(PR6Rl5L8TRU/lBjMjIBtmPzweBp8IC2l43AwVrgdNT1NrmiM2baukprLwCCBata40msx5mMDjbJmW2JGxVbq9mHOgHQs+HlcX5prm1q+l1vvJYQJOAN7Z5z8RlAFokjf1PzZDPlGXZE=)

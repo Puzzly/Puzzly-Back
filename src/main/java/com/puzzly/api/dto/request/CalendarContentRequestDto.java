@@ -42,6 +42,8 @@ public class CalendarContentRequestDto {
     @Schema(description = "알림 타입: 6(native), 4(kakao), 1(email)")
     private Integer notifyType;
 
+    @Schema(description="반복 여부")
+    private Boolean isRecurrable;
     @Schema(description="반복 중단 여부, 반복 설정을 멈추려고 할 때 true로 전달")
     private Boolean isStopRecurrable;
     /*
