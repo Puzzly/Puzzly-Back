@@ -1,16 +1,11 @@
 package com.puzzly.test.user;
 
-import com.puzzly.api.service.UserService;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class UserServiceTest {
 
-    Logger logger = LoggerFactory.getLogger(UserServiceTest.class);
+//    Logger logger = LoggerFactory.getLogger(UserServiceTest.class);
 
     //UserRepository userRepository;
-    UserService userService;
+//    UserService userService;
 
     /*
     @BeforeEach
@@ -22,8 +17,8 @@ public class UserServiceTest {
      */
     // TODO 생성자 주입을 사용하면, new를 사용해서 넣을수 있는게 장점이다
     // 를 아직 이해 못함. 찾아서 공부해야해
-    @Test
-    public void addUser(){
+//    @Test
+//    public void addUser(){
         /*
         logger.info("addUser Started");
         UserRequestDto userRequestDto = UserRequestDto.builder()
@@ -45,5 +40,5 @@ public class UserServiceTest {
 
          */
 
-    }
+//    }
 }
