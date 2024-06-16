@@ -2,6 +2,7 @@ package com.puzzly.api.repository.jpa;
 
 import com.puzzly.api.entity.CalendarContent;
 import com.puzzly.api.entity.CalendarContentAttachments;
+import com.puzzly.api.repository.jpa.querydsl.CalendarContentAttachmentsJpaRepositoryCustom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -10,7 +11,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface CalendarContentAttachmentsJpaRepository extends JpaRepository<CalendarContentAttachments, Long> {
+public interface CalendarContentAttachmentsJpaRepository extends JpaRepository<CalendarContentAttachments, Long>,
+        CalendarContentAttachmentsJpaRepositoryCustom {
     //public CalendarContentAttachments findByIdAndIsDeleted(Long id, Boolean isDeleted);
 
     //public List<CalendarContentAttachments> findAllByCalendarContent(CalendarContent calendarContent);

@@ -29,11 +29,12 @@ dependencies {
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
 
     implementation 'org.apache.commons:commons-lang3:'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-    implementation 'com.h2database:h2'
+    //implementation 'com.h2database:h2'
 
     //runtimeOnly 'com.mysql:mysql-connector-j'
 
@@ -47,13 +48,25 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.2'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
 
     annotationProcessor 'org.projectlombok:lombok'
     //annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
-    implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.4'
+
+    implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.3'
     implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.70'
 
+    implementation 'org.apache.httpcomponents.core5:httpcore5:5.2'
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.3.1'
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+
+    implementation 'org.postgresql:postgresql:42.7.3'
+    implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16' /* Log4JDBC */
+
+    implementation 'org.hibernate.orm:hibernate-core:6.5.2.Final'
+    //properties 암호화
+    implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:1.18'
+
     annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
     annotationProcessor 'com.querydsl:querydsl-core:5.0.0'
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"

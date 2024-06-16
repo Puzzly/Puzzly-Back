@@ -1,12 +1,11 @@
 package com.puzzly.api.entity;
 
+import com.puzzly.api.enums.AlarmType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Comment;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter
@@ -38,7 +37,16 @@ public class CalendarContent {
     @Comment("일정 종류")
     @Column private String type;
     @Comment("알림 여부")
-    @Column private Boolean notify;
+    @Column private Boolean isNotify;
+    @Comment("알림 설정")
+    @Enumerated(EnumType.STRING)
+    @Column private AlarmType notifyIntervalUnit;
+    @Comment("원본 알림 시각")
+    @Column private Integer notifyInterval;
+    @Comment("알림 타입: 6(native), 4(kakao), 1(email)")
+    @Column private Integer notifyType;
+    @Comment("알림 시각")
+    @Column private LocalDateTime notifyDate;
     // 알림은 여러개일 수 있으므로 별도 테이블로 관리 해야함.
     //@Column private LocalDateTime notifyTime; <- onetomany
     @Comment("메모")

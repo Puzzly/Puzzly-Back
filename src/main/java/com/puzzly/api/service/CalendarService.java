@@ -10,10 +10,9 @@ import com.puzzly.api.dto.request.CalendarRequestDto;
 import com.puzzly.api.dto.response.*;
 import com.puzzly.api.entity.Calendar;
 import com.puzzly.api.entity.*;
+import com.puzzly.api.enums.AlarmType;
 import com.puzzly.api.exception.FailException;
 import com.puzzly.api.repository.jpa.*;
-import com.puzzly.api.repository.mybatis.CalendarContentMybatisRepository;
-import com.puzzly.api.repository.mybatis.CalendarMybatisRepository;
 import com.puzzly.api.util.CustomUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,13 +22,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,12 +43,10 @@ import java.util.stream.Collectors;
 public class CalendarService {
     private static final Logger logger = LoggerFactory.getLogger(CalendarService.class);
     private final CalendarJpaRepository calendarJpaRepository;
-    private final CalendarMybatisRepository calendarMybatisRepository;
 
     private final CalendarUserRelationJpaRepository calendarUserRelationJpaRepository;
 
     private final CalendarContentJpaRepository calendarContentJpaRepository;
-    private final CalendarContentMybatisRepository calendarContentMybatisRepository;
 
     private final CalendarContentAttachmentsJpaRepository calendarContentAttachmentsJpaRepository;
 
@@ -53,10 +55,22 @@ public class CalendarService {
     private final CustomUtils customUtils;
     private final ObjectMapper objectMapper;
     private final UserService userService;
+    private final HttpClientService httpClientService;
 
     private final CalendarContentUserRelationJpaRepository calendarContentUserRelationJpaRepository;
     private final CalendarContentRecurringInfoJpaRepository calendarContentRecurringInfoJpaRepository;
+
+    private final CommonCalendarContentJpaRepository commonCalendarContentJpaRepository;
+    private final CommonCalendarSyncJpaRepository commonCalendarSyncJpaRepository;
     private final String context = "calendar";
+
+    @Value("${puzzly.datago.encoding}")
+    private String DATAGO_ENCODE_KEY;
+    @Value("${puzzly.datago.decoding}")
+    private String DATAGO_DECODE_KEY;
+
+    private final String DATAGO_URI_PATH = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService";
+    private final String DATAGO_PATH_HOLIDAY = "/getRestDeInfo";
 
     /** 초대코드 생성*/
     public HashMap<String, String> createInviteCode(SecurityUser securityUser, Long calendarId) throws FailException, Exception{
@@ -161,7 +175,7 @@ public class CalendarService {
                 .calendarType(calendar.getCalendarType())
                 .userList(userList)
                 .build();
-        resultMap.put("calnendar", calendarRequestDto);
+        resultMap.put("calnendar", calendarResponseDto);
         return resultMap;
     }
 
@@ -169,9 +183,10 @@ public class CalendarService {
     public HashMap<String, Object> getCalendarList(SecurityUser securityUser, int offset, int pageSize, boolean isDeleted){
         HashMap<String, Object> resultMap = new HashMap<>();
         User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
-        List<CalendarResponseDto> calendarList = calendarMybatisRepository.selectCalendarList(user.getUserId(), offset, pageSize, isDeleted);
+        //List<CalendarResponseDto> calendarList = calendarMybatisRepository.selectCalendarList(user.getUserId(), offset, pageSize, isDeleted);
+        List<CalendarResponseDto> calendarList = calendarJpaRepository.selectCalendarList(securityUser.getUser().getUserId(), offset*pageSize, pageSize, isDeleted);
         calendarList.stream().forEach((calendarResponseDto -> {
-            calendarResponseDto.setUserList(userService.selectUserByCalendar(calendarResponseDto.getCalendarId()));
+            calendarResponseDto.setUserList(userService.selectUserByCalendar(calendarResponseDto.getCalendarId(), false));
             // mybatis로 select할경우 entity 관계로 찾는게 아니라 테이블에서 바로찾아야 함.
         }));
 
@@ -231,6 +246,7 @@ public class CalendarService {
             throw new FailException("SERVER_MESSAGE_USER_NOT_OWN_CALENDAR", 400);
         }
         try{
+            // TODO 이렇게 삭제하지 말고, 캘린더에만 soft delete걸고 스케쥴에서 전체 처리하는 방향 고민. 대신 이경우, SELECT에서 반드시 조회가 안됨이 보장되어야함
             // 첨부파일 삭제
             calendarContentAttachmentsJpaRepository.bulkUpdateIsDeletedCalendarContentAttachments(calendar.getCalendarId());
             // 캘린더 컨텐츠 삭제
@@ -267,13 +283,19 @@ public class CalendarService {
         if(calendarUserRelation == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
-        CalendarLabel calendarLabel = null;
-        if(contentRequestDto.getLabelId()!=null) {
-            calendarLabel = calendarLabelJpaRepository.findById(contentRequestDto.getLabelId()).orElse(null);
-        }
+        CalendarLabel calendarLabel = calendarLabelJpaRepository.findById(contentRequestDto.getLabelId()).orElse(null);
         if(contentRequestDto.getLabelId() != null && contentRequestDto.getLabelId() != 0 && calendarLabel == null){
             throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
         }
+
+        LocalDateTime notifyDate = null;
+
+        // 다음 알림 울릴 시간
+        if(contentRequestDto.getIsNotify()){
+            LocalDateTime startDate = contentRequestDto.getStartDateTime();
+            notifyDate = subtractTime(startDate, contentRequestDto.getNotifyIntervalUnit(), contentRequestDto.getNotifyInterval());
+        }
+
         // 켈린더 컨텐트 등록
         CalendarContent calendarContent = CalendarContent.builder()
                 .calendar(calendar)
@@ -285,9 +307,14 @@ public class CalendarService {
                 .location(contentRequestDto.getLocation())
                 .isDeleted(false)
                 .isRecurrable(contentRequestDto.getRecurringInfo() != null ? true : false)
-                .notify(contentRequestDto.getNotify() == null ? false : contentRequestDto.getNotify())
+                .isNotify(contentRequestDto.getIsNotify())
+                .notifyIntervalUnit(contentRequestDto.getIsNotify() ? contentRequestDto.getNotifyIntervalUnit() : AlarmType.NONE)
+                .notifyInterval(contentRequestDto.getIsNotify() ? contentRequestDto.getNotifyInterval() : 0)
+                .notifyType(contentRequestDto.getIsNotify() ? contentRequestDto.getNotifyType() : 0)
+                .notifyDate(notifyDate)
                 //.notifyTime(contentRequestDto.getNotify() ? contentRequestDto.getNotifyTime() == null ? null : contentRequestDto.getNotifyTime(): null)
                 .memo(contentRequestDto.getMemo())
+                .label(calendarLabel)
                 //.calendarLabel()
                 .build();
         calendarContentJpaRepository.save(calendarContent);
@@ -303,7 +330,7 @@ public class CalendarService {
                 if(calendarContentAttachments != null) {
                     calendarContentAttachments.setCalendarContent(calendarContent);
                     calendarContentAttachmentsJpaRepository.save(calendarContentAttachments);
-                    attachmentsList.add(CalendarContentAttachmentsResponseDto.builder().calendarContentId(calendarContentAttachments.getCalendarContent().getContentId())
+                    attachmentsList.add(CalendarContentAttachmentsResponseDto.builder().contentId(calendarContentAttachments.getCalendarContent().getContentId())
                             .attachmentsId(calendarContentAttachments.getAttachmentsId())
                             .filePath(calendarContentAttachments.getFilePath())
                             .fileSize(calendarContentAttachments.getFileSize())
@@ -364,7 +391,7 @@ public class CalendarService {
                 calendarContentUserRelationJpaRepository.save(contentUserRelation);
                 UserAttachments userAttachments = userService.selectUserAttachmentsByUser(selectedUser, false).orElse(null);
                 userList.add(UserResponseDto.builder().userId(selectedUser.getUserId()).nickName(selectedUser.getNickName()).userName(selectedUser.getUserName()).userAttachments(
-                        UserAttachmentsResponse.builder().attachmentsId(userAttachments != null ? userAttachments.getAttachmentsId() : null).build()
+                        UserAttachmentsResponseDto.builder().attachmentsId(userAttachments != null ? userAttachments.getAttachmentsId() : null).build()
                 ).build());
             });
             contentResponseDto.setUserList(userList);
@@ -490,6 +517,10 @@ public class CalendarService {
         if(calendarUserRel == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
         }
+        CalendarLabel calendarLabel = calendarLabelJpaRepository.findById(calendarContentRequestDto.getLabelId()).orElse(null);
+        if(calendarContentRequestDto.getLabelId() != null && calendarContentRequestDto.getLabelId() != 0 && calendarLabel == null){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_LABEL_NOT_EXISTS", 400);
+        }
 
         calendarContent.setModifyUser(user);
         calendarContent.setModifyDateTime(LocalDateTime.now());
@@ -507,6 +538,7 @@ public class CalendarService {
         } else if (calendarContentRequestDto.getRecurringInfo() != null){
             calendarContent.setIsRecurrable(true);
         }
+        if(calendarLabel != null || calendarContentRequestDto.getLabelId() == 0) calendarContent.setLabel(calendarLabel);
         calendarContentJpaRepository.save(calendarContent);
 
         ArrayList<Long> deletedFiles = new ArrayList<>();
@@ -576,7 +608,7 @@ public class CalendarService {
         List<CalendarContentAttachmentsResponseDto> attachmentsList =
                 calendarContentAttachmentsJpaRepository.findByCalendarContentAndIsDeleted(calendarContent, false).stream().map(
                         attachments -> {
-                            return CalendarContentAttachmentsResponseDto.builder().calendarContentId(attachments.getCalendarContent().getContentId())
+                            return CalendarContentAttachmentsResponseDto.builder().contentId(attachments.getCalendarContent().getContentId())
                                     .attachmentsId(attachments.getAttachmentsId())
                                     .filePath(attachments.getFilePath())
                                     .fileSize(attachments.getFileSize())
@@ -599,7 +631,10 @@ public class CalendarService {
                 .location(calendarContent.getLocation())
                 .title(calendarContent.getTitle())
                 .contentId(calendarContent.getContentId())
-                .notify(calendarContent.getNotify())
+                .notify(calendarContent.getIsNotify())
+                .labelId(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelId() : null)
+                .labelName(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelName() : null)
+                .colorCode(calendarContent.getLabel() != null ? calendarContent.getLabel().getColorCode() : null)
                 //.notifyTime(calendarContent.getNotifyTime())
                 .memo(calendarContent.getMemo())
                 .attachmentsList(attachmentsList)
@@ -879,6 +914,85 @@ public class CalendarService {
         return resultMap;
     }
 
+    @Transactional
+    public void pullOpenCalendarSchedule(LocalDate currentDate, int pullingDuration) {
+    // 스케쥴 캘린더 싱크
+        for(int i=0; i<pullingDuration; i++){
+            LocalDate targetDate = currentDate.plusMonths(i);
+            int year = targetDate.getYear();
+            int month = targetDate.getMonth().getValue();
+            try {
+                pullOpenCalendar(Integer.toString(year), month < 10 ? "0"+Integer.toString(month) : Integer.toString(month));
+            }catch(FailException fe) {
+                fe.printStackTrace();
+                continue;
+            } catch(Exception e ){
+                e.printStackTrace();
+            }
+        }
+
+    }
+    /** 공공 API 호출 */
+    public String pullOpenCalendar(String year, String month) throws FailException{
+        /** Right Way to use http5Core (Migration GUIDE) */
+        //HttpGet httpGet = new HttpGet(new URIBuilder())
+        List<NameValuePair> params = new ArrayList<>();
+
+        //params.add(new BasicNameValuePair("serviceKey", URLDecoder.decode(DATAGO_ENCODE_KEY, "UTF-8")));
+        params.add(new BasicNameValuePair("serviceKey", DATAGO_DECODE_KEY));
+        params.add(new BasicNameValuePair("solYear", year));
+        params.add(new BasicNameValuePair("solMonth", month));
+        params.add(new BasicNameValuePair("_type", "json"));
+        params.add(new BasicNameValuePair("numOfRows", "200"));
+        try {
+            Map resultMap = httpClientService.httpGet(DATAGO_URI_PATH + DATAGO_PATH_HOLIDAY, params);
+            Map body = MapUtils.getMap(MapUtils.getMap(resultMap, "response"), "body");
+            int totalCount = MapUtils.getInteger(body, "totalCount");
+            int pageSize = MapUtils.getInteger(body, "numOfRows");
+            int page = MapUtils.getInteger(body, "pageNo");
+
+            if (totalCount > 1) {
+                ArrayList<Map<String, Object>> items = (ArrayList<Map<String, Object>>) MapUtils.getObject(MapUtils.getMap(body, "items"), "item");
+                for (Map<String, Object> item : items) {
+                    CommonCalendarContent content = CommonCalendarContent.builder()
+                            .title(MapUtils.getString(item, "dateName"))
+                            .startDateTime(customUtils.localDateFromNoneDashedDateString(MapUtils.getString(item, "locdate")).atStartOfDay())
+                            .endDateTime(customUtils.localDateFromNoneDashedDateString(MapUtils.getString(item, "locdate")).atStartOfDay().plusDays(1).minusMinutes(1))
+                            .isHoliday(MapUtils.getString(item, "isHoliday").equals("Y") ? true : false)
+                            .build();
+                    commonCalendarContentJpaRepository.save(content);
+
+                }
+            } else if (totalCount == 1) {
+                Map item = MapUtils.getMap(MapUtils.getMap(body, "items"), "item");
+                CommonCalendarContent content = CommonCalendarContent.builder()
+                        .title(MapUtils.getString(item, "dateName"))
+                        .startDateTime(customUtils.localDateFromNoneDashedDateString(MapUtils.getString(item, "locdate")).atStartOfDay())
+                        .endDateTime(customUtils.localDateFromNoneDashedDateString(MapUtils.getString(item, "locdate")).atStartOfDay().plusDays(1).minusMinutes(1))
+                        .isHoliday(MapUtils.getString(item, "isHoliday").equals("Y") ? true : false)
+                        .build();
+                commonCalendarContentJpaRepository.save(content);
+
+            }
+            // 기존 Sync 기록 있다면 제거
+            CommonCalendarSync oldSync = commonCalendarSyncJpaRepository.findBySyncYearAndSyncMonth(Integer.valueOf(year), Integer.valueOf(month));
+            if (oldSync != null) {
+                commonCalendarSyncJpaRepository.delete(oldSync);
+            }
+            CommonCalendarSync sync = CommonCalendarSync.builder()
+                    .syncDateTime(LocalDateTime.now())
+                    .syncMonth(Integer.valueOf(month))
+                    .syncYear(Integer.valueOf(year))
+                    .build();
+            commonCalendarSyncJpaRepository.save(sync);
+        }catch(Exception e){
+            e.printStackTrace();
+            throw new FailException(e.getMessage(), 500);
+        }
+        return "SUCCESS";
+
+    }
+
     public HashMap<String, Object> removeCalendarContentAttachments(SecurityUser securityUser, Long attachmentsId){
         HashMap<String, Object> resultMap = new HashMap<>();
         User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
@@ -940,7 +1054,10 @@ public class CalendarService {
                 .location(calendarContent.getLocation())
                 .title(calendarContent.getTitle())
                 .contentId(calendarContent.getContentId())
-                .notify(calendarContent.getNotify())
+                .notify(calendarContent.getIsNotify())
+                .labelId(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelId() : null)
+                .labelName(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelName() : null)
+                .colorCode(calendarContent.getLabel() != null ? calendarContent.getLabel().getColorCode() : null)
                 //.notifyTime(calendarContent.getNotifyTime())
                 .memo(calendarContent.getMemo())
                 //.calendarLabel(null)
@@ -950,5 +1067,18 @@ public class CalendarService {
     public Calendar getCalendarForDummy(Long calendarId){
         return calendarJpaRepository.findById(calendarId).orElse(null);
     }
+    public LocalDateTime subtractTime(LocalDateTime dateTime, AlarmType type, int time) {
+        switch (type) {
+            case MINUTE:
+                return dateTime.minusMinutes(time);
+            case HOUR:
+                return dateTime.minusHours(time);
+            case DAY:
+                return dateTime.minusDays(time);
+            default:
+                throw new IllegalArgumentException("Unsupported TimeUnit: " + type);
+        }
+    }
+
 
 }

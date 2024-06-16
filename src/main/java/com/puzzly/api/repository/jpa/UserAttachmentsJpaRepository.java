@@ -2,6 +2,7 @@ package com.puzzly.api.repository.jpa;
 
 import com.puzzly.api.entity.User;
 import com.puzzly.api.entity.UserAttachments;
+import com.puzzly.api.repository.jpa.querydsl.UserAttachmentsJpaRepositoryCustom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
-public interface UserAttachmentsJpaRepository extends JpaRepository<UserAttachments, Long> {
+public interface UserAttachmentsJpaRepository extends JpaRepository<UserAttachments, Long>, UserAttachmentsJpaRepositoryCustom {
 
     public Optional<UserAttachments> findByUserAndIsDeleted(User user, Boolean isDeleted);
 

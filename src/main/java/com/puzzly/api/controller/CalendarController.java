@@ -7,6 +7,7 @@ import com.puzzly.api.dto.request.CalendarRequestDto;
 import com.puzzly.api.dto.response.CalendarContentResponseDto;
 import com.puzzly.api.dto.response.CalendarLabelResponseDto;
 import com.puzzly.api.dto.response.CalendarResponseDto;
+import com.puzzly.api.dto.response.CommonCalendarContentResponseDto;
 import com.puzzly.api.dto.wrapper.RestResponse;
 import com.puzzly.api.exception.FailException;
 import com.puzzly.api.service.CalendarService;
@@ -182,6 +183,7 @@ public class CalendarController {
                             "* ContentId (생략 가능, 값 생성/변경은 서버에서 수행함. 값이 주어지면 무시됨)\n\n"+
                             "상기 명시되지 않은 값을 생략할 경우 400에러 발생\n\n" +
                             "이 API에서 주의사항은 아래와 같음\n\n" +
+                            "alarmType: 알림 설정 (같은 시간: SAME_TIME, 10분전: TEN_MINUTES_BEFORE, 1시간전: ONE_HOUR_BEFORE, 1일전: ONE_DAY_BEFORE, 직접설정: CUSTOM)\n\n" +
                             "",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
             )
@@ -197,6 +199,7 @@ public class CalendarController {
 
     @GetMapping("/content/list")
     @ApiResponse(responseCode = "200", description = "성공시 result의 key:contentList value로 캘린더 컨텐트(일정) 제공", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CalendarContentResponseDto.class)))
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:commonList value로 공통일정 (휴일정보) 제공", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CommonCalendarContentResponseDto.class)))
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
     @Operation(summary="캘린더 컨텐트(일정) 리스트 가져오기, JWT 토큰 필요", description = "캘린더 컨텐트(일정) 리스트 가져오기, JWT 토큰 필요")
@@ -310,37 +313,6 @@ public class CalendarController {
         calendarService.downloadCalendarContentAttachments(securityUser, attachmentsId, request, response);
     }
 
-    //FE 에서 자체적으로 파일을 삭제할 수단을 제공하지 않음. 일정 수정을 통해서 수행
-    /*
-    @DeleteMapping(value = "/content/file")
-    @ApiResponse(responseCode = "200", description = "성공 시 result의 key:attachmentsId 로 삭제에 성공한 첨부파일 Id 제공")
-    @Operation(summary="캘린더 첨부파일 삭제", description = "캘린더 첨부파일 삭제, JWT토큰 필요, 해당 캘린더에 참여해있어야 함")
-    public ResponseEntity<?> removeCalendarContentAttachments(
-            HttpServletRequest request,
-            @Parameter(description="삭제할 첨부파일 Id")
-            @RequestParam(name="attachmentsId") Long attachmentsId
-    ) throws FailException, IOException {
-        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        RestResponse restResponse = new RestResponse();
-
-        HashMap<String, Object> resultMap = calendarService.removeCalendarContentAttachments(securityUser, attachmentsId);
-        restResponse.setResult(resultMap);
-        return new ResponseEntity<>(restResponse, HttpStatus.OK);
-    }
-
-     */
-
-    /*
-    @PostMapping("/label")
-    @Operation(summary = "캘린더 라벨 등록, JWT 토큰 필요", description = "캘린더 라벨 등록, JWT토큰 필요")
-    public ResponseEntity<?> createCalendarLabel(
-            HttpServletRequest request
-    ) throws FailException{
-        return null;
-    }
-
-     */
-
     @PostMapping("label")
     @ApiResponse(responseCode = "200", description = "성공시 result의 key:content 의 value로 캘린더 라벨 제공", content = @Content(schema = @Schema(implementation = CalendarLabelResponseDto.class)))
     @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
@@ -430,5 +402,19 @@ public class CalendarController {
 
         restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
+    @GetMapping
+    @Operation(summary = "test for open calendar")
+    public ResponseEntity<?> getOpenCal(
+            @RequestParam(name = "month") String month,
+            @RequestParam(name = "year") String year
+    ) throws Exception {
+        RestResponse restResponse = new RestResponse();
+
+        HashMap<String, Object> resultMap = new HashMap<>();
+        resultMap.put("result", calendarService.pullOpenCalendar(year, month));
+
+        return new ResponseEntity<>(restResponse,HttpStatus.OK);
     }
 }

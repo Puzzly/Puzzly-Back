@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserAttachmentsResponse {
+public class UserAttachmentsResponseDto {
     private Long attachmentsId;
 
     private String extension;

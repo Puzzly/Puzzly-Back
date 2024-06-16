@@ -37,6 +37,7 @@ public class CustomUtils {
     private static DateTimeFormatter formatDateTime  = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static DateTimeFormatter formatDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
+    private static DateTimeFormatter noneDashedformatDate = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     @Value("${puzzly.filePath}")
     private String filePath;
@@ -177,6 +178,11 @@ public class CustomUtils {
     public LocalDate localDateFromDateString(String dateString){
         return LocalDate.parse(dateString, formatDate);
     }
+
+    public LocalDate localDateFromNoneDashedDateString(String dateString){
+        return LocalDate.parse(dateString, noneDashedformatDate);
+    }
+
 
     public LocalDateTime localDateTimeFromDateTimeString(String dateTimeString){
         return LocalDateTime.parse(dateTimeString, formatDateTime);

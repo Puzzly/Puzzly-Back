@@ -1,12 +1,7 @@
 package com.puzzly.api.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.puzzly.api.entity.CalendarContent;
-import com.puzzly.api.entity.User;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Comment;
 
 import java.time.LocalDateTime;
 
@@ -18,8 +13,7 @@ import java.time.LocalDateTime;
 public class CalendarContentAttachmentsResponseDto {
 
     private Long attachmentsId;
-
-    private Long calendarContentId;
+    private Long contentId;
     private String extension;
     private String originName;
     private String filePath;

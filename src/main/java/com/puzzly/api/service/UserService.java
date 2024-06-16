@@ -3,7 +3,7 @@ package com.puzzly.api.service;
 import com.puzzly.api.domain.AccountAuthority;
 import com.puzzly.api.domain.SecurityUser;
 import com.puzzly.api.dto.request.UserRequestDto;
-import com.puzzly.api.dto.response.UserAttachmentsResponse;
+import com.puzzly.api.dto.response.UserAttachmentsResponseDto;
 import com.puzzly.api.dto.response.UserResponseDto;
 import com.puzzly.api.entity.User;
 import com.puzzly.api.entity.UserAccountAuthority;
@@ -14,7 +14,6 @@ import com.puzzly.api.repository.jpa.UserAccountAuthorityJpaRepository;
 import com.puzzly.api.repository.jpa.UserAttachmentsJpaRepository;
 import com.puzzly.api.repository.jpa.UserExtensionJpaRepository;
 import com.puzzly.api.repository.jpa.UserJpaRepository;
-import com.puzzly.api.repository.mybatis.UserMybatisRepository;
 import com.puzzly.api.util.CustomUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -46,10 +46,21 @@ public class UserService {
     private final UserAccountAuthorityJpaRepository userAccountAuthorityJpaRepository;
 
     private final UserAttachmentsJpaRepository userAttachmentsJpaRepository;
-    private final UserMybatisRepository userMybatisRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final CustomUtils customUtils;
     private final String context = "user";
+
+    /** 이메일 중복여부 조회*/
+    public HashMap<String, Object> selectExistsEmail(String email) throws FailException{
+        HashMap<String, Object> resultMap = new HashMap<>();
+
+        if(userJpaRepository.selectUserExistsByEmail(email)){
+            throw new FailException("SERVER_MESSAGE_EMAIL_ALREADY_EXISTS", 400);
+        } else {
+            resultMap.put("result", false);
+        }
+        return resultMap;
+    }
 
     /** 사용자 추가 */
     @Transactional
@@ -58,16 +69,16 @@ public class UserService {
 
         if(ObjectUtils.isEmpty(userRequestDto.getUserName()) || ObjectUtils.isEmpty(userRequestDto.getNickName()) ||
         ObjectUtils.isEmpty(userRequestDto.getEmail()) || ObjectUtils.isEmpty(userRequestDto.getPassword()) ||
-                ObjectUtils.isEmpty(userRequestDto.getPhoneNumber()) || ObjectUtils.isEmpty(userRequestDto.getBirth())){
+                ObjectUtils.isEmpty(userRequestDto.getPhoneNumber()) || ObjectUtils.isEmpty(userRequestDto.getBirth()) ||
+                ObjectUtils.isEmpty(userRequestDto.getGender())){
             throw new FailException("SERVER_MESSAGE_BASIC_USER_PARAMETER_MISSING", 400);
         }
-        if(ObjectUtils.isEmpty(userRequestDto.getGender())) {
-            throw new FailException("SERVER_MESSAGE_GENDER_NOT_EXISTS", 400);
-        }
+
         if(ObjectUtils.isEmpty(userRequestDto.getFirstTermAgreement() || ObjectUtils.isEmpty(userRequestDto.getSecondTermAgreement()))){
             throw new FailException("SERVER_MESSAGE_TERM_AGREEMENT_NOT_EXISTS", 400);
         }
-        if(userMybatisRepository.selectUserByEmail(userRequestDto.getEmail()) != null){
+
+        if(userJpaRepository.selectUserExistsByEmail(userRequestDto.getEmail())){
             throw new FailException("SERVER_MESSAGE_EMAIL_ALREADY_EXISTS", 400);
         }
         // TODO FE와 별도로 상의하여 통신구간 암호화를 구현하고, 복호화 > 암호화 혹은 그대로 때려박기 등을 구현해야 한다.
@@ -86,7 +97,6 @@ public class UserService {
                 .birth(userRequestDto.getBirth())
                 .gender(userRequestDto.getGender())
                 .createDateTime(LocalDateTime.now())
-                .status(StringUtils.isEmpty(userRequestDto.getStatus()) ? "CREATE" : userRequestDto.getStatus())
                 .userExtension(userExtension)
                 .isDeleted(false)
                 .build();
@@ -97,7 +107,6 @@ public class UserService {
                 .accountAuthority(ObjectUtils.isEmpty(userRequestDto.getAccountAuthority()) ? AccountAuthority.ROLE_USER : userRequestDto.getAccountAuthority())
                 .build();
         userAccountAuthorityJpaRepository.save(userAccountAuthority);
-
         if(userAccountAuthority.getAccountAuthority().equals(AccountAuthority.ROLE_ADMIN)){
             UserAccountAuthority adminAccountAuthority = UserAccountAuthority.builder()
                     .user(user)
@@ -114,9 +123,11 @@ public class UserService {
     /** 사용자 조회 */
     public HashMap<String, Object> getUser(Long userId){
         HashMap<String, Object> resultMap = new HashMap<>();
-
-        UserResponseDto user = userMybatisRepository.selectUser(userId);
-        user.setAccountAuthority(userMybatisRepository.selectUserAuthority(userId));
+        UserResponseDto user = userJpaRepository.selectUserByUserId(userId, false);
+        if(user == null){
+            throw new FailException("SERVER_MESSAGE_USER_INFO_NOT_FOUND", 400);
+        }
+        user.setAccountAuthority(getAccountAuthority(userId));
 
         resultMap.put("user", user);
         return resultMap;
@@ -129,24 +140,26 @@ public class UserService {
         User user = userJpaRepository.findById(userId).orElse(null);
         UserExtension userExtension = user.getUserExtension();
 
-        if(userRequestDto.getUserName() != null) user.setUserName(StringUtils.trim(userRequestDto.getUserName()));
+        /** 사용자 정보 수정*/
+        //if(userRequestDto.getUserName() != null) user.setUserName(StringUtils.trim(userRequestDto.getUserName()));
         if(userRequestDto.getNickName() != null) user.setNickName(StringUtils.trim(userRequestDto.getNickName()));
         if(userRequestDto.getPassword() != null) user.setPassword(bCryptPasswordEncoder.encode(StringUtils.trim(userRequestDto.getPassword())));
-        if(userRequestDto.getPhoneNumber() != null) user.setPhoneNumber(StringUtils.trim(userRequestDto.getPhoneNumber()));
+       // if(userRequestDto.getPhoneNumber() != null) user.setPhoneNumber(StringUtils.trim(userRequestDto.getPhoneNumber()));
         if(userRequestDto.getBirth() != null) user.setBirth(userRequestDto.getBirth());
         if(userRequestDto.getGender() != null) user.setGender(userRequestDto.getGender());
         if(userRequestDto.getFirstTermAgreement() != null) userExtension.setFirstTermAgreement(userRequestDto.getFirstTermAgreement());
         if(userRequestDto.getSecondTermAgreement() != null) userExtension.setSecondTermAgreement(userRequestDto.getSecondTermAgreement());
         if(userRequestDto.getStatusMessage() != null) userExtension.setStatusMessage(userRequestDto.getStatusMessage());
-        //profile은 나중에
+
         user.setModifyDateTime(LocalDateTime.now());
 
         userJpaRepository.save(user);
         userExtensionJpaRepository.save(userExtension);
 
-        if(userRequestDto.getCreateAttachmentsId() != null && userRequestDto.getCreateAttachmentsId() != 0){
+        /** 기존에 등록한 프로필 사진 삭제로 변경하고 신규 사진 등록*/
+        if(userRequestDto.getAttachmentsId() != null && userRequestDto.getAttachmentsId() != 0){
             userAttachmentsJpaRepository.bulkUpdateIsDeleted(user, false, true, LocalDateTime.now());
-            UserAttachments userAttachments = userAttachmentsJpaRepository.findById(userRequestDto.getCreateAttachmentsId()).orElse(null);
+            UserAttachments userAttachments = userAttachmentsJpaRepository.findById(userRequestDto.getAttachmentsId()).orElse(null);
             if(userAttachments == null){
                 throw new FailException("SERVER_MESSAGE_ATTACHMENTS_NOT_EXISTS",400);
             }
@@ -159,6 +172,7 @@ public class UserService {
 
         return resultMap;
     }
+
 
     /** 사용자 정보 조회 */
     @Deprecated
@@ -213,9 +227,9 @@ public class UserService {
     /** User , UserExtension Entity로부터 user responseDto 생성*/
     private UserResponseDto buildUserResponseDtoFromUser(User user, UserExtension userExtension){
         UserAttachments userAttachments = userAttachmentsJpaRepository.findByUserAndIsDeleted(user, false).orElse(null);
-        UserAttachmentsResponse userAttachmentsResponse = null;
+        UserAttachmentsResponseDto userAttachmentsResponse = null;
         if(userAttachments != null){
-            userAttachmentsResponse = UserAttachmentsResponse.builder()
+            userAttachmentsResponse = UserAttachmentsResponseDto.builder()
                                         .attachmentsId(userAttachments.getAttachmentsId())
                                         .createDateTime(userAttachments.getCreateDateTime())
                                         .originName(userAttachments.getOriginName())
@@ -242,12 +256,20 @@ public class UserService {
     public Optional<User> findById(Long userId) {return userJpaRepository.findById(userId);}
 
     public User findByUserId(Long userId) {return userJpaRepository.findByUserId(userId);}
-    public List<UserResponseDto> selectUserByCalendar(Long calendarId){
-        return userMybatisRepository.selectUserByCalendar(calendarId);
+    public List<UserResponseDto> selectUserByCalendar(Long calendarId, Boolean isDeleted){
+        //return userMybatisRepository.selectUserByCalendar(calendarId);
+        return userJpaRepository.selectUserByCalendar(calendarId, isDeleted);
     }
 
-    public List<UserResponseDto> selectUserByCalendarContentRelation(long calendarId, Boolean isDeleted) {
-        return userMybatisRepository.selectUserByCalendarContentRelation(calendarId, isDeleted);
+    public List<UserResponseDto> selectUserByCalendarContentRelation(Long contentId, Boolean isDeleted) {
+        // TODO 이 위치에서 사용자 프로필 사진 정보 필요한지 협의필요
+        //return userMybatisRepository.selectUserByCalendarContentRelation(calendarId, isDeleted);
+        //return userJpaRepository.selectUserByCalendarContentRelation(contentId, isDeleted);
+        List<UserResponseDto> userList = userJpaRepository.selectUserByCalendarContentRelation(contentId, isDeleted);
+        userList.stream().forEach((user) -> {
+            user.setUserAttachments(userAttachmentsJpaRepository.selectUserAttachmentsByUserId(user.getUserId(), false));
+        });
+        return userList;
     }
 
     public Optional<UserAttachments> selectUserAttachmentsByUser(User user, Boolean isDeleted){
@@ -255,5 +277,14 @@ public class UserService {
     }
     public List<UserAccountAuthority> findAccountAuhorityByUser(User user){
         return userAccountAuthorityJpaRepository.findByUser(user);
+    }
+
+    public List<String> getAccountAuthority(Long userId){
+        List<String> accountAuthorityList = new ArrayList<>();
+        userAccountAuthorityJpaRepository.selectUserAuthority(userId).stream().forEach(
+                (authority) -> {
+                    accountAuthorityList.add(authority.getText());
+                });
+        return accountAuthorityList;
     }
 }
