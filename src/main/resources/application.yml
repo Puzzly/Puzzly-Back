@@ -105,8 +105,8 @@ spring:
     #url: jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
     url: jdbc:log4jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
-    username: puzzly
-    password: Puzz!yDB@06!2
+    username: ENC(s3gQu4f4HQgMFVohS47fBg==)
+    password: ENC(ydVIucZGbHwLAk9nC5hbQadI5kwhAZeJ)
 
 puzzly:
   filePath: /Users/junhoon.lee/sideP/PuzzlyFile
@@ -179,8 +179,8 @@ spring:
   datasource:
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
     url: jdbc:log4jdbc:postgresql://localhost:7220/puzzly?characterEncoding=utf8&&allowMultiQueries=true
-    username: puzzly
-    password: Puzz!yDB@06!2
+    username: ENC(s3gQu4f4HQgMFVohS47fBg==)
+    password: ENC(ydVIucZGbHwLAk9nC5hbQadI5kwhAZeJ)
 puzzly:
   filePath: /opt/PuzzlyFile
   swagger-ui:
