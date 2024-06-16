@@ -35,6 +35,9 @@ public class CalendarContentRequestDto {
     @Schema(description = "알림 여부, 생략하면 자동으로 서버에서  false로 등록", defaultValue = "false")
     private Boolean notify;
 
+    @Schema(description="반복 여부")
+    private Boolean isRecurrable;
+
     @Schema(description="반복 중단 여부, 반복 설정을 멈추려고 할 때 true로 전달")
     private Boolean isStopRecurrable;
     /*
