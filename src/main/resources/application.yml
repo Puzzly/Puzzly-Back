@@ -171,6 +171,7 @@ spring:
     activate:
       on-profile: devPostgres
   jpa:
+    database: postgresql
     hibernate:
       ddl-auto: update
     generate-ddl: true
