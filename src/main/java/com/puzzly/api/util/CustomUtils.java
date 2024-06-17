@@ -39,9 +39,12 @@ public class CustomUtils {
     @Value("${puzzly.filePath}")
     private String filePath;
 
-    @Value("${puzzly.private.key}")
     private static String PRIVATE_KEY;
 
+    @Value("${puzzly.private.key}")
+    public void setPrivateKey(String PRIVATE_KEY){
+        this.PRIVATE_KEY = PRIVATE_KEY;
+    }
     public static String aesCBCEncode(String plainText) throws FailException {
         SecretKeySpec secretKey = null;
         IvParameterSpec iv = null;

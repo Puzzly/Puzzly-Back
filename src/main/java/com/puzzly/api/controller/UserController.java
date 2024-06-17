@@ -93,6 +93,7 @@ public class UserController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description="이 API에서 아래의 값은 생략이 가능하며 변경사항이 발생하지 않은 값은 전송하지 않아도 됌.\n\n" +
                             "userId (생략가능, JWT토큰에서 값을 직접 뽑아내며, 값이 주어져도 무시됨)\n\n"+
+                            "userName (생략가능, 변경불가항목, 값이 주어져도 무시됨)\n\n"+
                             "email (생략가능, 해당 값을 변경하는 기능은 제공하지 않을 예정, 보낼경우 무시됨)\n\n" +
                             "createAttachmentsId (생략가능, 프로필사진 변경하려면 PK값 입력, 변경 안하려면 변수 선언 X) \n\n" +
                             "accountAuthority (생략가능, 계정 권한 변경은 제공하지 않을 예정. 보낼경우 무시됨. 협의 필요) \n\n" +

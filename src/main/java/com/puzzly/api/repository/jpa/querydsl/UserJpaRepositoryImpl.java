@@ -65,7 +65,7 @@ public class UserJpaRepositoryImpl {
                 .from(user)
                 .leftJoin(userExtension).on(user.userExtension.extensionId.eq(userExtension.extensionId))
                 .leftJoin(userAttachments).on(user.userId.eq(userAttachments.user.userId))
-                .where(user.userId.eq(userId), user.isDeleted.eq(isDeleted)).fetchOne();
+                .where(user.userId.eq(userId), user.isDeleted.eq(isDeleted), userAttachments.isDeleted.eq(isDeleted)).fetchOne();
     }
 
     public List<UserResponseDto> selectUserByCalendar(Long calendarId, Boolean isDeleted){
