@@ -1,6 +1,7 @@
 package com.puzzly.api.coreComponent.securityCore.provider;
 
 import com.puzzly.api.domain.SecurityUser;
+import com.puzzly.api.exception.FailException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,9 @@ public class CustomUsernamePasswordAuthenticationProvider implements Authenticat
         if (!bCryptPasswordEncoder.matches(userPassword, securityUser.getPassword())) {
             throw new BadCredentialsException(securityUser.getEmail() + "Invalid password");
         }
-
+        if(securityUser.getUser().getIsDeleted()){
+            throw new FailException("SERVER_MESSAGE_DELETED_USER", 400);
+        }
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(securityUser, "el", securityUser.getAuthorities());
         return authToken;
     }

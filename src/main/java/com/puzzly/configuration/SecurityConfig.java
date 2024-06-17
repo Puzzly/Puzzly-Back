@@ -9,6 +9,7 @@ import com.puzzly.api.coreComponent.securityCore.handler.CustomUsernamePasswordF
 import com.puzzly.api.coreComponent.securityCore.handler.CustomUsernamePasswordSuccessHandler;
 import com.puzzly.api.coreComponent.securityCore.provider.CustomUsernamePasswordAuthenticationProvider;
 import com.puzzly.api.coreComponent.securityCore.securityService.CustomUserDetailsService;
+import com.puzzly.api.service.UserService;
 import com.puzzly.api.util.JwtUtils;
 import com.puzzly.api.util.CustomUtils;
 import lombok.RequiredArgsConstructor;
@@ -49,12 +50,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtUtils jwtUtils;
 
     private final CustomUtils customUtils;
     private final ObjectMapper mapper;
+    private final UserService userService;
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
@@ -142,7 +143,7 @@ public class SecurityConfig {
         //return new CustomUsernamePasswordAuthenticationProvider(userDetailsService);
     }
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtils jwtUtils, CustomUserDetailsService userDetailsService) {
-        return new JwtAuthenticationFilter(jwtUtils, userDetailsService);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtils jwtUtils, CustomUserDetailsService userDetailsService, UserService userService) {
+        return new JwtAuthenticationFilter(jwtUtils, userDetailsService, userService);
     }
 }
