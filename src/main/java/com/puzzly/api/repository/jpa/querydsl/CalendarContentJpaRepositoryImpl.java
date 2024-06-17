@@ -7,6 +7,7 @@ import com.puzzly.api.entity.QCalendarUserRelation;
 import com.puzzly.api.entity.QUser;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class CalendarContentJpaRepositoryImpl {
         QCalendarContent content = new QCalendarContent("content");
         return jpaQueryFactory
                 .select(Projections.fields(CalendarContentResponseDto.class,
-                        content.contentId, content.calendar.calendarId, calendar.calendarName,
+                        content.contentId, content.calendar.calendarId, calendar.calendarName, content.title,
                         createUser.userId.as("create_id"), createUser.nickName.as("createNickName"),
                         modifyUser.userId.as("modifyId"), modifyUser.nickName.as("modifyNickName"),
                         content.startDateTime, content.endDateTime,
@@ -39,7 +40,8 @@ public class CalendarContentJpaRepositoryImpl {
                 .leftJoin(calendar).on(content.calendar.calendarId.eq(calendar.calendarId))
                 .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
                 .leftJoin(modifyUser).on(content.modifyUser.userId.eq(modifyUser.userId))
-                .where(content.isDeleted.eq(isDeleted), eqCalendar(calendarId))
+                .where(content.isDeleted.eq(isDeleted), eqCalendar(calendarId),
+                        content.endDateTime.goe(startDateTime), content.endDateTime.loe(limitStartDateTime))
                 .fetch();
     }
     public List<CalendarContentResponseDto> selectCalendarContentByDateTime(Long userId, LocalDateTime startDateTime, LocalDateTime limitStartDateTime, boolean isDeleted){
