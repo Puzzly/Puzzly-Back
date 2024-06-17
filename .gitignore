@@ -286,3 +286,6 @@ $RECYCLE.BIN/
 
 # Encryptor test java file
 src/test/java/com/puzzly/test/security/*
+
+# secret
+src/main/resources/firebase/serviceKey.json

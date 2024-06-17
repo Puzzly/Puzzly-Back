@@ -67,6 +67,8 @@ dependencies {
     //properties 암호화
     implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:1.18'
 
+    implementation 'com.google.firebase:firebase-admin:9.3.0'
+
     annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
     annotationProcessor 'com.querydsl:querydsl-core:5.0.0'
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"

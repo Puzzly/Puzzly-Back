@@ -11,6 +11,7 @@ import com.puzzly.api.dto.response.CommonCalendarContentResponseDto;
 import com.puzzly.api.dto.wrapper.RestResponse;
 import com.puzzly.api.exception.FailException;
 import com.puzzly.api.service.CalendarService;
+import com.puzzly.api.util.FirebaseUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -47,6 +48,7 @@ import java.util.Map;
 public class CalendarController {
 
     private final CalendarService calendarService;
+    private final FirebaseUtil firebaseUtil;
 
     @PostMapping("/invitationCode")
     @Operation(summary="캘린더 초대코드 생성, 토큰필요 O", description = "캘린더 초대코드 생성, 토큰필요 O",
@@ -417,4 +419,15 @@ public class CalendarController {
 
         return new ResponseEntity<>(restResponse,HttpStatus.OK);
     }
+
+    @PostMapping("/test/notify")
+    @Operation(summary = "test for firebase notify")
+    public ResponseEntity<?> postNotify() throws Exception {
+        RestResponse restResponse = new RestResponse();
+        firebaseUtil.sendTest();
+        return new ResponseEntity<>(restResponse,HttpStatus.OK);
+    }
+
+
+
 }

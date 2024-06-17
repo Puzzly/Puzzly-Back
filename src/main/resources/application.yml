@@ -9,7 +9,7 @@ server:
 
 spring:
   profiles:
-    active: local
+    active: localPostgres
   autoconfigure:
     # whitelabel redirect disable. +@ ErrorController, Error redirecting.
     exclude: org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration
