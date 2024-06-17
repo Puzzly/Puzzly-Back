@@ -9,6 +9,8 @@ public interface UserJpaRepositoryCustom {
 
     public Boolean selectUserExistsByEmail(String email);
 
+    public Boolean selectUserExistsByEmailAndIsDeleted(String email, Boolean isDeleted);
+
     public UserResponseDto selectUserByUserId(Long userId, Boolean isDeleted);
 
     public List<UserResponseDto> selectUserByCalendar(Long calendarId, Boolean isDeleted);

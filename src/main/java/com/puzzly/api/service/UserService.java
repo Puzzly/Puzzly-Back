@@ -120,6 +120,27 @@ public class UserService {
         return resultMap;
     }
 
+    public HashMap<String, Object> deleteUser(SecurityUser securityUser, Long userId){
+        HashMap<String, Object> resultMap = new HashMap<>();
+        if(userId == null){
+            userId = securityUser.getUser().getUserId();
+            User user = userJpaRepository.findByUserId(userId);
+            user.setIsDeleted(true);
+            userJpaRepository.save(user);
+
+        } else {
+            if(securityUser.getAuthorities().contains("ROLE_ADMIN")) {
+                User user = userJpaRepository.findByUserId(userId);
+                user.setIsDeleted(true);
+                userJpaRepository.save(user);
+            } else {
+                throw new FailException("SERVER_MESSAGE_ONLY_ADMIN_CAN_DO_THIS_OPERATION", 400);
+            }
+        }
+        resultMap.put("result", "SUCCEED");
+        return resultMap;
+    }
+
     /** 사용자 조회 */
     public HashMap<String, Object> getUser(Long userId){
         HashMap<String, Object> resultMap = new HashMap<>();
@@ -254,6 +275,10 @@ public class UserService {
         return userJpaRepository.findByEmail(email);
     }
     public Optional<User> findById(Long userId) {return userJpaRepository.findById(userId);}
+
+    public Boolean selectUserExistsByEmailAndIsDeleted(String email, Boolean isDeleted){
+        return userJpaRepository.selectUserExistsByEmailAndIsDeleted(email, isDeleted);
+    }
 
     public User findByUserId(Long userId) {return userJpaRepository.findByUserId(userId);}
     public List<UserResponseDto> selectUserByCalendar(Long calendarId, Boolean isDeleted){

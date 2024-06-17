@@ -3,6 +3,8 @@ package com.puzzly.api.coreComponent.securityCore.filter;
 import com.puzzly.api.domain.SecurityUser;
 import com.puzzly.api.entity.User;
 import com.puzzly.api.exception.FailException;
+import com.puzzly.api.repository.jpa.UserJpaRepository;
+import com.puzzly.api.service.UserService;
 import com.puzzly.api.util.JwtUtils;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -35,6 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final UserDetailsService userDetailsService;
 
+    private final UserService userService;
     /*
     public JwtAuthenticationFilter(JwtUtils jwtUtils, UserDetailsService userDetailsService){
         this.userDetailsService = userDetailsService;
@@ -88,7 +91,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String email = jwtUtils.getEmailFromToken(token);
         List<String> authorities = jwtUtils.getAuthorityFromToken(token);
         Long userId = jwtUtils.getUserIdFromToken(token);
+        if(!userService.selectUserExistsByEmailAndIsDeleted(email, false)){
+            throw new FailException("SERVER_MESSAGE_DELETED_USER", 400);
+        }
         User user = User.builder().userId(userId).email(email).password("PROTECTED").build();
+        /** 삭제된 유저 검증 임시처리 방안, JWT 필터링 시에 유저 검증*/
 
         SecurityUser securityUser = new SecurityUser(user);
         securityUser.setAuthorities(getSimpleAuthorityListFromJwt(authorities));

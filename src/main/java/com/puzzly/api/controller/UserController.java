@@ -68,6 +68,26 @@ public class UserController {
         response.setResult(resultMap);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    @DeleteMapping("/user")
+    @Operation(summary = "회원탈퇴", description = "회원탈퇴")
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:user 의 value로 사용자 정보 제공")
+    @ApiResponse(responseCode = "4**", description = "SERVER_MESSAGE_* 메시지는 의도된 예외처리")
+    public ResponseEntity<?> deleteUser(
+            HttpServletRequest request,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description="이 API에서 아래의 값은 생략이 가능함.\n\n" +
+                            "userId (사용자 PK, 생략시 본인계정 탈퇴. 계정PK 주어질경우 관리자권한 검사 후 수행)\n\n"+
+                            "* 상기 명시되지 않은 파라미터가 생략되면 400에러 발생 \n\n"
+            )
+            @RequestParam(name ="userId", required=false) Long userId
+    ) throws FailException {
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse response = new RestResponse();
+        HashMap<String, Object> resultMap = userService.deleteUser(securityUser, userId);
+
+        response.setResult(resultMap);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
     @GetMapping()
     @Operation(summary = "사용자 정보 조회, JWT 토큰필요 O", description = "내 정보 조회, 토큰 필요 O")

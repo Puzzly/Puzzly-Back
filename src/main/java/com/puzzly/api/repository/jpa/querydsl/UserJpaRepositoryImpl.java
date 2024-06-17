@@ -45,6 +45,15 @@ public class UserJpaRepositoryImpl {
                 .fetchFirst() != null;
     }
 
+    public Boolean selectUserExistsByEmailAndIsDeleted(String email, Boolean isDeleted){
+        QUser user = QUser.user;
+
+        return jpaQueryFactory
+                .selectFrom(user)
+                .where(user.email.eq(email), user.isDeleted.eq(isDeleted))
+                .fetchFirst() != null;
+    }
+
     public UserResponseDto selectUserByUserId(Long userId, Boolean isDeleted){
         QUser user = QUser.user;
         QUserExtension userExtension = new QUserExtension("userExtension");
