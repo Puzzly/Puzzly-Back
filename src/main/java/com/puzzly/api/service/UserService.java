@@ -23,6 +23,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cglib.core.Local;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -128,7 +129,7 @@ public class UserService {
             throw new FailException("SERVER_MESSAGE_USER_INFO_NOT_FOUND", 400);
         }
         user.setAccountAuthority(getAccountAuthority(userId));
-
+        user.setUserAttachments(userAttachmentsJpaRepository.selectUserAttachmentsByUserId(user.getUserId(), false));
         resultMap.put("user", user);
         return resultMap;
     }
@@ -156,7 +157,8 @@ public class UserService {
         userJpaRepository.save(user);
         userExtensionJpaRepository.save(userExtension);
 
-        /** 기존에 등록한 프로필 사진 삭제로 변경하고 신규 사진 등록*/
+        /*
+        //기존에 등록한 프로필 사진 삭제로 변경하고 신규 사진 등록
         if(userRequestDto.getAttachmentsId() != null && userRequestDto.getAttachmentsId() != 0){
             userAttachmentsJpaRepository.bulkUpdateIsDeleted(user, false, true, LocalDateTime.now());
             UserAttachments userAttachments = userAttachmentsJpaRepository.findById(userRequestDto.getAttachmentsId()).orElse(null);
@@ -166,7 +168,7 @@ public class UserService {
             userAttachments.setUser(user);
             userAttachmentsJpaRepository.save(userAttachments);
         }
-
+        */
         UserResponseDto userResult = buildUserResponseDtoFromUser(user, userExtension);
         resultMap.put("user", userResult);
 
@@ -201,9 +203,14 @@ public class UserService {
         if(user == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
         }
+        if(userAttachmentsJpaRepository.selectUserAttachmentsByUserId(user.getUserId(), false) != null){
+            userAttachmentsJpaRepository.bulkUpdateIsDeleted(user, false, true, LocalDateTime.now());
+        }
+
         Long attachmentsId = 0L;
         try {
             HashMap<String, Object> fileResult = customUtils.uploadFile(context, attachments);
+
             UserAttachments userAttachments = UserAttachments.builder()
                     .extension(MapUtils.getString(fileResult, "extension"))
                     .filePath(MapUtils.getString(fileResult, "dirPath") + MapUtils.getString(fileResult, "fileName"))
@@ -212,9 +219,12 @@ public class UserService {
                     .originName(MapUtils.getString(fileResult, "originName"))
                     .isDeleted(false)
                     .createUser(user)
+                    .user(user)
                     .build();
             userAttachmentsJpaRepository.save(userAttachments);
             attachmentsId = userAttachments.getAttachmentsId();
+            user.setModifyDateTime(LocalDateTime.now());
+            userJpaRepository.save(user);
         }catch(Exception e){
             e.printStackTrace();
             throw new FailException("SERVER_MESSAGE_EXCEPTION_ON_USER_ATTACHMENTS", 500);
