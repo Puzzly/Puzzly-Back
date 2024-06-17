@@ -29,7 +29,7 @@ springdoc:
   enable-spring-security: true
 
 puzzly:
-  version: 1.0.2
+  version: 1.0.3
   private:
     key: ENC(5CPnefCvPqOWL6FYkTwxY5CkHRqS27CrTH7qfpzEEwuVyaYZoDqOBYeViEtrfabSsPK5tVJJ71ekChRIwT88tzIE8BBxmQsMc/y8ajbgULo=)
   datago:
