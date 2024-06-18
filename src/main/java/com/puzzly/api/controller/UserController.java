@@ -145,4 +145,32 @@ public class UserController {
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }
 
+    @PutMapping("fcm-token")
+    @Operation(summary = "FCM 토큰 변경", description = "2개월 동안 변동 없는 경우 fcm 토큰 자동 삭제")
+    @ApiResponse(responseCode = "200", description = "성공시 성공 메세지 제공")
+    @ApiResponse(responseCode = "4**", description = "SERVER_MESSAGE_* 메시지는 의도된 예외처리")
+    public ResponseEntity<?> modifyFcmToken(
+        HttpServletRequest request,
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description="이 API에서 아래의 값은 생략이 가능함.\n\n" +
+                "userId (사용자 PK, 생략시 본인계정 갱신. 계정 PK 주어질경우 관리자권한 검사 후 수행)\n\n"+
+                "* 상기 명시되지 않은 파라미터가 생략되면 400에러 발생 \n\n"
+        )
+        @RequestParam(name ="userId", required=false) Long userId,
+        @RequestParam(name ="appToken", required=false) String appToken,
+        @RequestParam(name ="webToken", required=false) String webToken
+    ) throws FailException {
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse response = new RestResponse();
+
+        HashMap<String, Object> resultMap = userService.modifyFcmToken(securityUser, userId, appToken, webToken);
+
+        response.setResult(resultMap);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    // TODO: 토큰 존재 여부 확인 API
+
+
+
 }

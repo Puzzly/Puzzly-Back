@@ -16,6 +16,7 @@ import com.puzzly.api.repository.jpa.UserExtensionJpaRepository;
 import com.puzzly.api.repository.jpa.UserJpaRepository;
 import com.puzzly.api.util.CustomUtils;
 import jakarta.transaction.Transactional;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
@@ -49,6 +50,7 @@ public class UserService {
     private final UserAttachmentsJpaRepository userAttachmentsJpaRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final CustomUtils customUtils;
+    private final RedisService redisService;
     private final String context = "user";
 
     /** 이메일 중복여부 조회*/
@@ -280,6 +282,40 @@ public class UserService {
                 .userAttachments(userAttachmentsResponse == null ? null : userAttachmentsResponse)
                 .build();
     }
+
+    /* FCM 토큰 변경 */
+    public HashMap<String, Object> modifyFcmToken(SecurityUser securityUser, Long userId, String appToken, String webToken){
+        HashMap<String, Object> resultMap = new HashMap<>();
+
+
+        Map<String, String> requestMap = new HashMap<>();
+        if(appToken != null){
+            requestMap.put("app_token", appToken);
+        }
+        if(webToken != null){
+            requestMap.put("web_token", webToken);
+        }
+
+        if(userId == null){
+            userId = securityUser.getUser().getUserId();
+            User user = userJpaRepository.findByUserId(userId);
+            if(user == null){
+                throw new FailException("SERVER_MESSAGE_USER_NOT_FOUND", 400);
+            }
+            if(user.getIsDeleted() == true){
+                throw new FailException("SERVER_MESSAGE_DELETED_USER", 400);
+            }
+        } else {
+            if(!securityUser.getAuthorities().contains("ROLE_ADMIN")) {
+                throw new FailException("SERVER_MESSAGE_ONLY_ADMIN_CAN_DO_THIS_OPERATION", 400);
+            }
+        }
+
+        redisService.setHash(String.valueOf(userId), requestMap, 5184000000L);
+        resultMap.put("result", "SUCCEED");
+        return resultMap;
+    }
+
 
     public User findByEmail(String email){
         return userJpaRepository.findByEmail(email);
