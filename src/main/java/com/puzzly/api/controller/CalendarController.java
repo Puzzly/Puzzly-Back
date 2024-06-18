@@ -11,6 +11,7 @@ import com.puzzly.api.dto.response.CommonCalendarContentResponseDto;
 import com.puzzly.api.dto.wrapper.RestResponse;
 import com.puzzly.api.exception.FailException;
 import com.puzzly.api.service.CalendarService;
+import com.puzzly.api.service.RedisService;
 import com.puzzly.api.util.FirebaseUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -50,6 +51,7 @@ public class CalendarController {
 
     private final CalendarService calendarService;
     private final FirebaseUtil firebaseUtil;
+    private final RedisService redisService;
 
     @PostMapping("/invitationCode")
     @Operation(summary="캘린더 초대코드 생성, 토큰필요 O", description = "캘린더 초대코드 생성, 토큰필요 O",
@@ -426,6 +428,19 @@ public class CalendarController {
     public ResponseEntity<?> postNotify() throws Exception {
         RestResponse restResponse = new RestResponse();
         firebaseUtil.sendTest();
+        return new ResponseEntity<>(restResponse,HttpStatus.OK);
+    }
+
+    @PostMapping("/test/redis")
+    @Operation(summary = "test for redis")
+    public ResponseEntity<?> postRedis() throws Exception {
+        RestResponse restResponse = new RestResponse();
+        redisService.setValues("test", "testValue", 1000000);
+        Map<String, String> map = new HashMap<>();
+        map.put("one", "1");
+        map.put("two", "2");
+        map.put("three", "3");
+        redisService.setHash("testHash", map, 1000000);
         return new ResponseEntity<>(restResponse,HttpStatus.OK);
     }
 

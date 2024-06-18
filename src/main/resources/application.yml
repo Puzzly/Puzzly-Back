@@ -104,6 +104,12 @@ spring:
     username: ENC(nvF/CuzlEIuUlC69v08Q1Q==)
     password: ENC(J9GWfqblNgjCYDx6RHrmLt1Yyx5t1SxxojI0YcDavRg=)
 
+  data:
+    redis:
+      host: localhost
+      port: 7230
+      password: ENC(Mz63mC8Ggz5AreNEJQbGjUyO0assAFscXqEx0NQzeW0=)
+
 puzzly:
   filePath: /Users/junhoon.lee/sideP/PuzzlyFile
   swagger-ui:
