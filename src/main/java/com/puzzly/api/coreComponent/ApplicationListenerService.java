@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.collections4.MapUtils;
+import org.quartz.SchedulerException;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
@@ -89,12 +90,17 @@ public class ApplicationListenerService implements ApplicationListener<ContextRe
             calendarLabelRequestDto.setOrderNum(1);
             calendarService.createCalendarLabel(securityUser, calendarLabelRequestDto);
 
-            setupRequestedCalendarContentsDummyData(calendar, securityUser);
+            try {
+                setupRequestedCalendarContentsDummyData(calendar, securityUser);
+            } catch (SchedulerException e) {
+                throw new RuntimeException(e);
+            }
         }
 
     }
 
-    public void setupRequestedCalendarContentsDummyData(Calendar calendar, SecurityUser securityUser){
+    public void setupRequestedCalendarContentsDummyData(Calendar calendar, SecurityUser securityUser)
+        throws SchedulerException {
 
         ArrayList<LocalDateTime> startDateTime = new ArrayList<>();
         startDateTime.add(customUtils.localDateTimeFromDateTimeString("2024-06-14 00:00:00"));

@@ -24,6 +24,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
+import org.quartz.SchedulerException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -190,7 +191,7 @@ public class CalendarController {
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
             )
             @RequestBody CalendarContentRequestDto contentRequestDto
-    ) throws FailException{
+    ) throws FailException, SchedulerException {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         RestResponse restResponse = new RestResponse();
 

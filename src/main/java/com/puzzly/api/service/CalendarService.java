@@ -24,6 +24,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,6 +56,7 @@ public class CalendarService {
     private final CustomUtils customUtils;
     private final ObjectMapper objectMapper;
     private final UserService userService;
+    private final JobService jobService;
     private final HttpClientService httpClientService;
 
     private final CalendarContentUserRelationJpaRepository calendarContentUserRelationJpaRepository;
@@ -268,7 +270,8 @@ public class CalendarService {
     }
 
     /** 캘린더 컨텐트 (일정) 생성 */
-    public HashMap<String, Object> createCalendarContent(SecurityUser securityUser, CalendarContentRequestDto contentRequestDto){
+    public HashMap<String, Object> createCalendarContent(SecurityUser securityUser, CalendarContentRequestDto contentRequestDto)
+        throws SchedulerException {
         HashMap<String, Object> resultMap = new HashMap<>();
         Calendar calendar = calendarJpaRepository.findById(contentRequestDto.getCalendarId()).orElse(null);
         if(calendar == null){
@@ -319,6 +322,11 @@ public class CalendarService {
         calendarContentJpaRepository.save(calendarContent);
         // 캘린더 컨텐트 응답 생성
         CalendarContentResponseDto contentResponseDto = buildCalendarContentResponseDto(calendarContent, user);
+
+        // job 등록
+//        if(contentRequestDto.getIsNotify()){
+//            jobService.scheduleAlarm(calendarContent);
+//        }
 
         // 켈린더 첨부파일 등록
         if(contentRequestDto.getCreateAttachmentsList() != null && ObjectUtils.isNotEmpty(contentRequestDto.getCreateAttachmentsList())) {
