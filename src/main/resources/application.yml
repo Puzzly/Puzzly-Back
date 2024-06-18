@@ -35,48 +35,6 @@ puzzly:
   datago:
     encoding: ENC(Rb+tcSkUi8t9VepHVoagIaxD1nIwKFSbZeKUbotC4oBbkF/+xuww1lRtHP2chQro0pOrPuJ1BY7u/k+oK6tTE9zRK81bqe0xloE9451UY8S+m0vs+K6IEhUlTnNQ+R7lGRMc1r9mgOF1FZ7+MUK4Rg==)
     decoding: ENC(/6unzWIpnNY+qii6hEyQNhiY03YLQMztJsHxLiVK8BlI7Rt2Hif4izhD9adEjXzJWpsKGRXK2xuvSixPKDbr+yYL00F3ZN1ynlbUlhA/TEkiq1k/MoXw5m2FOvERaclBo19YOI6qYx8=)
-#--- local
----
-spring:
-  config:
-    activate:
-      on-profile: local
-  h2:
-    console:
-      enabled: true
-      settings:
-        web-allow-others: true
-      path: /h2-console
-  jpa:
-    hibernate:
-      //ddl-auto: create-drop
-      ddl-auto: update
-    show-sql: true
-    generate-ddl: true
-    defer-datasource-initialization: true
-    properties:
-      hibernate:
-        format_sql: true
-  datasource:
-    driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:testdb;MODE=mysql;
-    username: sa
-    password:
-puzzly:
-  filePath: /Users/junhoon.lee/sideP/PuzzlyFile
-  swagger-ui:
-    server-url: http://localhost:9412
-logging:
-  level:
-    root: info
-    org:
-      hibernate:
-        orm:
-          jdbc:
-            bind: trace
-        type:
-          descriptor:
-            sql: trace
 #--- localPostgres
 ---
 spring:
@@ -125,47 +83,6 @@ logging:
         #type:
         #  descriptor:
         #    sql: trace
-#--- dev
----
-spring:
-  config:
-    activate:
-      on-profile: dev
-  h2:
-    console:
-      enabled: true
-      settings:
-        web-allow-others: true
-      path: /h2-console
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: true
-    generate-ddl: true
-    defer-datasource-initialization: true
-    properties:
-      hibernate:
-        format_sql: true
-  datasource:
-    driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:testdb;MODE=mysql;
-    username: sa
-    password:
-puzzly:
-  filePath: /opt/PuzzlyFile
-  swagger-ui:
-    server-url: http://146.56.118.235:9412
-logging:
-  level:
-    root: info
-    org:
-      hibernate:
-        orm:
-          jdbc:
-            bind: trace
-        type:
-          descriptor:
-            sql: trace
 #--- devPostgres
 ---
 spring:
