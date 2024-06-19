@@ -323,7 +323,7 @@ public class CalendarService {
         // 캘린더 컨텐트 응답 생성
         CalendarContentResponseDto contentResponseDto = buildCalendarContentResponseDto(calendarContent, user);
 
-        // job 등록
+        // TODO: Fe fcm key 발급 후 job 등록 테스트
 //        if(contentRequestDto.getIsNotify()){
 //            jobService.scheduleAlarm(calendarContent);
 //        }
@@ -536,9 +536,23 @@ public class CalendarService {
         if(calendarContentRequestDto.getTitle() != null) calendarContent.setTitle(calendarContentRequestDto.getTitle());
         if(calendarContentRequestDto.getMemo() != null) calendarContent.setMemo(calendarContentRequestDto.getMemo());
         if(calendarContentRequestDto.getLocation() != null)calendarContent.setLocation(calendarContentRequestDto.getLocation());
-        if(calendarContentRequestDto.getIsNotify() != null) {
-            calendarContent.setIsNotify(calendarContentRequestDto.getIsNotify());
+        if(calendarContentRequestDto.getIsNotify() != null) calendarContent.setIsNotify(calendarContentRequestDto.getIsNotify());
+        if(calendarContentRequestDto.getIsNotify() != null && calendarContentRequestDto.getIsNotify()) {
+            // TODO: 기존 알림: NONE -> 반복 일정인 경우 notifyDate 설정 계산식 필요. 현재 null 값 들어감
+            LocalDateTime originNotifyDate = plusTime(calendarContent.getNotifyDate(), calendarContent.getNotifyIntervalUnit(), calendarContent.getNotifyInterval());
+            LocalDateTime notifyDate = null;
+            if(originNotifyDate!=null) notifyDate = subtractTime(originNotifyDate, calendarContentRequestDto.getNotifyIntervalUnit(), calendarContentRequestDto.getNotifyInterval());
+            calendarContent.setNotifyIntervalUnit(calendarContentRequestDto.getNotifyIntervalUnit());
+            calendarContent.setNotifyInterval(calendarContentRequestDto.getNotifyInterval());
+            calendarContent.setNotifyType(calendarContentRequestDto.getNotifyType());
+            calendarContent.setNotifyDate(notifyDate);
+        }else{
+            calendarContent.setNotifyIntervalUnit(AlarmType.NONE);
+            calendarContent.setNotifyInterval(0);
+            calendarContent.setNotifyType(0);
+            calendarContent.setNotifyDate(null);
         }
+
         if(calendarContentRequestDto.getIsStopRecurrable()) {
             calendarContent.setIsRecurrable(false);
             calendarContentRecurringInfoJpaRepository.deleteByCalendarContent(calendarContent);
@@ -638,8 +652,12 @@ public class CalendarService {
                 .location(calendarContent.getLocation())
                 .title(calendarContent.getTitle())
                 .contentId(calendarContent.getContentId())
-                .notify(calendarContent.getIsNotify())
-                .labelId(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelId() : null)
+                .isNotify(calendarContent.getIsNotify())
+                .notifyIntervalUnit(calendarContent.getNotifyIntervalUnit())
+                .notifyInterval(calendarContent.getNotifyInterval())
+                .notifyType(calendarContent.getNotifyType())
+                .notifyDate(calendarContent.getNotifyDate())
+            .labelId(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelId() : null)
                 .labelName(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelName() : null)
                 .colorCode(calendarContent.getLabel() != null ? calendarContent.getLabel().getColorCode() : null)
                 //.notifyTime(calendarContent.getNotifyTime())
@@ -1061,7 +1079,11 @@ public class CalendarService {
                 .location(calendarContent.getLocation())
                 .title(calendarContent.getTitle())
                 .contentId(calendarContent.getContentId())
-                .notify(calendarContent.getIsNotify())
+                .isNotify(calendarContent.getIsNotify())
+                .notifyIntervalUnit(calendarContent.getNotifyIntervalUnit())
+                .notifyInterval(calendarContent.getNotifyInterval())
+                .notifyType(calendarContent.getNotifyType())
+                .notifyDate(calendarContent.getNotifyDate())
                 .labelId(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelId() : null)
                 .labelName(calendarContent.getLabel() != null ? calendarContent.getLabel().getLabelName() : null)
                 .colorCode(calendarContent.getLabel() != null ? calendarContent.getLabel().getColorCode() : null)
@@ -1082,6 +1104,23 @@ public class CalendarService {
                 return dateTime.minusHours(time);
             case DAY:
                 return dateTime.minusDays(time);
+            case NONE:
+                return null;
+            default:
+                throw new IllegalArgumentException("Unsupported TimeUnit: " + type);
+        }
+    }
+
+    public LocalDateTime plusTime(LocalDateTime dateTime, AlarmType type, int time) {
+        switch (type) {
+            case MINUTE:
+                return dateTime.plusMinutes(time);
+            case HOUR:
+                return dateTime.plusHours(time);
+            case DAY:
+                return dateTime.plusDays(time);
+            case NONE:
+                return null;
             default:
                 throw new IllegalArgumentException("Unsupported TimeUnit: " + type);
         }

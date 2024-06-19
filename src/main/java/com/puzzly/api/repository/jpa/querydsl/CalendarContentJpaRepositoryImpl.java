@@ -84,7 +84,7 @@ public class CalendarContentJpaRepositoryImpl {
                         modifyUser.userId.as("modifyUser"),
                         modifyUser.nickName.as("modifyNickName"),
                         content.startDateTime, content.endDateTime, content.memo,
-                        content.isNotify, content.location, content.createDateTime, content.modifyDateTime))
+                        content.isNotify, content.notifyIntervalUnit, content.notifyInterval, content.notifyType, content.notifyDate, content.location, content.createDateTime, content.modifyDateTime))
                 .from(content)
                 .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
                 .leftJoin(modifyUser).on(content.modifyUser.userId.eq(modifyUser.userId))

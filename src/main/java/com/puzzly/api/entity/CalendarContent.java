@@ -45,7 +45,7 @@ public class CalendarContent {
     @Column private Integer notifyInterval;
     @Comment("알림 타입: 6(native), 4(kakao), 1(email)")
     @Column private Integer notifyType;
-    @Comment("알림 시각")
+    @Comment("다음 알림 시각")
     @Column private LocalDateTime notifyDate;
     // 알림은 여러개일 수 있으므로 별도 테이블로 관리 해야함.
     //@Column private LocalDateTime notifyTime; <- onetomany
