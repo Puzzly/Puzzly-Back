@@ -35,7 +35,7 @@ public class CalendarContentJpaRepositoryImpl {
                         createUser.userId.as("create_id"), createUser.nickName.as("createNickName"),
                         modifyUser.userId.as("modifyId"), modifyUser.nickName.as("modifyNickName"),
                         content.startDateTime, content.endDateTime,
-                        content.memo, content.isNotify, content.location, content.createDateTime, content.modifyDateTime))
+                        content.memo, content.isNotify, content.notifyIntervalUnit, content.notifyInterval, content.notifyType, content.notifyDate, content.location, content.createDateTime, content.modifyDateTime))
                 .from(content)
                 .leftJoin(calendar).on(content.calendar.calendarId.eq(calendar.calendarId))
                 .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
@@ -56,7 +56,7 @@ public class CalendarContentJpaRepositoryImpl {
                         createUser.userId.as("create_id"), createUser.nickName.as("createNickName"),
                         modifyUser.userId.as("modifyId"), modifyUser.nickName.as("modifyNickName"),
                         content.startDateTime, content.endDateTime,
-                        content.memo, content.isNotify, content.location, content.createDateTime, content.modifyDateTime))
+                        content.memo, content.isNotify, content.notifyIntervalUnit, content.notifyInterval, content.notifyType, content.notifyDate, content.location, content.createDateTime, content.modifyDateTime))
                 .from(content)
                 .leftJoin(calendar).on(content.calendar.calendarId.eq(calendar.calendarId))
                 .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
