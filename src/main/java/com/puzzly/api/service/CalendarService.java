@@ -1107,7 +1107,7 @@ public class CalendarService {
             case NONE:
                 return null;
             default:
-                throw new IllegalArgumentException("Unsupported TimeUnit: " + type);
+                throw new FailException("SERVER_MESSAGE_CALENDAR_CONTENT_UNSUPPORTED_NOTIFY_INTERVAL_UNIT", 400);
         }
     }
 
@@ -1122,7 +1122,7 @@ public class CalendarService {
             case NONE:
                 return null;
             default:
-                throw new IllegalArgumentException("Unsupported TimeUnit: " + type);
+                throw new FailException("SERVER_MESSAGE_CALENDAR_CONTENT_UNSUPPORTED_NOTIFY_INTERVAL_UNIT", 400);
         }
     }
 
