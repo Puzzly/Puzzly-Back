@@ -2,11 +2,14 @@ package com.puzzly.api.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.puzzly.api.dto.request.CalendarContentRecurringInfoRequestDto;
+import com.puzzly.api.enums.AlarmType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
 import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.hibernate.annotations.Comment;
 
 @Builder
 @Getter
@@ -57,7 +60,16 @@ public class CalendarContentResponseDto {
     private LocalDateTime endDateTime;
 
     @Schema(description = "알림 여부, 생략하면 자동으로 서버에서  false로 등록", defaultValue = "false")
-    private Boolean notify;
+    private Boolean isNotify;
+    @Schema(description = "알림 설정(MINUTE: 분, HOUR: 시간, DAY: 일)", defaultValue = "MINUTE")
+    private AlarmType notifyIntervalUnit;
+    @Schema(description = "원본 알림 시각")
+    private Integer notifyInterval;
+    @Schema(description = "알림 타입: 6(native), 4(kakao), 1(email)")
+    private Integer notifyType;
+    @Schema(pattern = "2024-04-22 00:00:00", type="string", description = "알림 시각")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime notifyDate;
 
     @Schema(description = "반복정보")
     private CalendarContentRecurringInfoResponseDto recurringInfo;
