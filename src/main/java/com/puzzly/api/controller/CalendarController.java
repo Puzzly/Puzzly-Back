@@ -1,9 +1,11 @@
 package com.puzzly.api.controller;
 
 import com.puzzly.api.domain.SecurityUser;
+import com.puzzly.api.dto.request.CalendarContentCommentRequestDto;
 import com.puzzly.api.dto.request.CalendarContentRequestDto;
 import com.puzzly.api.dto.request.CalendarLabelRequestDto;
 import com.puzzly.api.dto.request.CalendarRequestDto;
+import com.puzzly.api.dto.response.CalendarContentCommentResponseDto;
 import com.puzzly.api.dto.response.CalendarContentResponseDto;
 import com.puzzly.api.dto.response.CalendarLabelResponseDto;
 import com.puzzly.api.dto.response.CalendarResponseDto;
@@ -405,6 +407,55 @@ public class CalendarController {
         RestResponse restResponse = new RestResponse();
         HashMap<String, Object> resultMap = calendarService.removeCalendarLabel(securityUser, labelId);
 
+        restResponse.setResult(resultMap);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
+
+
+    @PostMapping("/content/comment")
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:content 의 value로 캘린더 라벨 제공", content = @Content(schema = @Schema(implementation = CalendarLabelResponseDto.class)))
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
+    @Operation(summary="캘린더 일정 댓글 등록, JWT 토큰 필요", description = "캘린더 라벨 등록, JWT토큰 필요")
+    public ResponseEntity<?> createCalendarContentComment(
+        HttpServletRequest request,
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description="이 API에서 아래의 값은 생략이 가능함\n\n" +
+                "* commentlId (생략가능, 서버에서 자동으로 값을 생성함)\n\n" +
+                "* isSystem (생략가능, 생략 시 false)\n\n" +
+                "상기 명시되지 않은 값을 생략할 경우 400에러 발생\n\n" +
+                "이 API에서 주의사항은 아래와 같음\n\n" +
+                "* comment (생략되었거나 빈 값 인 경우 400에러 발생)\n\n"
+        )
+        @RequestBody CalendarContentCommentRequestDto calendarContentsComment
+    ){
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+
+        CalendarContentCommentResponseDto calendarContentCommentResponseDto = calendarService.createCalendarContentComment(securityUser, calendarContentsComment);
+        restResponse.setResult(calendarContentCommentResponseDto);
+        return new ResponseEntity<>(restResponse, HttpStatus.OK);
+    }
+
+    @GetMapping("/content/comment")
+    @ApiResponse(responseCode = "200", description = "성공시 result의 key:content 의 value로 캘린더 라벨 리스트 제공", content = @Content(schema = @Schema(implementation = CalendarContentCommentResponseDto.class)))
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_* : 서비스 로직에서 의도된 체크 목록에 걸린것")
+    @ApiResponse(responseCode = "400", description = "SERVER_MESSAGE_ 가 없는것 : 서비스 로직에 진입하지 못함. 파라미터 부족등으로 Controller에서 Spring이 튕긴것")
+    @Operation(summary="내가 참여한 캘린더 일정 댓글 조회, 토큰필요 O, JWT 토큰 필요", description = "내가 참여한 캘린더 일정의 댓글 조회, JWT토큰 필요")
+    public ResponseEntity<?> getCalendarContentCommentList(
+        HttpServletRequest request,
+        @Parameter(description="캘린더 일정 id")
+        @RequestParam(required = false, defaultValue = "1") Long contentId,
+        @Parameter(description="검색할 이전 댓글 id. 댓글 list 마지막에 호출된 commentId 값 입력. 파라미터로 주어지지 않거나 0 이면 BE에서 자동으로 최신값 셋팅")
+        @RequestParam(required = false, defaultValue = "0") Long beforeCommentId,
+        @Parameter(description="한번에 가져갈 갯수, 파라미터로 주어지지 않으면 BE에서 자동으로 50으로 셋팅")
+        @RequestParam(required = false, defaultValue = "50") int pageSize
+    ) throws FailException{
+        SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        RestResponse restResponse = new RestResponse();
+
+        HashMap<String, Object> resultMap = calendarService.getCalendarContentCommentList(securityUser, contentId, beforeCommentId, pageSize);
         restResponse.setResult(resultMap);
         return new ResponseEntity<>(restResponse, HttpStatus.OK);
     }

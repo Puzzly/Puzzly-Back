@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.puzzly.api.domain.SecurityUser;
+import com.puzzly.api.dto.request.CalendarContentCommentRequestDto;
 import com.puzzly.api.dto.request.CalendarContentRequestDto;
 import com.puzzly.api.dto.request.CalendarLabelRequestDto;
 import com.puzzly.api.dto.request.CalendarRequestDto;
@@ -52,6 +53,8 @@ public class CalendarService {
     private final CalendarContentAttachmentsJpaRepository calendarContentAttachmentsJpaRepository;
 
     private final CalendarLabelJpaRepository calendarLabelJpaRepository;
+
+    private final CalendarContentCommentJpaRepository calendarContentCommentJpaRepository;
 
     private final CustomUtils customUtils;
     private final ObjectMapper objectMapper;
@@ -936,6 +939,75 @@ public class CalendarService {
         calendarLabel.setDeleteDateTime(LocalDateTime.now());
 
         resultMap.put("labelId", labelId);
+        return resultMap;
+    }
+
+
+    /** 캘린더 일정 댓글 생성*/
+    @Transactional
+    public CalendarContentCommentResponseDto createCalendarContentComment(SecurityUser securityUser, CalendarContentCommentRequestDto calendarContentCommentRequestDto){
+        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
+        if(user == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
+        }
+        if(StringUtils.isEmpty(StringUtils.trim(calendarContentCommentRequestDto.getComment()))){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_CONTENT_COMMENT_EMPTY", 400);
+        }
+
+        CalendarContent calendarContent = calendarContentJpaRepository.findById(calendarContentCommentRequestDto.getContentId()).orElse(null);
+
+        if(calendarContent == null){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_CONTENT_NOT_EXISTS", 400);
+        }
+
+        List<CalendarContentUserRelation> calendarContentUserRelations = calendarContentUserRelationJpaRepository.findByUserAndCalendarContent(user, calendarContent);
+
+        if(calendarContentUserRelations.size() == 0){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_CONTENT_NOT_INVITATION", 400);
+        }
+
+        CalendarContentComment calendarContentComment = CalendarContentComment.builder().comment(calendarContentCommentRequestDto.getComment())
+            .calendarContent(calendarContent)
+            .createDateTime(LocalDateTime.now())
+            .createUser(user)
+            .isSystem(calendarContentCommentRequestDto.getIsSystem())
+            .build();
+
+        // 캘린더 라벨 생성
+        calendarContentCommentJpaRepository.save(calendarContentComment);
+
+        return CalendarContentCommentResponseDto.builder().commentId(calendarContentComment.getCommentId())
+            .comment(calendarContentComment.getComment())
+            .createId(user.getUserId())
+            .createNickName(user.getNickName())
+            .createDateTime(calendarContentComment.getCreateDateTime())
+            .build();
+    }
+
+    /** 캘린더 일정 댓글 리스트 조회*/
+    public HashMap<String, Object> getCalendarContentCommentList(SecurityUser securityUser, Long contentId, Long beforeCommentId, int pageSize){
+        HashMap<String, Object> resultMap = new HashMap<>();
+
+        User user = userService.findById(securityUser.getUser().getUserId()).orElse(null);
+        CalendarContent calendarContent = calendarContentJpaRepository.findById(contentId).orElse(null);
+
+        if(calendarContent == null){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_CONTENT_NOT_EXISTS", 400);
+        }
+
+        List<CalendarContentUserRelation> calendarContentUserRelations = calendarContentUserRelationJpaRepository.findByUserAndCalendarContent(user, calendarContent);
+
+        if(calendarContentUserRelations.size() == 0){
+            throw new FailException("SERVER_MESSAGE_CALENDAR_CONTENT_NOT_INVITATION", 400);
+        }
+
+        if(beforeCommentId == null || beforeCommentId == 0){
+            beforeCommentId = calendarContentCommentJpaRepository.findTopByOrderByCommentIdDesc().getCommentId();
+        }
+
+        List<CalendarContentCommentResponseDto> calendarList = calendarContentCommentJpaRepository.selectCalendarContentCommentList(contentId, beforeCommentId, pageSize);
+
+        resultMap.put("calendarList", calendarList);
         return resultMap;
     }
 
