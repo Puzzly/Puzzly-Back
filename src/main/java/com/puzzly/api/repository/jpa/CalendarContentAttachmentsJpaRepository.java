@@ -20,9 +20,9 @@ public interface CalendarContentAttachmentsJpaRepository extends JpaRepository<C
     public List<CalendarContentAttachments> findByCalendarContentAndIsDeleted(CalendarContent calendarContent, Boolean isDeleted);
     @Modifying(clearAutomatically = true)
     @Query(nativeQuery = true,
-            value = "UPDATE calendar_content_attachments tcca "+
-                    "SET tcca.is_deleted = true "+
-                    "WHERE tcca.content_id IN (SELECT content_id" +
+            value = "UPDATE calendar_content_attachments "+
+                    "SET is_deleted = true "+
+                    "WHERE content_id IN (SELECT content_id" +
                     "                           FROM calendar_content" +
                     "                           WHERE calendar_id =:calendarId)"
             )

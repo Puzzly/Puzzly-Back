@@ -11,6 +11,9 @@ import java.util.List;
 public interface CalendarContentJpaRepositoryCustom {
     public List<CalendarContentResponseDto> selectCalendarContentByDateTimeAndCalendar(Long userId, Long calendarId, LocalDateTime startDateTime, LocalDateTime limitStartDateTime, boolean isDeleted);
 
+    public List<CalendarContentResponseDto> selectCalendarContentByDateTimeAndCalendarAndIsRecurrable(Long userId, Long calendarId, LocalDateTime startDateTime, LocalDateTime limitStartDateTime, boolean isDeleted, boolean isRecurrable);
+
+    public List<CalendarContentResponseDto> selectCalendarContentByCalendarAndIsRecurrableAndBeforeEndConditionDate(Long userId, Long calendarId, LocalDateTime startDateTime, LocalDateTime limitStartDateTime, boolean isDeleted, boolean isRecurrable);
     public List<CalendarContentResponseDto> selectCalendarContentByDateTime(Long userId, LocalDateTime startDateTime, LocalDateTime limitStartDateTime, boolean isDeleted);
 
     public CalendarContentResponseDto selectCalendarContentByContentId(Long contentId, Boolean isDeleted);

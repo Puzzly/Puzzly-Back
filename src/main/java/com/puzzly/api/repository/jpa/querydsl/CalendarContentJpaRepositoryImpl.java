@@ -1,10 +1,7 @@
 package com.puzzly.api.repository.jpa.querydsl;
 
 import com.puzzly.api.dto.response.CalendarContentResponseDto;
-import com.puzzly.api.entity.QCalendar;
-import com.puzzly.api.entity.QCalendarContent;
-import com.puzzly.api.entity.QCalendarUserRelation;
-import com.puzzly.api.entity.QUser;
+import com.puzzly.api.entity.*;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
@@ -40,8 +37,66 @@ public class CalendarContentJpaRepositoryImpl {
                 .leftJoin(calendar).on(content.calendar.calendarId.eq(calendar.calendarId))
                 .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
                 .leftJoin(modifyUser).on(content.modifyUser.userId.eq(modifyUser.userId))
-                .where(content.isDeleted.eq(isDeleted), eqCalendar(calendarId),
-                        content.endDateTime.goe(startDateTime), content.endDateTime.loe(limitStartDateTime))
+                // https://gist.github.com/timowest/5098112 : and 수행 후 or 수행
+                .where(eqCalendar(calendarId),content.isDeleted.eq(isDeleted),
+                        // 시작기간
+                        // 일정시작 <= 검색시작기간 / 검색시작기간 <= 일정종료
+                        content.startDateTime.loe(startDateTime).and(content.endDateTime.goe(startDateTime))
+                        // 종료기간
+                        // 일정시작 <= 검색종료기간 / 검색종료기간 <= 일정종료
+                        .or(content.startDateTime.loe(limitStartDateTime).and(content.endDateTime.goe(limitStartDateTime)))
+                )
+                .fetch();
+    }
+    public List<CalendarContentResponseDto> selectCalendarContentByDateTimeAndCalendarAndIsRecurrable(Long userId, Long calendarId, LocalDateTime startDateTime, LocalDateTime limitStartDateTime, boolean isDeleted, boolean isRecurrable){
+        QUser createUser = new QUser("createUser");
+        QUser modifyUser = new QUser("modifyUser");
+        QCalendar calendar = QCalendar.calendar;
+        QCalendarContent content = new QCalendarContent("content");
+        return jpaQueryFactory
+                .select(Projections.fields(CalendarContentResponseDto.class,
+                        content.contentId, content.calendar.calendarId, calendar.calendarName, content.title,
+                        createUser.userId.as("create_id"), createUser.nickName.as("createNickName"),
+                        modifyUser.userId.as("modifyId"), modifyUser.nickName.as("modifyNickName"),
+                        content.startDateTime, content.endDateTime,
+                        content.memo, content.isNotify, content.location, content.createDateTime, content.modifyDateTime))
+                .from(content)
+                .leftJoin(calendar).on(content.calendar.calendarId.eq(calendar.calendarId))
+                .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
+                .leftJoin(modifyUser).on(content.modifyUser.userId.eq(modifyUser.userId))
+                // https://gist.github.com/timowest/5098112 : and 수행 후 or 수행
+                .where(eqCalendar(calendarId),content.isDeleted.eq(isDeleted),content.isRecurrable.eq(isRecurrable),
+                        // 시작기간
+                        // 일정시작 <= 검색시작기간 / 검색시작기간 <= 일정종료
+                        content.startDateTime.loe(startDateTime).and(content.endDateTime.goe(startDateTime))
+                                // 종료기간
+                                // 일정시작 <= 검색종료기간 / 검색종료기간 <= 일정종료
+                                .or(content.startDateTime.loe(limitStartDateTime).and(content.endDateTime.goe(limitStartDateTime)))
+                )
+                .fetch();
+    }
+    public List<CalendarContentResponseDto> selectCalendarContentByCalendarAndIsRecurrableAndBeforeEndConditionDate(Long userId, Long calendarId, LocalDateTime startDateTime, LocalDateTime limitStartDateTime, boolean isDeleted, boolean isRecurrable){
+        QUser createUser = new QUser("createUser");
+        QUser modifyUser = new QUser("modifyUser");
+        QCalendar calendar = QCalendar.calendar;
+        QCalendarContent content = new QCalendarContent("content");
+        QCalendarContentRecurringInfo ccri = new QCalendarContentRecurringInfo("ccri");
+        return jpaQueryFactory
+                .select(Projections.fields(CalendarContentResponseDto.class,
+                        content.contentId, content.calendar.calendarId, calendar.calendarName, content.title,
+                        createUser.userId.as("create_id"), createUser.nickName.as("createNickName"),
+                        modifyUser.userId.as("modifyId"), modifyUser.nickName.as("modifyNickName"),
+                        content.startDateTime, content.endDateTime,
+                        content.memo, content.isNotify, content.location, content.createDateTime, content.modifyDateTime))
+                .from(content)
+                .leftJoin(calendar).on(content.calendar.calendarId.eq(calendar.calendarId))
+                .leftJoin(createUser).on(content.createUser.userId.eq(createUser.userId))
+                .leftJoin(modifyUser).on(content.modifyUser.userId.eq(modifyUser.userId))
+                // https://gist.github.com/timowest/5098112 : and 수행 후 or 수행
+                .where(eqCalendar(calendarId),content.isDeleted.eq(isDeleted),content.isRecurrable.eq(isRecurrable),
+                        // 일정의 반복 종료 조건 날짜가 아직 안지났을때
+                        ccri.conditionEndDate.goe(startDateTime.toLocalDate())
+                )
                 .fetch();
     }
     public List<CalendarContentResponseDto> selectCalendarContentByDateTime(Long userId, LocalDateTime startDateTime, LocalDateTime limitStartDateTime, boolean isDeleted){

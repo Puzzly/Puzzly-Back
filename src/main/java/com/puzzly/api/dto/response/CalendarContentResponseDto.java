@@ -71,6 +71,8 @@ public class CalendarContentResponseDto {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime notifyDate;
 
+    @Schema(description = "반복여부")
+    private Boolean isRecurrable;
     @Schema(description = "반복정보")
     private CalendarContentRecurringInfoResponseDto recurringInfo;
     @Schema(description = "참여자 정보")

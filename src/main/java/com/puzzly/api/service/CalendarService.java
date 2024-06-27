@@ -21,6 +21,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.core5.http.NameValuePair;
@@ -31,11 +32,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
+import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -77,6 +83,7 @@ public class CalendarService {
     private final String DATAGO_URI_PATH = "http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService";
     private final String DATAGO_PATH_HOLIDAY = "/getRestDeInfo";
 
+    /** 초대 */
     /** 초대코드 생성*/
     public HashMap<String, String> createInviteCode(SecurityUser securityUser, Long calendarId) throws FailException, Exception{
         HashMap<String, String> result = new HashMap<>();
@@ -149,6 +156,8 @@ public class CalendarService {
         resultMap.put("calendar", calendarResponseDto);
         return resultMap;
     }
+
+    /** 캘린더 */
     /** 캘린더 생성*/
     @Transactional
     public HashMap<String, Object> createCalendar(SecurityUser securityUser, CalendarRequestDto calendarRequestDto){
@@ -237,6 +246,7 @@ public class CalendarService {
 
     /** 캘린더 삭제 */
     @Transactional
+    //TODO 캘린더 삭제에서 컨텐츠 반복정보 삭제안됨
     public HashMap<String, Object> removeCalendar(SecurityUser securityUser, Long calendarId) throws FailException{
         HashMap<String, Object> resultMap = new HashMap<>();
         Calendar calendar = calendarJpaRepository.findById(calendarId).orElse(null);
@@ -272,6 +282,7 @@ public class CalendarService {
         return resultMap;
     }
 
+    /** 컨텐트 */
     /** 캘린더 컨텐트 (일정) 생성 */
     public HashMap<String, Object> createCalendarContent(SecurityUser securityUser, CalendarContentRequestDto contentRequestDto)
         throws SchedulerException {
@@ -311,7 +322,7 @@ public class CalendarService {
                 .createDateTime(LocalDateTime.now())
                 .location(contentRequestDto.getLocation())
                 .isDeleted(false)
-                .isRecurrable(contentRequestDto.getRecurringInfo() != null ? true : false)
+                .isRecurrable(contentRequestDto.getIsRecurrable())
                 .isNotify(contentRequestDto.getIsNotify())
                 .notifyIntervalUnit(contentRequestDto.getIsNotify() ? contentRequestDto.getNotifyIntervalUnit() : AlarmType.NONE)
                 .notifyInterval(contentRequestDto.getIsNotify() ? contentRequestDto.getNotifyInterval() : 0)
@@ -320,7 +331,6 @@ public class CalendarService {
                 //.notifyTime(contentRequestDto.getNotify() ? contentRequestDto.getNotifyTime() == null ? null : contentRequestDto.getNotifyTime(): null)
                 .memo(contentRequestDto.getMemo())
                 .label(calendarLabel)
-                //.calendarLabel()
                 .build();
         calendarContentJpaRepository.save(calendarContent);
         // 캘린더 컨텐트 응답 생성
@@ -354,11 +364,9 @@ public class CalendarService {
                 }
             });
             contentResponseDto.setAttachmentsList(attachmentsList);
-
         }
         // 반복 정보 입력
         if(calendarContent.getIsRecurrable()){
-
             CalendarContentRecurringInfo recurringInfo = CalendarContentRecurringInfo.builder()
                     .calendarContent(calendarContent)
                     .recurringType(contentRequestDto.getRecurringInfo().getRecurringType())
@@ -366,10 +374,12 @@ public class CalendarService {
                     .recurringDate(contentRequestDto.getRecurringInfo().getRecurringDate())
                     .recurringDay(contentRequestDto.getRecurringInfo().getRecurringDay())
                     .conditionCount(contentRequestDto.getRecurringInfo().getConditionCount())
-                    .currentCount((contentRequestDto.getRecurringInfo().getConditionCount()) != null ? 0L : null)
+                    .currentCount((contentRequestDto.getRecurringInfo().getConditionCount()) != null ? 0 : null)
                     .conditionEndDate((contentRequestDto.getRecurringInfo().getConditionEndDate()))
                     .isDeleted(false)
                     .build();
+            //TODO EndDate랑 Count가 동시에 들어올 수도 있음, 이때 endDate == null? 로 처리하는건 부족해보임
+            recurringInfo.setConditionEndDate(calculateEndConditionDate(calendarContent.getStartDateTime(), recurringInfo));
             calendarContentRecurringInfoJpaRepository.save(recurringInfo);
             contentResponseDto.setRecurringInfo(CalendarContentRecurringInfoResponseDto.builder()
                     .calendarContentId(calendarContent.getContentId())
@@ -419,18 +429,34 @@ public class CalendarService {
 
         if(calendarIds != null && calendarIds.size() >=0) {
             List<CalendarContentResponseDto> responseCalendarContentList = new ArrayList<>();
+
+            /** CUSTOM 캘린더 일정 조회 */
             for (Long calendarId : calendarIds) {
+                // 캘린더 존재여부 조회
                 Calendar calendar = calendarJpaRepository.findById(calendarId).orElse(null);
                 if (calendar == null) {
                     throw new FailException("SERVER_MESSAGE_CALENDAR_NOT_EXISTS", 400);
                 }
+                // 캘린더 참여여부 조회
                 CalendarUserRelation calendarUserRel = calendarUserRelationJpaRepository.findCalendarUserRelation(calendar, securityUser.getUser(), false);
                 if (calendarUserRel == null) {
                     throw new FailException("SERVER_MESSAGE_USER_NOT_PARTICIPATE_IN", 404);
                 }
 
-                List<CalendarContentResponseDto> calendarContentList = calendarContentJpaRepository.selectCalendarContentByDateTimeAndCalendar(securityUser.getUser().getUserId(), calendarId, startTargetDateTime, limitTargetDateTime, isDeleted);
+                // 캘린더 조회 -> 반복 X
+                List<CalendarContentResponseDto> calendarContentList = calendarContentJpaRepository.selectCalendarContentByDateTimeAndCalendarAndIsRecurrable(securityUser.getUser().getUserId(), calendarId, startTargetDateTime, limitTargetDateTime, isDeleted, false);
                 calendarContentList.forEach((calendarContent) -> {
+                    calendarContent.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(calendarContent.getContentId(), false));
+                    // 참가자 정보
+                    calendarContent.setUserList(userService.selectUserByCalendarContentRelation(calendarContent.getContentId(), false));
+/*                    // 반복정보
+                    calendarContent.setRecurringInfo(calendarContentRecurringInfoJpaRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
+                    responseCalendarContentList.add(calendarContent);*/
+                });
+
+                // 캘린더 조회 -> 반복 O
+                List<CalendarContentResponseDto> rec = calendarContentJpaRepository.selectCalendarContentByCalendarAndIsRecurrableAndBeforeEndConditionDate(securityUser.getUser().getUserId(), calendarId, startTargetDateTime, limitTargetDateTime, isDeleted, true);
+                rec.forEach((calendarContent) -> {
                     calendarContent.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(calendarContent.getContentId(), false));
                     // 참가자 정보
                     calendarContent.setUserList(userService.selectUserByCalendarContentRelation(calendarContent.getContentId(), false));
@@ -438,30 +464,13 @@ public class CalendarService {
                     calendarContent.setRecurringInfo(calendarContentRecurringInfoJpaRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
                     responseCalendarContentList.add(calendarContent);
                 });
+
             }
 
             resultMap.put("contentList", responseCalendarContentList);
         }
-        /* 조회방식 변경 (param 없으면 전체다조회 -> param이 반드시 주어져야 함)
-        else {
-            List<CalendarContentResponseDto> calendarContentList = calendarContentJpaRepository.selectCalendarContentByDateTime(securityUser.getUser().getUserId(), startTargetDateTime, limitTargetDateTime, isDeleted);
-            calendarContentList.forEach((calendarContent) -> {
-                calendarContent.setAttachmentsList(calendarContentAttachmentsJpaRepository.selectCalendarContentAttachmentsByContentId(calendarContent.getContentId(), false));
-                // 참가자 정보
-                calendarContent.setUserList(userService.selectUserByCalendarContentRelation(calendarContent.getContentId(), false));
-                // 반복정보
-                calendarContent.setRecurringInfo(calendarContentRecurringInfoJpaRepository.selectCalendarContentRecurringInfo(calendarContent.getContentId(), false));
-            });
-            resultMap.put("contentList", calendarContentList);
-        }
-        */
-        // 만약 조회기간이 4주 이내라면
+        /** 공휴일 정보 */
         long monthDiff = startTargetDateTime.until(limitTargetDateTime, ChronoUnit.MONTHS);
-        // 이번 달 내에서라면 0, 다음달까지 넘어가면 1
-        // 전체기간 내에서 제공하는 방향으로 변경
-        //if(monthDiff<=1){
-            // 공통 캘린더 제공
-
             int idx = 0;
             // 기존 싱크 기록 조회
             do {
@@ -559,8 +568,21 @@ public class CalendarService {
         if(calendarContentRequestDto.getIsStopRecurrable()) {
             calendarContent.setIsRecurrable(false);
             calendarContentRecurringInfoJpaRepository.deleteByCalendarContent(calendarContent);
-        } else if (calendarContentRequestDto.getRecurringInfo() != null){
-            calendarContent.setIsRecurrable(true);
+        } else if (calendarContent.getIsRecurrable() && calendarContentRequestDto.getRecurringInfo() != null){
+            //calendarContent.setIsRecurrable(true);
+            CalendarContentRecurringInfo recurringInfo = CalendarContentRecurringInfo.builder()
+                    .calendarContent(calendarContent)
+                    .recurringType(calendarContentRequestDto.getRecurringInfo().getRecurringType())
+                    .period(calendarContentRequestDto.getRecurringInfo().getPeriod())
+                    .recurringDate(calendarContentRequestDto.getRecurringInfo().getRecurringDate())
+                    .recurringDay(calendarContentRequestDto.getRecurringInfo().getRecurringDay())
+                    .conditionCount(calendarContentRequestDto.getRecurringInfo().getConditionCount())
+                    .currentCount((calendarContentRequestDto.getRecurringInfo().getConditionCount()) != null ? 0 : null)
+                    .conditionEndDate((calendarContentRequestDto.getRecurringInfo().getConditionEndDate()))
+                    .isDeleted(false)
+                    .build();
+            recurringInfo.setConditionEndDate(calculateEndConditionDate(calendarContent.getStartDateTime(), recurringInfo));
+            calendarContentRecurringInfoJpaRepository.save(recurringInfo);
         }
         if(calendarLabel != null || calendarContentRequestDto.getLabelId() == 0) calendarContent.setLabel(calendarLabel);
         calendarContentJpaRepository.save(calendarContent);
@@ -618,7 +640,7 @@ public class CalendarService {
                         .recurringDate(calendarContentRequestDto.getRecurringInfo().getRecurringDate())
                         .recurringDay(calendarContentRequestDto.getRecurringInfo().getRecurringDay())
                         .conditionCount(calendarContentRequestDto.getRecurringInfo().getConditionCount())
-                        .currentCount((calendarContentRequestDto.getRecurringInfo().getConditionCount()) != null ? 0L : null)
+                        .currentCount((calendarContentRequestDto.getRecurringInfo().getConditionCount()) != null ? 0 : null)
                         .conditionEndDate((calendarContentRequestDto.getRecurringInfo().getConditionEndDate()))
                         .isDeleted(false)
                         .build();
@@ -1198,6 +1220,206 @@ public class CalendarService {
         }
     }
 
+    public LocalDate calculateEndConditionDate(LocalDateTime startDateTime, CalendarContentRecurringInfo recurringInfo){
+        logger.info("[DEV] 종료날짜 계산");
+        // 종료 일정 지정시 연산 필요 X
+        if(recurringInfo.getConditionEndDate() != null){
+            logger.info("[DEV] 종료날짜 지정 : " + customUtils.localDateStringFromLocalDate(recurringInfo.getConditionEndDate()));
+            return recurringInfo.getConditionEndDate();
+        }
+        int conditionCount = recurringInfo.getConditionCount();
+        LocalDate endConditionDate = null;
+        int endDateDayCount = 0;
+        Integer period = recurringInfo.getPeriod();
+        switch(recurringInfo.getRecurringType()){
+            /** 일 기준 반복*/
+            case "D":
+                // 반복횟수 * 간격 = 반복종료까지의 날짜
+                /** 연산부 */
+                // 첫날도 반복 1일차
+                endDateDayCount = period * (conditionCount-1);
+                endConditionDate = startDateTime.toLocalDate().plusDays(endDateDayCount);
+
+                /** 검증부 */
+                logger.info("[DEV] * 일단위 * 종료날짜 계산 : " + customUtils.localDateStringFromLocalDate(endConditionDate));
+                logger.info("[DEV] * 일단위 *검증");
+                for(int i=0; i<conditionCount; i++){
+                    logger.info(String.format("[DEV]   %d 회차 반복 : %s 일", (i+1), startDateTime.toLocalDate().plusDays(i*period)));
+                }
+                logger.info("[DEV] 검증 종료");
+                return endConditionDate;
+            /** 주 기준 반복*/
+            case "W" :
+                /** 연산부 */
+                // 일정을 반복 수행할 요일들
+                ArrayList<Integer> recurringDate = (ArrayList<Integer>) Arrays.stream(StringUtils.split(recurringInfo.getRecurringDate(), ","))
+                        .map(dateString -> Integer.valueOf(dateString))
+                        .sorted()
+                        .collect(Collectors.toList());
+                // 반복요일 중 시작날짜 요일 찾기
+                int recurringDateIdx = recurringDate.indexOf(startDateTime.getDayOfWeek().getValue());
+                if(recurringDateIdx == -1) {
+                    // 만약 시작 날이 반복주차에 포함이 안되어있다면
+                    // TODO 예외처리 따로 필요함.
+                    throw new FailException("SERVER_MESSAGE_START_DATE_NOT_IN_RECURRING_DATE", 400);
+                }
+
+                // 몇주 반복해야 하는가?
+                // 시작날도 1회 반복임
+                int totalWeek = (conditionCount -1 ) / recurringDate.size();
+                // TODO 시작날짜 + 주반복
+                // 종료날짜 = 시작날짜 + (주반복)주 + (나머지 일로 발생하는 초과 주) + 나머지 요일 반복
+                // 시작요일로부터 + 꽉 채운 주를 넘어서서 몇번 더 해야하는가?
+                int countOverWeek = (recurringDateIdx + ((conditionCount -1) % recurringDate.size())) / recurringDate.size();
+                // 시작 요일로부터 + 몇 번째 반복 요일 idx를 참조해야 하는가?
+                int countOverDayIdx = (recurringDateIdx + ((conditionCount -1) % recurringDate.size())) % recurringDate.size();
+                // 주기 * (몇주 반복 + 꽉 채운 주를 넘어서 다음주 넘어가는지)
+                if(totalWeek == 0){
+                    // 꽉 채운 주차가 없다면 ?
+                    int plusDays = (period * countOverWeek * 7) - startDateTime.getDayOfWeek().getValue() + recurringDate.get(countOverDayIdx);
+                    //int plusDays = (period * countOverWeek) - startDateTime.getDayOfWeek().getValue() + recurringDate.get(countOverDayIdx);
+                    endConditionDate = startDateTime.toLocalDate().plusDays(plusDays);
+                } else {
+                    // 종료일 = 시작일 + (주 반복일) + (주차넘길경우 ? 그주의 일요일 + 초과해서 반복하는 요일 : 전주의 일요일 + 초과날 idx)
+                    int plusDays = (totalWeek * period * 7) + (countOverWeek * period * 7) - startDateTime.getDayOfWeek().getValue() + recurringDate.get(countOverDayIdx);
+                    //plusDays = countOverWeek == 1 ? plusDays + 7 - startDateTime.getDayOfWeek().getValue() + recurringDate.get(countOverDayIdx) : plusDays + recurringDate.get(countOverDayIdx) - startDateTime.getDayOfWeek().getValue();
+                    endConditionDate = startDateTime.toLocalDate().plusDays(plusDays);
+                }
+                logger.info("[DEV] *주단위* 종료날짜 계산 : " + customUtils.localDateStringFromLocalDate(endConditionDate));
+
+                /** 검증부 */
+                logger.info("[DEV] *주단위* 검증");
+                logger.info("[DEV] period (n주마다) : " + period);
+                logger.info("[DEV] 반복 일 : " + ArrayUtils.toString(recurringDate));
+
+                int verifyrecurringDateIdx = recurringDate.indexOf(startDateTime.getDayOfWeek().getValue());
+                LocalDate verifyDate = startDateTime.toLocalDate().minusDays(startDateTime.getDayOfWeek().getValue());
+                if(verifyrecurringDateIdx != -1){
+                    for(int i=1; i<=conditionCount; i++){
+                        // 주차가산
+                        int verifyWeekCof = ((recurringDateIdx + (i-1)) / recurringDate.size()) *7;
+                        // Date 가산
+                        int verifyDateCof = recurringDate.get(((recurringDateIdx + (i-1))% recurringDate.size()));
+                        int verifyPlusDays = verifyDateCof + verifyWeekCof * period;
+                        // 시작 기준점을 그냥 전주 일요일로 잡아버리자
+                        logger.info(String.format("[DEV] %d 회차 반복 : %s 일. %s", i, verifyDate.plusDays(verifyPlusDays),verifyDate.plusDays(verifyPlusDays).getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.KOREA)));
+                        //logger.info(String.format("[DEV] %d 회차 반복 : %s 일. %s", i, customUtils.localDateStringFromLocalDate(startDateTime.toLocalDate().plusDays(dateCoefficient)), startDateTime.toLocalDate().plusDays(dateCoefficient).getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.KOREA)));
+                    }
+                    logger.info("[DEV] 검증 종료");
+                } else {
+                    // 만약 시작 날이 반복주차에 포함이 안되어있다면
+                    // TODO 예외처리 따로 필요함.
+                    throw new FailException("SERVER_MESSAGE_START_DATE_NOT_IN_RECURRING_DATE", 400);
+                }
+                return endConditionDate;
+            /** 월 단위 반복*/
+            case "M" :
+                //LocalDate temporal = startDateTime.toLocalDate().plusMonths(recurringInfo.getConditionCount());
+                if(recurringInfo.getPeriod().equals(0)) {
+                    /** 매달 특정 일에 반복*/
+                    /** 연산부 */
+                    // 첫 일정 시작일도 1회차 반복임
+                    endDateDayCount = conditionCount-1 ;
+                    // 매 달 n 일 반복   Integer recurringDay = 달에 한번
+                    endConditionDate = startDateTime.toLocalDate().plusMonths(endDateDayCount);
+
+                    /** 검증부 */
+                    logger.info("[DEV] * 달단위 특정일반복 * 종료날짜 계산 : " + customUtils.localDateStringFromLocalDate(endConditionDate));
+                    logger.info("[DEV] * 달단위 *검증");
+                    for(int i=0; i<conditionCount; i++){
+                        logger.info(String.format("[DEV] %d 회차 반복 : %s 일. %s", (i+1), startDateTime.toLocalDate().plusMonths(i), startDateTime.toLocalDate().plusMonths(i).getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.KOREA)));
+                    }
+                    logger.info("[DEV] 검증 종료");
+                } else {
+                    /** 연산부 */
+                    // 반복 횟수 == 경과 개월수, 첫 일정 수행일도 첫번째 반복
+                    int totalMonth = conditionCount -1;
+                    // 시작 요일
+                    int startDateInteger = startDateTime.getDayOfWeek().getValue();
+                    // 시작 요일의 n번째 수 반복
+                    int startDateCount = (int) Math.ceil((double)startDateTime.toLocalDate().getDayOfMonth()/(double)7) -1;
+                    int endDayCoefficient = 0;
+                    if(startDateCount != 4) {
+                        // 반복 종료 월
+                        //LocalDate endMonth = LocalDate.of(startDateTime.toLocalDate().plusMonths(totalMonth).getYear(), startDateTime.toLocalDate().plusMonths(totalMonth).getMonth(), 1);
+                        LocalDate endMonth = LocalDate.of(startDateTime.toLocalDate().plusMonths(totalMonth).getYear(), startDateTime.toLocalDate().plusMonths(totalMonth).getMonth(), 1);
+                        // 반복 종료 월 1일의 요일
+                        int endMonthdateInteger = endMonth.getDayOfWeek().getValue();
+                        // 반복 종료 월의 1일로부터의 날짜계수
+                        endDayCoefficient = startDateInteger < endMonthdateInteger ? 7 - (endMonthdateInteger - startDateInteger) : endMonthdateInteger == startDateInteger ? 0 : (endMonthdateInteger - startDateInteger);
+                        endConditionDate = endMonth.plusDays(endDayCoefficient).plusWeeks(startDateCount);
+                    } else {
+                        // 5번째 일 경우 -> 마지막 해당 요일로 가야함.
+                        LocalDate endMonth = LocalDate.of(startDateTime.toLocalDate().plusMonths(totalMonth).getYear(), startDateTime.toLocalDate().plusMonths(totalMonth).getMonth(), 1);
+                        // 마지막 날의 요일
+                        int endMonthLastdateInteger = endMonth.withDayOfMonth(endMonth.lengthOfMonth()).getDayOfWeek().getValue();
+                        // 마지막 날로부터 dateIntger
+                        // 마지막날이 목요일이면 월 (-3), 화(-2), 수(-1), 목(-0), 금(-6), 토(-5), 일(-4)
+                        endDayCoefficient = startDateInteger < endMonthLastdateInteger ? (endMonthLastdateInteger - startDateInteger) : startDateInteger == endMonthLastdateInteger ? 0 : (11 - startDateInteger);
+                        endConditionDate = LocalDate.of(endMonth.getYear(), endMonth.getMonth(), endMonth.withDayOfMonth(endMonth.lengthOfMonth()).getDayOfMonth() - endDayCoefficient);
+                    }
+                    logger.info("[DEV] * 달단위 특정주차 특정요일 * 종료날짜 계산 : " + customUtils.localDateStringFromLocalDate(endConditionDate));
+
+                    /** 검증부 */
+                    logger.info("[DEV] * 달단위 *검증");
+                    logger.info(String.format("[DEV] %d 회차 반복 : %s 일. %s", 1, customUtils.localDateStringFromLocalDate(startDateTime.toLocalDate())), startDateTime.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.KOREA));
+                    LocalDate devVerify2 = null;
+                    for(int i=2; i<conditionCount; i++){
+                        devVerify2 = LocalDate.of(devVerify2.plusMonths(i-1).getYear(),devVerify2.plusMonths(i-1).getMonth(), 1);
+                        int devVefDate = devVerify2.getDayOfWeek().getValue();
+                        if(startDateCount != 4) {
+                            devVerify2 = LocalDate.of(devVerify2.getYear(), devVerify2.getMonth(), devVerify2.plusDays(endDayCoefficient).plusWeeks(startDateCount).getDayOfMonth());
+                        }else {
+                            devVerify2 = LocalDate.of(devVerify2.getYear(), devVerify2.getMonth(), devVerify2.withDayOfMonth(devVerify2.lengthOfMonth()).getDayOfMonth() - endDayCoefficient);
+                        }
+                        // 2번째반복
+                        logger.info(String.format("[DEV] %d 회차 반복, %s : %s 일. %s", i, startDateCount != 4 ? "마지막 요일에 반복" : startDateCount+" 번째 요일에 반복" ,devVerify2, devVerify2.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.KOREA)));
+                    }
+                    logger.info("[DEV] 검증 종료");
+                }
+                return endConditionDate;
+            case "Y":
+                // 첫 일정일도 1회차 반복임
+                endDateDayCount = conditionCount-1;
+                // 매년 지정일 반복
+                endConditionDate = startDateTime.toLocalDate().plusYears(recurringInfo.getConditionCount());
+                logger.info("[DEV] *연단위* 종료날짜 계산 : " + customUtils.localDateStringFromLocalDate(endConditionDate));
+                logger.info("[DEV] *연단위* 검증");
+                for(int i=0; i<conditionCount; i++){
+                    logger.info("[DEV] %d 회차 반복 : %s 일. %s", (i+1), startDateTime.plusYears(i));
+                }
+                return endConditionDate;
+            default:
+                throw new FailException("SERVER_MESSAGE_UNVERIFIABLE_RECURRING_TYPE", 400);
+        }
+    }
+
+    // 검증용 인데 개발에 써도 되겠는데..
+    public int getCurrentWeekOfMonth(LocalDate localDate) {
+        // 한 주의 시작은 월요일이고, 첫 주에 4일이 포함되어있어야 첫 주 취급 (목/금/토/일)
+        WeekFields weekFields = WeekFields.of(DayOfWeek.MONDAY, 4);
+
+        int weekOfMonth = localDate.get(weekFields.weekOfMonth());
+
+        // 첫 주에 해당하지 않는 주의 경우 전 달 마지막 주차로 계산
+        if (weekOfMonth == 0) {
+            // 전 달의 마지막 날 기준
+            LocalDate lastDayOfLastMonth = localDate.with(TemporalAdjusters.firstDayOfMonth()).minusDays(1);
+            return getCurrentWeekOfMonth(lastDayOfLastMonth);
+        }
+
+        // 이번 달의 마지막 날 기준
+        LocalDate lastDayOfMonth = localDate.with(TemporalAdjusters.lastDayOfMonth());
+        // 마지막 주차의 경우 마지막 날이 월~수 사이이면 다음달 1주차로 계산
+        if (weekOfMonth == lastDayOfMonth.get(weekFields.weekOfMonth()) && lastDayOfMonth.getDayOfWeek().compareTo(DayOfWeek.THURSDAY) < 0) {
+            LocalDate firstDayOfNextMonth = lastDayOfMonth.plusDays(1); // 마지막 날 + 1일 => 다음달 1일
+            return getCurrentWeekOfMonth(firstDayOfNextMonth);
+        }
+        return weekOfMonth;
+        //return localDate.getMonthValue() + "월 " + weekOfMonth + "주차";
+    }
+
 
 
 }
+
