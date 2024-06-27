@@ -26,14 +26,14 @@ public class CalendarContentRecurringInfoRequestDto {
     @Schema(description =" recurringType M,W,Y 반복주기, M : 0 -> 매월 1,2,3,4 -> 매월 n째주")
     private Integer period;
 
-    @Schema(description = "반복 요일 0:일, 6:토 구분자 ,")
+    @Schema(description = "반복 요일 1 : 월 , 7:일 구분자 ,")
     private String recurringDate;
 
     @Schema(description = "반복할 일자")
     private Integer recurringDay;
 
     @Schema(description = "반복 횟수 종료 조건")
-    private Long conditionCount;
+    private Integer conditionCount;
 
     @Schema(pattern = "2024-04-22", type="string", description = "일정이 종료되는 날짜")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")

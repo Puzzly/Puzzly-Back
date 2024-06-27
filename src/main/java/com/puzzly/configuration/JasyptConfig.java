@@ -15,7 +15,7 @@ public class JasyptConfig {
     public StringEncryptor stringEncryptor() {
         PooledPBEStringEncryptor encryptor = new PooledPBEStringEncryptor();
         SimpleStringPBEConfig config = new SimpleStringPBEConfig();
-        config.setPassword(""); // 암호화 사용할 키 -> 중요
+        config.setPassword("_puzzly_jasypt_06!6_"); // 암호화 사용할 키 -> 중요
         config.setAlgorithm("PBEWithMD5AndDES"); // 사용할 알고리즘
         config.setKeyObtentionIterations("1000");
         config.setPoolSize("1");

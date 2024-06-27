@@ -59,6 +59,8 @@ public class CalendarContentResponseDto {
     @Schema(description = "알림 여부, 생략하면 자동으로 서버에서  false로 등록", defaultValue = "false")
     private Boolean notify;
 
+    @Schema(description = "반복여부")
+    private Boolean isRecurrable;
     @Schema(description = "반복정보")
     private CalendarContentRecurringInfoResponseDto recurringInfo;
     @Schema(description = "참여자 정보")
