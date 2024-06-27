@@ -33,7 +33,7 @@ public class CalendarContentRecurringInfo {
     // recurrying Type : period
     // D               : 2  = 매 4일마다
     // W               : 2  = 매 2주마다 + date
-    //                                 + [0,1,4]   -> 매 2주마다 0(일), 1(월), 4(목)
+    //                                 + [1,2,5]   -> 매 2주마다 1(월), 2(화), 5(금)
     // M               : 0  = 매달 + day
     //                            + 4        = 매달 4일에 반복
     // M               : 3  = 매 월 3째주 + date
@@ -44,13 +44,14 @@ public class CalendarContentRecurringInfo {
     @Comment("반복 요일 구분자 , ")
     @Column private String recurringDate;
 
+    @Deprecated
     @Comment("반복할 일자")
     @Column private Integer recurringDay;
 
     @Comment("반복 횟수 종료조건")
-    @Column private Long conditionCount;
+    @Column private Integer conditionCount;
     @Comment("현재까지 반복 횟수")
-    @Column private Long currentCount;
+    @Column private Integer currentCount;
     @Comment("반복 날짜 종료 조건")
     @Column private LocalDate conditionEndDate;
 

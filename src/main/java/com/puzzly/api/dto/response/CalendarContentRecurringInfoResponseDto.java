@@ -30,7 +30,7 @@ public class CalendarContentRecurringInfoResponseDto {
     private Integer recurringDay;
 
     @Schema(description = "반복 횟수 종료 조건")
-    private Long conditionCount;
+    private Integer conditionCount;
 
     @Schema(pattern = "2024-04-22", type="string", description = "일정이 종료되는 날짜")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")

@@ -198,4 +198,7 @@ public class CustomUtils {
         return LocalDate.now().format(formatDateTime);
     }
 
+    public String localDateTimeStringFromLocalDateTime(LocalDateTime localDateTime) { return localDateTime.format(formatDateTime);}
+
+    public String localDateStringFromLocalDate(LocalDate localDate) { return localDate.format(formatDate);}
 }
