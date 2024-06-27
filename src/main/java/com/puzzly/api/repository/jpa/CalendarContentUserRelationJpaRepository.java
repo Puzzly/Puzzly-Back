@@ -3,6 +3,7 @@ package com.puzzly.api.repository.jpa;
 import com.puzzly.api.entity.CalendarContent;
 import com.puzzly.api.entity.CalendarContentUserRelation;
 import com.puzzly.api.entity.User;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -20,4 +21,6 @@ public interface CalendarContentUserRelationJpaRepository extends JpaRepository<
     public int updateIsDeletedCalendarContentUserRelation(CalendarContent content, Long userId, Boolean isDeleted);
 
     public int deleteByCalendarContent(CalendarContent calendarContent);
+
+    public List<CalendarContentUserRelation> findByUserAndCalendarContent(User user, CalendarContent calendarContent);
 }
