@@ -4,6 +4,6 @@ import com.puzzly.api.domain.AccountAuthority;
 
 import java.util.List;
 
-public interface UserAccountAuthorityJpaRepositoryCustom {
+public interface UserAccountAuthorityRepositoryCustom {
     public List<AccountAuthority> selectUserAuthority(Long userId);
 }

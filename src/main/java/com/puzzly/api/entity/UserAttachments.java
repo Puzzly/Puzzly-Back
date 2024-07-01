@@ -8,12 +8,13 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@Entity
+//@Entity
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
 @ToString
-@Table(name="user_attachments")
+//@Table(name="user_attachments")
+@Deprecated(forRemoval = true)
 public class UserAttachments {
     @Comment("PK, autoIncrement")
     @Id

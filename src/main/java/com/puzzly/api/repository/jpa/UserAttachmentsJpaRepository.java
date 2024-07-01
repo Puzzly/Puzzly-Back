@@ -12,12 +12,13 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
-public interface UserAttachmentsJpaRepository extends JpaRepository<UserAttachments, Long>, UserAttachmentsJpaRepositoryCustom {
+@Deprecated(forRemoval = true)
+public interface UserAttachmentsJpaRepository {/* extends JpaRepository<UserAttachments, Long>, UserAttachmentsJpaRepositoryCustom {
 
     public Optional<UserAttachments> findByUserAndIsDeleted(User user, Boolean isDeleted);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE UserAttachments SET isDeleted =:after, deleteDateTime =:deleteDateTime, deleteUser=:user where isDeleted=:before and user =:user")
     public void bulkUpdateIsDeleted(User user, Boolean before, Boolean after, LocalDateTime deleteDateTime);
-
+*/
 }

@@ -409,10 +409,10 @@ public class CalendarService {
                                 .isDeleted(false)
                                 .build();
                 calendarContentUserRelationJpaRepository.save(contentUserRelation);
-                UserAttachments userAttachments = userService.selectUserAttachmentsByUser(selectedUser, false).orElse(null);
-                userList.add(UserResponseDto.builder().userId(selectedUser.getUserId()).nickName(selectedUser.getNickName()).userName(selectedUser.getUserName()).userAttachments(
-                        UserAttachmentsResponseDto.builder().attachmentsId(userAttachments != null ? userAttachments.getAttachmentsId() : null).build()
-                ).build());
+//                UserAttachments userAttachments = userService.selectUserAttachmentsByUser(selectedUser, false).orElse(null);
+//                userList.add(UserResponseDto.builder().userId(selectedUser.getUserId()).nickName(selectedUser.getNickName()).userName(selectedUser.getUserName()).userAttachments(
+//                        UserAttachmentsResponseDto.builder().attachmentsId(userAttachments != null ? userAttachments.getAttachmentsId() : null).build()
+//                ).build());
             });
             contentResponseDto.setUserList(userList);
         }
