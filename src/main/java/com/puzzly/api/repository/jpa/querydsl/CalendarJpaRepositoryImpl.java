@@ -33,9 +33,9 @@ public class CalendarJpaRepositoryImpl {
                 .select(Projections.fields(CalendarResponseDto.class,
                         calendar.calendarId, calendar.calendarType, calendar.calendarName,
                         createUser.userId.as("createId"), modifyUser.userId,
-                        createUser.nickName.as("createNickName"),
-                        modifyUser.userId.as("modifyId"),
-                        modifyUser.nickName.as("modifyNickName")
+//                        createUser.nickName.as("createNickName"),
+                        modifyUser.userId.as("modifyId")
+//                        modifyUser.nickName.as("modifyNickName")
                         ))
                 .from(calendar)
                 .leftJoin(createUser).on(calendar.createUser.userId.eq(createUser.userId))

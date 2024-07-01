@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @RequiredArgsConstructor
-public class UserAccountAuthorityJpaRepositoryImpl {
+public class UserAccountAuthorityRepositoryImpl {
     private final JPAQueryFactory jpaQueryFactory;
 
     public List<AccountAuthority> selectUserAuthority(Long userId){

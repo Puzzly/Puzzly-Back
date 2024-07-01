@@ -7,7 +7,7 @@ import com.puzzly.api.entity.QCalendarContentAttachments;
 import com.puzzly.api.entity.QCalendarContentComment;
 import com.puzzly.api.entity.QCalendarLabel;
 import com.puzzly.api.entity.QUser;
-import com.puzzly.api.entity.QUserAttachments;
+//import com.puzzly.api.entity.QUserAttachments;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -21,7 +21,7 @@ public class CalendarContentCommentJpaRepositoryImpl {
 
     public List<CalendarContentCommentResponseDto> selectCalendarContentCommentList(Long contentId, Long beforeCommentId, int pageSize) {
         QCalendarContentComment calendarContentComment = QCalendarContentComment.calendarContentComment;
-        QUserAttachments userAttachments = QUserAttachments.userAttachments;
+  //      QUserAttachments userAttachments = QUserAttachments.userAttachments;
         QUser user = QUser.user;
 
         return jpaQueryFactory
@@ -30,12 +30,12 @@ public class CalendarContentCommentJpaRepositoryImpl {
                     calendarContentComment.comment,
                     user.userId.as("createId"),
                     user.nickName.as("createNickName"),
-                    userAttachments.filePath,
+    //                userAttachments.filePath,
                     calendarContentComment.createDateTime
                 ))
                 .from(calendarContentComment)
                     .leftJoin(user).on(calendarContentComment.createUser.userId.eq(user.userId))
-                    .leftJoin(userAttachments).on(userAttachments.user.userId.eq(user.userId))
+    //                .leftJoin(userAttachments).on(userAttachments.user.userId.eq(user.userId))
                 .where(calendarContentComment.calendarContent.contentId.eq(contentId),
                        calendarContentComment.commentId.lt(beforeCommentId))
                 .orderBy(calendarContentComment.createDateTime.desc())
