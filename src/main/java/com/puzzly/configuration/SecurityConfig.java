@@ -126,7 +126,7 @@ public class SecurityConfig {
     ) {
         CustomUsernamePasswordAuthenticationFilter customUsernamePasswordAuthenticationFilter = new CustomUsernamePasswordAuthenticationFilter(authenticationManager);
         customUsernamePasswordAuthenticationFilter.setFilterProcessesUrl("/api/user/login");
-        customUsernamePasswordAuthenticationFilter.setUsernameParameter("email");
+        customUsernamePasswordAuthenticationFilter.setUsernameParameter("memberId");
         customUsernamePasswordAuthenticationFilter.setAuthenticationSuccessHandler(customUsernamePasswordSuccessHandler);
         customUsernamePasswordAuthenticationFilter.setAuthenticationFailureHandler(customUsernamePasswordFailureHandler);
         customUsernamePasswordAuthenticationFilter.afterPropertiesSet();

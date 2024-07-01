@@ -88,12 +88,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String email = jwtUtils.getEmailFromToken(token);
+        String memberId = jwtUtils.getMemberIdFromToken(token);
         List<String> authorities = jwtUtils.getAuthorityFromToken(token);
         Long userId = jwtUtils.getUserIdFromToken(token);
         if(!userService.selectExistsEmailAndIsDeleted(email, false)){
             throw new FailException("SERVER_MESSAGE_DELETED_USER", 400);
         }
-        User user = User.builder().userId(userId).email(email).password("PROTECTED").build();
+        User user = User.builder().userId(userId).memberId(memberId).email(email).password("PROTECTED").build();
         /** 삭제된 유저 검증 임시처리 방안, JWT 필터링 시에 유저 검증*/
 
         SecurityUser securityUser = new SecurityUser(user);

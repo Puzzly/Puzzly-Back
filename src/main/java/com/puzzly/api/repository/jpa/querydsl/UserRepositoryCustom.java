@@ -8,7 +8,7 @@ public interface UserRepositoryCustom {
     /** 회원 이메일 존재 여부 조회*/
     public Boolean selectExistsEmailAndIsDeleted(String email, Boolean isDeleted);
     /** 회원 아이디 중복 여부 조회*/
-    public Boolean selectExistsMemberId(String memberId);
+    public Boolean selectExistsMemberIdAndIsDeleted(String memberId, Boolean isDeleted);
     /** 사용자 PK로 정보 조회*/
     public UserResponseDto selectUserByUserId(Long userId, Boolean isDeleted);
     @Deprecated

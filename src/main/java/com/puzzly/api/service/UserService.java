@@ -73,10 +73,10 @@ public class UserService {
         if(ObjectUtils.isEmpty(userRequestDto.getFirstTermAgreement() || ObjectUtils.isEmpty(userRequestDto.getSecondTermAgreement()))){
             throw new FailException("SERVER_MESSAGE_TERM_AGREEMENT_NOT_EXISTS", 400);
         }
-        if(userRepository.selectExistsEmailAndIsDeleted(userRequestDto.getEmail(), false)){
+        if(userRepository.selectExistsEmailAndIsDeleted(userRequestDto.getEmail(), null)){
             throw new FailException("SERVER_MESSAGE_EMAIL_ALREADY_EXISTS", 400);
         }
-        if(userRepository.selectExistsMemberId(userRequestDto.getMemberId())){
+        if(selectExistsMemberIdAndIsDeleted(userRequestDto.getMemberId(), null)){
             throw new FailException("SERVER_MESSAGE_ID_ALREADY_EXISTS", 400);
         }
         // TODO FE와 별도로 상의하여 통신구간 암호화를 구현하고, 복호화 > 암호화 혹은 그대로 때려박기 등을 구현해야 한다.
@@ -157,7 +157,7 @@ public class UserService {
 
     /** ID 중복여부 조회 */
     public boolean selectExistsMemberId(String memberId) throws FailException{
-        if(userRepository.selectExistsMemberId(memberId)){
+        if(selectExistsMemberIdAndIsDeleted(memberId, null)){
             throw new FailException("SERVER_MESSAGE_MEMBER_ID_ALREADY_EXISTS", 400);
         }{
             return false;
@@ -262,7 +262,7 @@ public class UserService {
                 .birth(user.getBirth()).gender(user.getGender())
                 .email(user.getEmail()).createDateTime(user.getCreateDateTime())
 
-                .joinType(userExtension.getJoinType().getText())
+                .joinType(userExtension.getJoinType())
                 .statusMessage(userExtension.getStatusMessage())
                 .profilePath(userExtension.getProfilePath()).extension(userExtension.getExtension()).originName(userExtension.getOriginName())
                 .fileSize(userExtension.getFileSize())
@@ -283,8 +283,16 @@ public class UserService {
     public Boolean selectExistsEmailAndIsDeleted(String email, Boolean isDeleted){
         return userRepository.selectExistsEmailAndIsDeleted(email, isDeleted);
     }
+    public Boolean selectExistsMemberIdAndIsDeleted(String memberId, Boolean isDeleted){
+        return userRepository.selectExistsMemberIdAndIsDeleted(memberId, isDeleted);
+    }
 
     public User findByUserId(Long userId) {return userRepository.findByUserId(userId);}
+
+    public User findByMemberIdAndIsDeleted(String memberId, Boolean isDeleted) {
+        return userRepository.findByMemberIdAndIsDeleted(memberId, isDeleted);
+    }
+
     public List<UserResponseDto> selectUserByCalendar(Long calendarId, Boolean isDeleted){
         //return userMybatisRepository.selectUserByCalendar(calendarId);
         return userRepository.selectUserByCalendar(calendarId, isDeleted);

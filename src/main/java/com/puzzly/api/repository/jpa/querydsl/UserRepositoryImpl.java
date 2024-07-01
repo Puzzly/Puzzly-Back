@@ -10,7 +10,6 @@ import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.List;
 
-import static com.puzzly.api.entity.QCalendar.calendar;
 import static com.puzzly.api.entity.QUser.user;
 
 @RequiredArgsConstructor
@@ -46,12 +45,12 @@ public class UserRepositoryImpl {
     }
 
     /** 회원 아이디 존재 여부 조회 */
-    public Boolean selectExistsMemberId(String email){
+    public Boolean selectExistsMemberIdAndIsDeleted(String email, Boolean isDeleted){
         QUser user = QUser.user;
 
         return jpaQueryFactory
                 .selectFrom(user)
-                .where(user.memberId.eq(email))
+                .where(user.memberId.eq(email), eqIsDeleted(isDeleted))
                 .fetchFirst() != null;
     }
     /** 사용자 PK로 정보조회 */

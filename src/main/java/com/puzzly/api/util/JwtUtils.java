@@ -33,7 +33,8 @@ public class JwtUtils implements InitializingBean {
     private final UserService userService;
 
     private Key key;
-    private final String principal = "email";
+    private final String principal = "memberId";
+    private final String secondPrincipal = "email";
     private final String authority = "authorities";
 
     private final String userId = "userId";
@@ -47,6 +48,7 @@ public class JwtUtils implements InitializingBean {
     }
     public String generateJwtToken(User user) {
         Claims claims = Jwts.claims();
+        claims.put("memberId", user.getMemberId());
         claims.put("email", user.getEmail());
         claims.put("authorities", getUserAccountAuthorityList(userService.findAccountAuhorityByUser(user)));
         claims.put("userId", user.getUserId());
@@ -101,6 +103,11 @@ public class JwtUtils implements InitializingBean {
     }
 
     public String getEmailFromToken(String token) {
+        Claims claims = getClaimsFormToken(token);
+        return claims.get(secondPrincipal).toString();
+    }
+
+    public String getMemberIdFromToken(String token) {
         Claims claims = getClaimsFormToken(token);
         return claims.get(principal).toString();
     }

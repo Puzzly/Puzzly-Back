@@ -21,10 +21,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserService userService;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws FailException {
+    public UserDetails loadUserByUsername(String memberId) throws FailException {
         User user = null;
         try {
-            user = userService.findByEmail(email);
+            //user = userService.findByEmail(email);
+            user = userService.findByMemberIdAndIsDeleted(memberId, false);
             if(ObjectUtils.isEmpty(user)){
                 throw new NoSuchElementException();
             }

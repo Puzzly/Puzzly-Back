@@ -1,6 +1,7 @@
 package com.puzzly.api.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.puzzly.api.domain.JoinType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import lombok.*;
@@ -54,7 +55,7 @@ public class UserResponseDto {
     private Long extensionId;
      */
     @Schema(description="가입종류(Native/KAKAO/NAVER..etc)")
-    private String joinType;
+    private JoinType joinType;
     @Schema(defaultValue = "WELCOME PUZZLY", description = "사용자 상태메시지")
     private String statusMessage;
     @Schema(defaultValue = "", description="사용자 프로필 경로")
