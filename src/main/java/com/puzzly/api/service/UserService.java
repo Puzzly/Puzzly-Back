@@ -42,13 +42,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserService {
 
-    //TODO DID
-    // 1. Attachments, userDel 제거
-    // 2. Param ID 추가
-    // 3. API 정리
-    // 4. DTO 정리 ( time계열 정리 )
-    // 5. Id 체크 API 추가
-    // 6. Repository Level Jpa 단어 제거
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;

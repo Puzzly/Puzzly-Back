@@ -35,8 +35,6 @@ import java.util.Map;
 public class UserController {
     private final UserService userService;
 
-    //TODO Refactor
-    //TODO Login Parameter email -> memberId
     @PostMapping("/join")
     @Operation(summary = "회원가입", description = "토큰 필요X / 성공하면 result.user 의 value로 사용자 정보 리턴")
     @ApiResponse(responseCode = "200", description = "성공시 result의 key:user 의 value로 사용자 정보 제공")
