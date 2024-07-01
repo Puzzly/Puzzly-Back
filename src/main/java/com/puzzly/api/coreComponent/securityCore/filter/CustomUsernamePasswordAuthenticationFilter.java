@@ -29,7 +29,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             UserRequestDto user = objectMapper.readValue(request.getInputStream(), UserRequestDto.class);
-            attemptToken = new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword());
+            attemptToken = new UsernamePasswordAuthenticationToken(user.getMemberId(), user.getPassword());
             setDetails(request, attemptToken);
         } catch (AuthenticationException e) {
             e.printStackTrace();
