@@ -35,9 +35,9 @@
     </appender>
 
     <!-- JDBC -->
+    <logger name="jdbc.sqlonly" level="OFF" />
+    <logger name="jdbc.sqltiming" level="DEBUG"/>
     <logger name="jdbc.audit" level="OFF" />
-    <logger name="jdbc.sqltiming" level="OFF"/>
-    <logger name="jdbc.sqlonly" level="${LOG_LEVEL}" />
     <logger name="jdbc.connection" level="OFF" />
     <logger name="jdbc.resultset" level="OFF" />
     <logger name="jdbc.resultsettable" level="OFF" />

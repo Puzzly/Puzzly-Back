@@ -6,6 +6,7 @@ import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,8 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.URLEncoder;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -114,7 +117,7 @@ public class CustomUtils {
             String extension = fileNameArr[fileNameArr.length - 1];
 
             try (InputStream inputStream = multipartFile.getInputStream();
-                 OutputStream outputStream = new FileOutputStream(dirPath + fileName)) {
+                 OutputStream outputStream = new FileOutputStream(dirPath + fileName + "." + extension)) {
                 // 1Mb씩
                 byte[] buffer = new byte[1024 * 1024 * 1];
                 int readBytes;
@@ -136,6 +139,20 @@ public class CustomUtils {
             return fileResult;
         } else {
             throw new FailException("SERVER_MESSAGE_MULTIPART_FILE_NULL", 400);
+        }
+    }
+    public boolean deleteFile(String context, String filePath){
+        File targetFile = Paths.get(filePath).normalize().toFile();
+        if(targetFile.isFile()){
+            try{
+                FileUtils.delete(targetFile);
+                return true;
+            } catch(IOException e){
+                e.printStackTrace();
+                throw new FailException("SERVER_MESSAGE_REMOVING_FILE_FAILED : " + targetFile.getAbsolutePath(), 500);
+            }
+        } else {
+            throw new FailException("SERVER_MESSAGE_FILE_ISNOT_FILE: " + targetFile.getAbsolutePath(), 500);
         }
     }
 

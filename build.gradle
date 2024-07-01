@@ -71,6 +71,8 @@ dependencies {
 
     implementation 'com.google.firebase:firebase-admin:9.3.0'
 
+    implementation 'commons-io:commons-io:2.16.1'
+
     annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
     annotationProcessor 'com.querydsl:querydsl-core:5.0.0'
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"

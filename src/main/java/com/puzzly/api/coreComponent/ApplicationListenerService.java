@@ -48,12 +48,14 @@ public class ApplicationListenerService implements ApplicationListener<ContextRe
     private final CustomUtils customUtils;
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
+
         log.info("[++] Application ready");
         log.error("jwt key : " + jwtUtils.getJwtSecretKey());
 
         try {
             UserRequestDto user = new UserRequestDto();
             user.setUserName("admin");
+            user.setMemberId("admin");
             user.setNickName("관리자");
             user.setEmail("admin@puzzly.com");
             user.setPassword("admin");
@@ -62,7 +64,7 @@ public class ApplicationListenerService implements ApplicationListener<ContextRe
             user.setAccountAuthority(AccountAuthority.ROLE_ADMIN);
             user.setFirstTermAgreement(true);
             user.setSecondTermAgreement(true);
-            user.setGender(true);
+            user.setGender(1);
             userService.createUser(user);
         }catch(FailException e){
             if(e.getMessage().equals("SERVER_MESSAGE_EMAIL_ALREADY_EXISTS")){
@@ -96,6 +98,8 @@ public class ApplicationListenerService implements ApplicationListener<ContextRe
                 throw new RuntimeException(e);
             }
         }
+
+
 
     }
 

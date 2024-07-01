@@ -36,7 +36,7 @@ public class CalendarLabelJpaRepositoryImpl {
                         calendarLabel.colorCode,
                         calendarLabel.orderNum,
                         createUser.userId.as("createId"),
-                        createUser.nickName.as("createNickName"),
+//                        createUser.nickName.as("createNickName"),
                         calendarLabel.createDateTime,
                         modifyUser.userId.as("modifyId"),
                         modifyUser.nickName.as("modifyNickName"),

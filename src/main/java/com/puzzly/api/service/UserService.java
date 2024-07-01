@@ -1,21 +1,23 @@
 package com.puzzly.api.service;
 
 import com.puzzly.api.domain.AccountAuthority;
+import com.puzzly.api.domain.JoinType;
 import com.puzzly.api.domain.SecurityUser;
 import com.puzzly.api.dto.request.UserRequestDto;
-import com.puzzly.api.dto.response.UserAttachmentsResponseDto;
 import com.puzzly.api.dto.response.UserResponseDto;
 import com.puzzly.api.entity.User;
 import com.puzzly.api.entity.UserAccountAuthority;
-import com.puzzly.api.entity.UserAttachments;
 import com.puzzly.api.entity.UserExtension;
 import com.puzzly.api.exception.FailException;
-import com.puzzly.api.repository.jpa.UserAccountAuthorityJpaRepository;
-import com.puzzly.api.repository.jpa.UserAttachmentsJpaRepository;
-import com.puzzly.api.repository.jpa.UserExtensionJpaRepository;
-import com.puzzly.api.repository.jpa.UserJpaRepository;
+import com.puzzly.api.repository.jpa.UserAccountAuthorityRepository;
+import com.puzzly.api.repository.jpa.UserExtensionRepository;
+import com.puzzly.api.repository.jpa.UserRepository;
 import com.puzzly.api.util.CustomUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
+
+import java.io.IOException;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +26,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cglib.core.Local;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,246 +42,182 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserService {
 
+    //TODO DID
+    // 1. Attachments, userDel 제거
+    // 2. Param ID 추가
+    // 3. API 정리
+    // 4. DTO 정리 ( time계열 정리 )
+    // 5. Id 체크 API 추가
+    // 6. Repository Level Jpa 단어 제거
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    private final UserJpaRepository userJpaRepository;
-    private final UserExtensionJpaRepository userExtensionJpaRepository;
-    private final UserAccountAuthorityJpaRepository userAccountAuthorityJpaRepository;
-
-    private final UserAttachmentsJpaRepository userAttachmentsJpaRepository;
+    private final UserRepository userRepository;
+    private final UserExtensionRepository userExtensionRepository;
+    private final UserAccountAuthorityRepository userAccountAuthorityRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final CustomUtils customUtils;
     private final RedisService redisService;
     private final String context = "user";
 
-    /** 이메일 중복여부 조회*/
-    public HashMap<String, Object> selectExistsEmail(String email) throws FailException{
-        HashMap<String, Object> resultMap = new HashMap<>();
-
-        if(userJpaRepository.selectUserExistsByEmail(email)){
-            throw new FailException("SERVER_MESSAGE_EMAIL_ALREADY_EXISTS", 400);
-        } else {
-            resultMap.put("result", false);
-        }
-        return resultMap;
-    }
-
-    /** 사용자 추가 */
+    /** 회원가입 (NATIVE) */
     @Transactional
-    public HashMap<String, Object> createUser(UserRequestDto userRequestDto) throws FailException{
-        HashMap<String, Object> resultMap = new HashMap<>();
-
+    public UserResponseDto createUser(UserRequestDto userRequestDto) throws FailException{
+        // Parameter Check
         if(ObjectUtils.isEmpty(userRequestDto.getUserName()) || ObjectUtils.isEmpty(userRequestDto.getNickName()) ||
-        ObjectUtils.isEmpty(userRequestDto.getEmail()) || ObjectUtils.isEmpty(userRequestDto.getPassword()) ||
+                ObjectUtils.isEmpty(userRequestDto.getMemberId()) ||
+                ObjectUtils.isEmpty(userRequestDto.getEmail()) || ObjectUtils.isEmpty(userRequestDto.getPassword()) ||
                 ObjectUtils.isEmpty(userRequestDto.getPhoneNumber()) || ObjectUtils.isEmpty(userRequestDto.getBirth()) ||
                 ObjectUtils.isEmpty(userRequestDto.getGender())){
             throw new FailException("SERVER_MESSAGE_BASIC_USER_PARAMETER_MISSING", 400);
         }
-
         if(ObjectUtils.isEmpty(userRequestDto.getFirstTermAgreement() || ObjectUtils.isEmpty(userRequestDto.getSecondTermAgreement()))){
             throw new FailException("SERVER_MESSAGE_TERM_AGREEMENT_NOT_EXISTS", 400);
         }
-
-        if(userJpaRepository.selectUserExistsByEmail(userRequestDto.getEmail())){
+        if(userRepository.selectExistsEmailAndIsDeleted(userRequestDto.getEmail(), false)){
             throw new FailException("SERVER_MESSAGE_EMAIL_ALREADY_EXISTS", 400);
+        }
+        if(userRepository.selectExistsMemberId(userRequestDto.getMemberId())){
+            throw new FailException("SERVER_MESSAGE_ID_ALREADY_EXISTS", 400);
         }
         // TODO FE와 별도로 상의하여 통신구간 암호화를 구현하고, 복호화 > 암호화 혹은 그대로 때려박기 등을 구현해야 한다.
         userRequestDto.setPassword(bCryptPasswordEncoder.encode(userRequestDto.getPassword()));
-        UserExtension userExtension = UserExtension.builder()
-                .firstTermAgreement(userRequestDto.getFirstTermAgreement())
-                .secondTermAgreement(userRequestDto.getSecondTermAgreement())
-                .build();
-        userExtensionJpaRepository.save(userExtension);
-        User user = User.builder()
-                .userName(userRequestDto.getUserName())
-                .nickName(userRequestDto.getNickName())
-                .email(userRequestDto.getEmail())
-                .password(userRequestDto.getPassword())
-                .phoneNumber(userRequestDto.getPhoneNumber())
-                .birth(userRequestDto.getBirth())
-                .gender(userRequestDto.getGender())
-                .createDateTime(LocalDateTime.now())
-                .userExtension(userExtension)
-                .isDeleted(false)
-                .build();
-        userJpaRepository.save(user);
 
+        // 확장정보 저장
+        // TODO Oauth 추가시, JoinType 강제지정 풀어야함.
+        UserExtension userExtension = UserExtension.builder()
+                .joinType(JoinType.NATIVE).firstTermAgreement(userRequestDto.getFirstTermAgreement()).secondTermAgreement(userRequestDto.getSecondTermAgreement())
+                .build();
+        userExtensionRepository.save(userExtension);
+
+        // 기초정보 저장
+        User user = User.builder()
+                .memberId(userRequestDto.getMemberId()).userName(userRequestDto.getUserName()).nickName(userRequestDto.getUserName()).phoneNumber(userRequestDto.getPhoneNumber())
+                .birth(userRequestDto.getBirth()).gender(userRequestDto.getGender()).email(userRequestDto.getEmail()).password(userRequestDto.getPassword())
+                .createDateTime(LocalDateTime.now()).isDeleted(false).userExtension(userExtension)
+                .build();
+        userRepository.save(user);
+
+        // 계정권한 저장
         UserAccountAuthority userAccountAuthority = UserAccountAuthority.builder()
                 .user(user)
                 .accountAuthority(ObjectUtils.isEmpty(userRequestDto.getAccountAuthority()) ? AccountAuthority.ROLE_USER : userRequestDto.getAccountAuthority())
                 .build();
-        userAccountAuthorityJpaRepository.save(userAccountAuthority);
+        userAccountAuthorityRepository.save(userAccountAuthority);
+
+        // 계정이 ADMIN일 경우 사용자 권한도 추가
         if(userAccountAuthority.getAccountAuthority().equals(AccountAuthority.ROLE_ADMIN)){
             UserAccountAuthority adminAccountAuthority = UserAccountAuthority.builder()
-                    .user(user)
-                    .accountAuthority(AccountAuthority.ROLE_USER)
+                    .user(user).accountAuthority(AccountAuthority.ROLE_USER)
                     .build();
-            userAccountAuthorityJpaRepository.save(adminAccountAuthority);
+            userAccountAuthorityRepository.save(adminAccountAuthority);
         }
-        UserResponseDto userResult = buildUserResponseDtoFromUser(user, userExtension);
 
-        resultMap.put("user", userResult);
-        return resultMap;
+        // 결과 return
+        UserResponseDto result = buildUserResponseDtoFromUser(user, userExtension);
+        return result;
     }
 
-    public HashMap<String, Object> deleteUser(SecurityUser securityUser, Long userId){
-        HashMap<String, Object> resultMap = new HashMap<>();
-        if(userId == null){
-            userId = securityUser.getUser().getUserId();
-            User user = userJpaRepository.findByUserId(userId);
-            user.setIsDeleted(true);
-            userJpaRepository.save(user);
+    /** 사용자 첨부파일 (프로필) 업로드*/
+    public UserResponseDto uploadUserProfile(SecurityUser securityUser, MultipartFile attachments) throws FailException{
 
+        User user = findById(securityUser.getUser().getUserId()).orElse(null);
+        UserExtension userExtension = user.getUserExtension();
+        if(user == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
+        }
+        if(StringUtils.isNotEmpty(userExtension.getProfilePath())){
+            customUtils.deleteFile(context , userExtension.getProfilePath());
+            userExtension.setProfilePath(null);
+            userExtension.setFileSize(null);
+            userExtension.setExtension(null);
+            userExtension.setOriginName(null);
+        }
+
+        HashMap<String, Object> fileResult = customUtils.uploadFile(context, attachments);
+        userExtension.setOriginName(MapUtils.getString(fileResult, "originName"));
+        userExtension.setProfilePath(MapUtils.getString(fileResult, "dirPath") + MapUtils.getString(fileResult, "fileName") + "." + MapUtils.getString(fileResult, "extension"));
+        userExtension.setFileSize(MapUtils.getLong(fileResult, "fileSize"));
+        userExtension.setExtension(MapUtils.getString(fileResult, "extension"));
+
+        user.setModifyDateTime(LocalDateTime.now());
+        userExtensionRepository.save(userExtension);
+        userRepository.save(user);
+
+        return buildUserResponseDtoFromUser(user, userExtension);
+    }
+
+    /** 이메일 중복여부 조회*/
+    public boolean selectExistsEmail(String email) throws FailException{
+        if(userRepository.selectExistsEmailAndIsDeleted(email, null)){
+            throw new FailException("SERVER_MESSAGE_EMAIL_ALREADY_EXISTS", 400);
         } else {
-            if(securityUser.getAuthorities().contains("ROLE_ADMIN")) {
-                User user = userJpaRepository.findByUserId(userId);
-                user.setIsDeleted(true);
-                userJpaRepository.save(user);
-            } else {
-                throw new FailException("SERVER_MESSAGE_ONLY_ADMIN_CAN_DO_THIS_OPERATION", 400);
-            }
+            return false;
         }
-        resultMap.put("result", "SUCCEED");
-        return resultMap;
     }
+
+    /** ID 중복여부 조회 */
+    public boolean selectExistsMemberId(String memberId) throws FailException{
+        if(userRepository.selectExistsMemberId(memberId)){
+            throw new FailException("SERVER_MESSAGE_MEMBER_ID_ALREADY_EXISTS", 400);
+        }{
+            return false;
+        }
+    }
+
 
     /** 사용자 조회 */
-    public HashMap<String, Object> getUser(Long userId){
-        HashMap<String, Object> resultMap = new HashMap<>();
-        UserResponseDto user = userJpaRepository.selectUserByUserId(userId, false);
+    public UserResponseDto getUser(Long userId){
+        UserResponseDto user = userRepository.selectUserByUserId(userId, false);
         if(user == null){
             throw new FailException("SERVER_MESSAGE_USER_INFO_NOT_FOUND", 400);
         }
         user.setAccountAuthority(getAccountAuthority(userId));
-        user.setUserAttachments(userAttachmentsJpaRepository.selectUserAttachmentsByUserId(user.getUserId(), false));
-        resultMap.put("user", user);
-        return resultMap;
-    }
-
-    /** 사용자 수정 */
-    @Transactional
-    public HashMap<String, Object> modifyUser(Long userId, UserRequestDto userRequestDto){
-        HashMap<String, Object> resultMap = new HashMap<>();
-        User user = userJpaRepository.findById(userId).orElse(null);
-        UserExtension userExtension = user.getUserExtension();
-
-        /** 사용자 정보 수정*/
-        //if(userRequestDto.getUserName() != null) user.setUserName(StringUtils.trim(userRequestDto.getUserName()));
-        if(userRequestDto.getNickName() != null) user.setNickName(StringUtils.trim(userRequestDto.getNickName()));
-        if(userRequestDto.getPassword() != null) user.setPassword(bCryptPasswordEncoder.encode(StringUtils.trim(userRequestDto.getPassword())));
-       // if(userRequestDto.getPhoneNumber() != null) user.setPhoneNumber(StringUtils.trim(userRequestDto.getPhoneNumber()));
-        if(userRequestDto.getBirth() != null) user.setBirth(userRequestDto.getBirth());
-        if(userRequestDto.getGender() != null) user.setGender(userRequestDto.getGender());
-        if(userRequestDto.getFirstTermAgreement() != null) userExtension.setFirstTermAgreement(userRequestDto.getFirstTermAgreement());
-        if(userRequestDto.getSecondTermAgreement() != null) userExtension.setSecondTermAgreement(userRequestDto.getSecondTermAgreement());
-        if(userRequestDto.getStatusMessage() != null) userExtension.setStatusMessage(userRequestDto.getStatusMessage());
-
-        user.setModifyDateTime(LocalDateTime.now());
-
-        userJpaRepository.save(user);
-        userExtensionJpaRepository.save(userExtension);
-
-        /*
-        //기존에 등록한 프로필 사진 삭제로 변경하고 신규 사진 등록
-        if(userRequestDto.getAttachmentsId() != null && userRequestDto.getAttachmentsId() != 0){
-            userAttachmentsJpaRepository.bulkUpdateIsDeleted(user, false, true, LocalDateTime.now());
-            UserAttachments userAttachments = userAttachmentsJpaRepository.findById(userRequestDto.getAttachmentsId()).orElse(null);
-            if(userAttachments == null){
-                throw new FailException("SERVER_MESSAGE_ATTACHMENTS_NOT_EXISTS",400);
-            }
-            userAttachments.setUser(user);
-            userAttachmentsJpaRepository.save(userAttachments);
-        }
-        */
-        UserResponseDto userResult = buildUserResponseDtoFromUser(user, userExtension);
-        resultMap.put("user", userResult);
-
-        return resultMap;
-    }
-
-
-    /** 사용자 정보 조회 */
-    @Deprecated
-    public UserResponseDto selectUser(Long userId){
-        // jpa 전용 failException 만들어서 orelseThrow 사용을 고려할것
-        User userEntity = userJpaRepository.findById(userId).orElse(null);
-        UserExtension userExEntity = userEntity.getUserExtension();
-        UserResponseDto user  = UserResponseDto.builder().userId(userEntity.getUserId()).userName(userEntity.getUserName()).nickName(userEntity.getNickName())
-                .email(userEntity.getEmail()).phoneNumber(userEntity.getPhoneNumber()).birth(userEntity.getBirth()).gender(userEntity.getGender())
-                .accountAuthority(userAccountAuthorityJpaRepository.findByUser(userEntity).stream().map((ua) -> {
-                    return ua.getAccountAuthority().getText();
-                }).collect(Collectors.toList())).createDateTime(userEntity.getCreateDateTime()).status(userEntity.getStatus())
-                .firstTermAgreement(userExEntity.getFirstTermAgreement())
-                .secondTermAgreement(userExEntity.getSecondTermAgreement())
-                //.profileFilePath(userExEntity.getProfileFilePath())
-                .statusMessage(userExEntity.getStatusMessage())
-                .build();
         return user;
     }
 
-
-    /** 사용자 첨부파일 (프로필) 업로드*/
-    public HashMap<String, Object> uploadUserAttachments(SecurityUser securityUser, MultipartFile attachments){
-        HashMap<String, Object> resultMap = new HashMap<>();
-        User user = findById(securityUser.getUser().getUserId()).orElse(null);
+    /** 사용자 프로필 사진 다운로드*/
+    public void downloadUserProfile(SecurityUser securityUser, Long userId, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if(ObjectUtils.isEmpty(userId)){
+            throw new FailException("SERVER_MESSAGE_PARAMETER_NOT_FOUND", 400);
+        }
+        User user = userRepository.findByUserIdAndIsDeleted(userId, false);
         if(user == null){
             throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
         }
-        if(userAttachmentsJpaRepository.selectUserAttachmentsByUserId(user.getUserId(), false) != null){
-            userAttachmentsJpaRepository.bulkUpdateIsDeleted(user, false, true, LocalDateTime.now());
-        }
-
-        Long attachmentsId = 0L;
-        try {
-            HashMap<String, Object> fileResult = customUtils.uploadFile(context, attachments);
-
-            UserAttachments userAttachments = UserAttachments.builder()
-                    .extension(MapUtils.getString(fileResult, "extension"))
-                    .filePath(MapUtils.getString(fileResult, "dirPath") + MapUtils.getString(fileResult, "fileName"))
-                    .fileSize(MapUtils.getLong(fileResult, "fileSize"))
-                    .createDateTime(LocalDateTime.now())
-                    .originName(MapUtils.getString(fileResult, "originName"))
-                    .isDeleted(false)
-                    .createUser(user)
-                    .user(user)
-                    .build();
-            userAttachmentsJpaRepository.save(userAttachments);
-            attachmentsId = userAttachments.getAttachmentsId();
-            user.setModifyDateTime(LocalDateTime.now());
-            userJpaRepository.save(user);
-        }catch(Exception e){
-            e.printStackTrace();
-            throw new FailException("SERVER_MESSAGE_EXCEPTION_ON_USER_ATTACHMENTS", 500);
-        }
-
-        resultMap.put("attachmentsId", attachmentsId);
-        return resultMap;
+        UserExtension userExtension = user.getUserExtension();
+        customUtils.downloadFile(userExtension.getProfilePath(), userExtension.getOriginName(), userExtension.getExtension(), request, response);
     }
 
-    /** User , UserExtension Entity로부터 user responseDto 생성*/
-    private UserResponseDto buildUserResponseDtoFromUser(User user, UserExtension userExtension){
-        UserAttachments userAttachments = userAttachmentsJpaRepository.findByUserAndIsDeleted(user, false).orElse(null);
-        UserAttachmentsResponseDto userAttachmentsResponse = null;
-        if(userAttachments != null){
-            userAttachmentsResponse = UserAttachmentsResponseDto.builder()
-                                        .attachmentsId(userAttachments.getAttachmentsId())
-                                        .createDateTime(userAttachments.getCreateDateTime())
-                                        .originName(userAttachments.getOriginName())
-                                        .filePath(userAttachments.getFilePath())
-                                        .fileSize(userAttachments.getFileSize())
-                                        .build();
+
+    /** 사용자 수정 */
+    @Transactional
+    public UserResponseDto modifyUser(Long userId, UserRequestDto userRequestDto){
+        User user = userRepository.findByUserIdAndIsDeleted(userId, false);
+        if(user == null){
+            throw new FailException("SERVER_MESSAGE_USER_NOT_EXISTS", 400);
         }
-        return UserResponseDto.builder().userId(user.getUserId()).userName(user.getUserName()).email(user.getEmail()).
-                createDateTime(user.getCreateDateTime()).status(user.getStatus()).nickName(user.getNickName()).phoneNumber(user.getPhoneNumber())
-                .birth(user.getBirth()).gender(user.getGender())
-                .extensionId(userExtension.getExtensionId())
-                .firstTermAgreement(userExtension.getFirstTermAgreement())
-                .secondTermAgreement(userExtension.getSecondTermAgreement())
-                .accountAuthority(userAccountAuthorityJpaRepository.findByUser(user).stream().map((ua) -> {
-                    return ua.getAccountAuthority().getText();
-                }).collect(Collectors.toList()))
-                .userAttachments(userAttachmentsResponse == null ? null : userAttachmentsResponse)
-                .build();
+        UserExtension userExtension = user.getUserExtension();
+
+        if(userRequestDto.getNickName() != null) user.setNickName(StringUtils.trim(userRequestDto.getNickName()));
+        if(userRequestDto.getStatusMessage() != null) userExtension.setStatusMessage(userRequestDto.getStatusMessage());
+        if(userRequestDto.getFirstTermAgreement() != null) userExtension.setFirstTermAgreement(userRequestDto.getFirstTermAgreement());
+        if(userRequestDto.getSecondTermAgreement() != null) userExtension.setSecondTermAgreement(userRequestDto.getSecondTermAgreement());
+        user.setModifyDateTime(LocalDateTime.now());
+
+        userRepository.save(user);
+        userExtensionRepository.save(userExtension);
+        UserResponseDto modifiedUser = buildUserResponseDtoFromUser(user, userExtension);
+
+        return modifiedUser;
+    }
+
+    /** 회원탈퇴 */
+    public Boolean deleteUser(SecurityUser securityUser){
+            long userId = securityUser.getUser().getUserId();
+            User user = userRepository.findByUserId(userId);
+            user.setIsDeleted(true);
+            userRepository.save(user);
+        return true;
     }
 
     /* FCM 토큰 변경 */
@@ -298,7 +235,7 @@ public class UserService {
 
         if(userId == null){
             userId = securityUser.getUser().getUserId();
-            User user = userJpaRepository.findByUserId(userId);
+            User user = userRepository.findByUserId(userId);
             if(user == null){
                 throw new FailException("SERVER_MESSAGE_USER_NOT_FOUND", 400);
             }
@@ -316,23 +253,67 @@ public class UserService {
         return resultMap;
     }
 
+    /** User , UserExtension Entity로부터 user responseDto 생성*/
+    private UserResponseDto buildUserResponseDtoFromUser(User user, UserExtension userExtension){
+
+        return UserResponseDto.builder()
+                .userId(user.getUserId()).memberId(user.getMemberId()).userName(user.getUserName())
+                .nickName(user.getNickName()).phoneNumber(user.getPhoneNumber())
+                .birth(user.getBirth()).gender(user.getGender())
+                .email(user.getEmail()).createDateTime(user.getCreateDateTime())
+
+                .joinType(userExtension.getJoinType().getText())
+                .statusMessage(userExtension.getStatusMessage())
+                .profilePath(userExtension.getProfilePath()).extension(userExtension.getExtension()).originName(userExtension.getOriginName())
+                .fileSize(userExtension.getFileSize())
+                .firstTermAgreement(userExtension.getFirstTermAgreement())
+                .secondTermAgreement(userExtension.getSecondTermAgreement())
+                .personalSetting(userExtension.getPersonalSetting())
+                .accountAuthority(userAccountAuthorityRepository.findByUser(user).stream().map((ua) -> {
+                    return ua.getAccountAuthority().getText();
+                }).collect(Collectors.toList()))
+                .build();
+    }
 
     public User findByEmail(String email){
-        return userJpaRepository.findByEmail(email);
+        return userRepository.findByEmail(email);
     }
-    public Optional<User> findById(Long userId) {return userJpaRepository.findById(userId);}
+    public Optional<User> findById(Long userId) {return userRepository.findById(userId);}
 
-    public Boolean selectUserExistsByEmailAndIsDeleted(String email, Boolean isDeleted){
-        return userJpaRepository.selectUserExistsByEmailAndIsDeleted(email, isDeleted);
+    public Boolean selectExistsEmailAndIsDeleted(String email, Boolean isDeleted){
+        return userRepository.selectExistsEmailAndIsDeleted(email, isDeleted);
     }
 
-    public User findByUserId(Long userId) {return userJpaRepository.findByUserId(userId);}
+    public User findByUserId(Long userId) {return userRepository.findByUserId(userId);}
     public List<UserResponseDto> selectUserByCalendar(Long calendarId, Boolean isDeleted){
         //return userMybatisRepository.selectUserByCalendar(calendarId);
-        return userJpaRepository.selectUserByCalendar(calendarId, isDeleted);
+        return userRepository.selectUserByCalendar(calendarId, isDeleted);
+    }
+
+
+    /** 사용자 정보 조회 */
+    @Deprecated(forRemoval = true)
+    public UserResponseDto selectUser(Long userId){
+
+        // jpa 전용 failException 만들어서 orelseThrow 사용을 고려할것
+        User userEntity = userRepository.findById(userId).orElse(null);
+        UserExtension userExEntity = userEntity.getUserExtension();
+        UserResponseDto user  = UserResponseDto.builder().userId(userEntity.getUserId()).userName(userEntity.getUserName()).nickName(userEntity.getNickName())
+                .email(userEntity.getEmail()).phoneNumber(userEntity.getPhoneNumber()).birth(userEntity.getBirth()).gender(userEntity.getGender())
+                .accountAuthority(userAccountAuthorityRepository.findByUser(userEntity).stream().map((ua) -> {
+                    return ua.getAccountAuthority().getText();
+                }).collect(Collectors.toList())).createDateTime(userEntity.getCreateDateTime())
+                .firstTermAgreement(userExEntity.getFirstTermAgreement())
+                .secondTermAgreement(userExEntity.getSecondTermAgreement())
+                //.profileFilePath(userExEntity.getProfileFilePath())
+                .statusMessage(userExEntity.getStatusMessage())
+                .build();
+        return user;
+
     }
 
     public List<UserResponseDto> selectUserByCalendarContentRelation(Long contentId, Boolean isDeleted) {
+        /*
         // TODO 이 위치에서 사용자 프로필 사진 정보 필요한지 협의필요
         //return userMybatisRepository.selectUserByCalendarContentRelation(calendarId, isDeleted);
         //return userJpaRepository.selectUserByCalendarContentRelation(contentId, isDeleted);
@@ -341,18 +322,18 @@ public class UserService {
             user.setUserAttachments(userAttachmentsJpaRepository.selectUserAttachmentsByUserId(user.getUserId(), false));
         });
         return userList;
+
+         */
+        return null;
     }
 
-    public Optional<UserAttachments> selectUserAttachmentsByUser(User user, Boolean isDeleted){
-        return userAttachmentsJpaRepository.findByUserAndIsDeleted(user, isDeleted);
-    }
     public List<UserAccountAuthority> findAccountAuhorityByUser(User user){
-        return userAccountAuthorityJpaRepository.findByUser(user);
+        return userAccountAuthorityRepository.findByUser(user);
     }
 
     public List<String> getAccountAuthority(Long userId){
         List<String> accountAuthorityList = new ArrayList<>();
-        userAccountAuthorityJpaRepository.selectUserAuthority(userId).stream().forEach(
+        userAccountAuthorityRepository.selectUserAuthority(userId).stream().forEach(
                 (authority) -> {
                     accountAuthorityList.add(authority.getText());
                 });

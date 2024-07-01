@@ -13,12 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-@Entity
+//@Entity
 @NoArgsConstructor
 @ToString
 @Comment("삭제 사용자 테이블")
 /* User가 예약어 회피를 위해 Users로 명명, 이에따라 del 테이블도 Users로 명명*/
 @Table(name="users_del")
+@Deprecated(forRemoval = true)
 public class UserDel {
 
     @Comment("Pk, autoIncrement")
